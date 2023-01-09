@@ -1,8 +1,8 @@
 import playwright from 'playwright';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
-import { CosmosClient } from '@azure/cosmos';
 import uploadImageToAzureStorage from './azure-storage.js';
+import upsertToAzureCosmos from './azure-cosmosdb.js';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -32,24 +32,6 @@ dotenv.config();
 //         ...
 //   </container div>
 
-// Set CosmosDB Database and Container names
-const databaseName = 'supermarket-prices';
-const containerName = 'products';
-const partitionKey = ['/name'];
-
-// Create Cosmos client using connection string stored in .env
-console.log(`--- Connecting to CosmosDB..`);
-const cosmosClient = new CosmosClient(process.env.COSMOS_CONSTRING);
-
-// Connect to price database
-const { database } = await cosmosClient.databases.createIfNotExists({ id: databaseName });
-
-// Connect to products container
-const { container } = await database.containers.createIfNotExists({
-  id: containerName,
-  partitionKey: { paths: partitionKey },
-});
-
 // Create a playwright browser using webkit
 console.log(`--- Launching Headless Browser..`);
 const browser = await playwright.webkit.launch({
@@ -59,15 +41,16 @@ const page = await browser.newPage();
 
 // Open url
 console.log('--- Loading Webpage..');
-await page.goto('https://www.countdown.co.nz/shop/browse/fridge-deli');
+await page.goto('https://www.countdown.co.nz/shop/browse/bakery');
 
 // Load all dynamic html into Cheerio for easy DOM selection
 const html = await page.evaluate(() => document.body.innerHTML);
 const $ = cheerio.load(html);
+console.log('--- Page Loaded with Length:' + html.length);
 
 // Print formatted table header to console
 console.log(
-  '\n  ID '.padEnd(6) +
+  '\n  ID '.padEnd(7) +
     ' | ' +
     'Product Name'.padEnd(50) +
     ' | ' +
@@ -108,16 +91,17 @@ $('a.product-entry').each((index, productCard) => {
     product.id.padEnd(6) +
       ' | ' +
       product.name
-        .slice(0, 50)
-        .concat(' ' + product.size)
+        .slice(0, 40)
+        .concat(' - ' + product.size)
         .padEnd(50) +
       ' | ' +
-      product.price.toString().padStart(2).padEnd(4) +
+      product.price.toString().padStart(3).padEnd(4) +
       ' |'
   );
 
   // Insert or update item into azure cosmosdb
-  container.items.upsert(product);
+  // container.items.upsert(product);
+  upsertToAzureCosmos(product);
 
   // Get image url, request hi-res 900px version, and then upload image to azure storage
   const originalImageUrl = $(productCard)

@@ -1,3 +1,4 @@
+// Used by index.js for storing images into Azure Storage blob containers
 import { BlobServiceClient } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -14,15 +15,14 @@ const containerClient = blobServiceClient.getContainerClient('countdownimages');
 
 export default async function uploadImageToAzureStorage(id, imageUrl) {
   // Use id as the filename
-  const blobFilename = id + '.jpg';
-  const blobClient = containerClient.getBlobClient(blobFilename);
+  // const blobFilename = id + '.jpg';
+  // const blobClient = containerClient.getBlobClient(blobFilename);
   // console.log('Attempting upload for id=' + id + ' \t url: ' + imageUrl.slice(29));
-
   // If image doesn't already exist on azure, copy over
   // if (!blobClient.exists()) {
-  const uploadBlobResponse = await blobClient.syncCopyFromURL(imageUrl);
-  if (uploadBlobResponse.copyStatus === 'success') {
-    // console.log('New image ' + blobFilename + ' uploaded successfully');
-  } else console.log(uploadBlobResponse);
+  // const uploadBlobResponse = await blobClient.syncCopyFromURL(imageUrl);
+  // if (uploadBlobResponse.copyStatus === 'success') {
+  //   // console.log('New image ' + blobFilename + ' uploaded successfully');
+  // } else console.log(imageUrl + ' --- failed ---');
   // } else console.log(blobFilename + ' already exists');
 }
