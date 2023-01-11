@@ -3,8 +3,6 @@ import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import uploadImageToAzureStorage from './azure-storage.js';
 import upsertToAzureCosmos from './azure-cosmosdb.js';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
 // Countdown Scraper
 // -----------------
