@@ -39,7 +39,7 @@ const { container } = await database.containers.createIfNotExists({
 // }
 
 // Function for insert/updating a product object to cosmosdb, returns true if updated, false if already up-to-date
-export async function upsertProductToCosmosDB(currentProduct) {
+export async function upsertProductToCosmosDB(currentProduct, loggingLevel) {
   // Check cosmosdb for any existing item using id and name as the partition key
   let existingProduct = await container.item(currentProduct.id, currentProduct.name).read();
 
@@ -47,10 +47,11 @@ export async function upsertProductToCosmosDB(currentProduct) {
   if ((await existingProduct.statusCode) == '200') {
     // If price has changed
     if ((await existingProduct.resource.currentPrice) != currentProduct.currentPrice) {
-      console.log(
-        `Product Price updated: ${currentProduct.name} updated from $${existingProduct.resource.currentPrice} 
+      if (loggingLevel >= 1)
+        console.log(
+          `Product Price updated: ${currentProduct.name} updated from $${existingProduct.resource.currentPrice} 
         to $${currentProduct.currentPrice}`
-      );
+        );
 
       // Create a datedPricing object and push into priceHistory array
       const datedPricing = {
@@ -69,9 +70,10 @@ export async function upsertProductToCosmosDB(currentProduct) {
       return true;
     } else {
       // Price hasn't changed
-      console.log(
-        `Product ${currentProduct.id} exists with same price of ${currentProduct.currentPrice}`
-      );
+      if (loggingLevel >= 2)
+        console.log(
+          `Product ${currentProduct.id} exists with same price of ${currentProduct.currentPrice}`
+        );
       return false;
     }
 
@@ -85,7 +87,7 @@ export async function upsertProductToCosmosDB(currentProduct) {
     priceHistory.push(datedPricing);
     currentProduct.priceHistory = priceHistory;
 
-    console.log(`Product added: ${currentProduct.name}`);
+    if (loggingLevel >= 1) console.log(`Product added: ${currentProduct.name}`);
 
     // Send completed product object to cosmosdb
     await container.items.create(currentProduct);
@@ -93,7 +95,8 @@ export async function upsertProductToCosmosDB(currentProduct) {
     // If cosmos returns a status code other than 200 or 404, manage other errors here
     return true;
   } else {
-    console.log(`CosmosDB returned status code: ${existingProduct.statusCode}`);
+    if (loggingLevel >= 0)
+      console.log(`CosmosDB returned status code: ${existingProduct.statusCode}`);
     return false;
   }
 }

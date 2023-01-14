@@ -3,6 +3,8 @@ import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 // Countdown Scraper
 // -----------------
@@ -33,22 +35,26 @@ import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 //             ...
 //   </container div>
 
+// Logging 0 = minimum, 1 = standard, 2 = verbose
+const loggingLevel = 1;
+process.env.LOGGING = 1;
+
 // Create a playwright browser using webkit
-console.log(`--- Launching Headless Browser..`);
+if (loggingLevel >= 1) console.log(`--- Launching Headless Browser..`);
 const browser = await playwright.webkit.launch({
   headless: true,
 });
 const page = await browser.newPage();
 
 // Open url
-const url = 'https://www.countdown.co.nz/shop/browse/household';
-console.log('--- Loading Webpage.. ' + url);
+const url = 'https://www.countdown.co.nz/shop/browse/beer-wine';
+if (loggingLevel >= 0) console.log('--- Loading Webpage.. ' + url);
 await page.goto(url);
 
 // Load all dynamic html into Cheerio for easy DOM selection
 const html = await page.evaluate(() => document.body.innerHTML);
 const $ = cheerio.load(html);
-console.log('--- Page Loaded with Length:' + html.length + '\n');
+if (loggingLevel >= 1) console.log('--- Page Loaded with Length:' + html.length + '\n');
 
 // Count number of items that are already up-to-date, for logging purposes
 let alreadyUpToDateCount = 0;
@@ -105,20 +111,23 @@ $('cdx-card a.product-entry').each((index, productCard) => {
 
   // FIX
   // Insert or update item into azure cosmosdb, use return value to update counters for logging
-  upsertProductToCosmosDB(product) ? updatedCount++ : alreadyUpToDateCount++;
+  upsertProductToCosmosDB(product, loggingLevel) ? updatedCount++ : alreadyUpToDateCount++;
 
   // Get image url, request hi-res 900px version, and then upload image to azure storage
   const originalImageUrl = $(productCard)
     .find('a.product-entry div.productImage-container figure picture img')
     .attr('src');
   const hiresImageUrl = originalImageUrl.replace('&w=200&h=200', '&w=900&h=900');
-  uploadImageToAzureStorage(product.id, hiresImageUrl, originalImageUrl);
+  uploadImageToAzureStorage(product.id, hiresImageUrl, originalImageUrl, loggingLevel);
 });
 
 // After scraping every item is complete, check how many products were already up-to-date in cosmosdb
-console.log(
-  `${updatedCount} new or updated products  \t - \t ${alreadyUpToDateCount} products already up-to-date \n`
-);
+setTimeout(() => {
+  if (loggingLevel >= 1)
+    console.log(
+      `\n${updatedCount} new or updated products  \t - \t ${alreadyUpToDateCount} products already up-to-date \n`
+    );
+}, 3000);
 
 // Close playwright headless browser
 await browser.close();
