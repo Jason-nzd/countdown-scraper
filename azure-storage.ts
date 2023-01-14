@@ -30,7 +30,7 @@ export default async function uploadImageToAzureStorage(
     // Atttempt to upload image to azure
     const uploadBlobResponse = await blobClient.syncCopyFromURL(hiresImageUrl);
     if (uploadBlobResponse.copyStatus === 'success') {
-      console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
+      //console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
       return true;
     } else {
       // Image upload can fail if the url was invalid

@@ -66,19 +66,6 @@ $('cdx-card a.product-entry').map(async (index, productCard) => {
     // Original title is all lower-case and needs to be made into start-case
     name: _.startCase($(productCard).find('h3').first().text().trim()),
 
-    // The price is originally displayed with dollars in an <em>, cents in a <span>,
-    // and potentially a kg unit name inside the <span> for some meat products.
-    // The 2 numbers are joined, parsed, and non-number chars are removed.
-    currentPrice: Number(
-      $(productCard).find('div.product-meta product-price h3 em').text().trim() +
-        '.' +
-        $(productCard)
-          .find('div.product-meta product-price h3 span')
-          .text()
-          .trim()
-          .replace(/\D/g, '')
-    ),
-
     // Product size may be blank
     size: $(productCard).find('div.product-meta p span.size').text().trim(),
 
@@ -86,7 +73,20 @@ $('cdx-card a.product-entry').map(async (index, productCard) => {
     sourceSite: 'countdown.co.nz',
   };
 
-  // FIX
+  // The price is originally displayed with dollars in an <em>, cents in a <span>,
+  // and potentially a kg unit name inside the <span> for some meat products.
+  // The 2 numbers are joined, parsed, and non-number chars are removed.
+  const dollarString: string = $(productCard)
+    .find('div.product-meta product-price h3 em')
+    .text()
+    .trim();
+  const centString: string = $(productCard)
+    .find('div.product-meta product-price h3 span')
+    .text()
+    .trim()
+    .replace(/\D/g, '');
+  product.currentPrice = Number(dollarString + '.' + centString);
+
   // Insert or update item into azure cosmosdb, use return value to update counters for logging
   (await upsertProductToCosmosDB(product)) ? updatedCount++ : alreadyUpToDateCount++;
 
@@ -108,7 +108,7 @@ setTimeout(() => {
   console.log(
     `\n${updatedCount} new or updated products  \t - \t ${alreadyUpToDateCount} products already up-to-date \n`
   );
-}, 3000);
+}, 2000);
 
 // Close playwright headless browser
 await browser.close();
