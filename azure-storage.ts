@@ -13,25 +13,28 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_C
 // Create ContainerClient for container 'countdownimages'
 const containerClient = blobServiceClient.getContainerClient('countdownimages');
 
-export default async function uploadImageToAzureStorage(id, hiresImageUrl, originalImageUrl) {
+export default async function uploadImageToAzureStorage(
+  id: string,
+  hiresImageUrl: string,
+  originalImageUrl: string
+) {
   // Use id as the filename
   const blobFilename = id + '.jpg';
   const blobClient = containerClient.getBlockBlobClient(blobFilename);
 
   // If image doesn't already exist on azure storage, copy over
   if (await blobClient.exists()) {
-    if (process.env.LOGGING >= 2) console.log('Image already exists: ' + blobFilename);
+    //console.log('Image already exists: ' + blobFilename);
     return false;
   } else {
     // Atttempt to upload image to azure
     const uploadBlobResponse = await blobClient.syncCopyFromURL(hiresImageUrl);
     if (uploadBlobResponse.copyStatus === 'success') {
-      if (process.env.LOGGING >= 1)
-        console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
+      console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
       return true;
     } else {
       // Image upload can fail if the url was invalid
-      if (process.env.LOGGING >= 0) console.log('Image upload failed: ' + hiresImageUrl);
+      console.log('Image upload failed: ' + hiresImageUrl);
       return false;
     }
   }

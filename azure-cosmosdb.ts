@@ -1,6 +1,7 @@
 // Used by index.js for creating and accessing items stored in Azure CosmosDB
 import { CosmosClient } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
+import { DatedPrice, Product } from './typings';
 dotenv.config();
 
 // Create Cosmos client using connection string stored in .env
@@ -9,7 +10,7 @@ const COSMOS_CONSTRING = process.env.COSMOS_CONSTRING;
 if (!COSMOS_CONSTRING) {
   throw Error('Azure CosmosDB Connection string not found');
 }
-const cosmosClient = new CosmosClient(process.env.COSMOS_CONSTRING);
+const cosmosClient = new CosmosClient(COSMOS_CONSTRING);
 
 // Set CosmosDB Database and Container names
 const databaseName = 'supermarket-prices';
@@ -25,33 +26,21 @@ const { container } = await database.containers.createIfNotExists({
   partitionKey: { paths: partitionKey },
 });
 
-// interface Product {
-//   id: String,
-//   name: String,
-//   currentPrice: Number,
-//   priceHistory: DatedPrice[],
-//   source: string
-// }
-
-// interface DatedPrice {
-//   date: Date,
-//   price: number
-// }
-
 // Function for insert/updating a product object to cosmosdb, returns true if updated, false if already up-to-date
-export async function upsertProductToCosmosDB(currentProduct, loggingLevel) {
+export async function upsertProductToCosmosDB(currentProduct: Product): Promise<boolean> {
   // Check cosmosdb for any existing item using id and name as the partition key
-  let existingProduct = await container.item(currentProduct.id, currentProduct.name).read();
+  let existingProduct = await container
+    .item(currentProduct.id as string, currentProduct.name)
+    .read();
 
   // If an item was found in cosmosdb
-  if ((await existingProduct.statusCode) == '200') {
+  if ((await existingProduct.statusCode) === 200) {
     // If price has changed
     if ((await existingProduct.resource.currentPrice) != currentProduct.currentPrice) {
-      if (loggingLevel >= 1)
-        console.log(
-          `Product Price updated: ${currentProduct.name} updated from $${existingProduct.resource.currentPrice} 
+      console.log(
+        `Product Price updated: ${currentProduct.name} updated from $${existingProduct.resource.currentPrice} 
         to $${currentProduct.currentPrice}`
-        );
+      );
 
       // Create a datedPricing object and push into priceHistory array
       const datedPricing = {
@@ -70,24 +59,23 @@ export async function upsertProductToCosmosDB(currentProduct, loggingLevel) {
       return true;
     } else {
       // Price hasn't changed
-      if (loggingLevel >= 2)
-        console.log(
-          `Product ${currentProduct.id} exists with same price of ${currentProduct.currentPrice}`
-        );
+      // console.log(
+      //   `Product ${currentProduct.id} exists with same price of ${currentProduct.currentPrice}`
+      // );
       return false;
     }
 
     // If product doesn't exist in DB, create a new priceHistory array and push the first datedPricing into it
-  } else if (existingProduct.statusCode == '404') {
-    const priceHistory = [];
-    const datedPricing = {
+  } else if (existingProduct.statusCode === 404) {
+    const priceHistory: DatedPrice[] = [];
+    const datedPricing: DatedPrice = {
       date: new Date().toDateString(),
-      price: currentProduct.currentPrice,
+      price: currentProduct.currentPrice as number,
     };
     priceHistory.push(datedPricing);
     currentProduct.priceHistory = priceHistory;
 
-    if (loggingLevel >= 1) console.log(`Product added: ${currentProduct.name}`);
+    console.log(`Product added: ${currentProduct.name}`);
 
     // Send completed product object to cosmosdb
     await container.items.create(currentProduct);
@@ -95,8 +83,7 @@ export async function upsertProductToCosmosDB(currentProduct, loggingLevel) {
     // If cosmos returns a status code other than 200 or 404, manage other errors here
     return true;
   } else {
-    if (loggingLevel >= 0)
-      console.log(`CosmosDB returned status code: ${existingProduct.statusCode}`);
+    console.log(`CosmosDB returned status code: ${existingProduct.statusCode}`);
     return false;
   }
 }
