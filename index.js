@@ -2,7 +2,7 @@ import playwright from 'playwright';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import uploadImageToAzureStorage from './azure-storage.js';
-import upsertToAzureCosmos from './azure-cosmosdb.js';
+import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 
 // Countdown Scraper
 // -----------------
@@ -11,23 +11,26 @@ import upsertToAzureCosmos from './azure-cosmosdb.js';
 // Countdown sample search results DOM (as of Jan-2023)
 // ----------------------------------------------------
 //   <container div>
-//     a.product-entry
-//         ...
-//     a.product-entry
-//         h3                 {title}
-//         div.product-meta
-//             product-price
-//                 h3
-//                     em     {price dollar section}
-//                     span   {price cents section}
-//             p
-//                 span.size  {size eg. 400g}
-//         div.productImage-container
-//             figure
-//                 picture
-//                     img    {img}
-//     a.product-entry
-//         ...
+//      cdx-card
+//        a.product-entry
+//            ...
+//      cdx-card
+//        a.product-entry
+//            h3                 {title}
+//            div.product-meta
+//                product-price
+//                     h3
+//                         em     {price dollar section}
+//                         span   {price cents section}
+//                 p
+//                    span.size  {size eg. 400g}
+//            div.productImage-container
+//                 figure
+//                     picture
+//                         img    {img}
+//      cdx-card
+//         a.product-entry
+//             ...
 //   </container div>
 
 // Create a playwright browser using webkit
@@ -38,27 +41,32 @@ const browser = await playwright.webkit.launch({
 const page = await browser.newPage();
 
 // Open url
-console.log('--- Loading Webpage..');
-await page.goto('https://www.countdown.co.nz/shop/browse/bakery');
+const url = 'https://www.countdown.co.nz/shop/browse/household';
+console.log('--- Loading Webpage.. ' + url);
+await page.goto(url);
 
 // Load all dynamic html into Cheerio for easy DOM selection
 const html = await page.evaluate(() => document.body.innerHTML);
 const $ = cheerio.load(html);
-console.log('--- Page Loaded with Length:' + html.length);
+console.log('--- Page Loaded with Length:' + html.length + '\n');
+
+// Count number of items that are already up-to-date, for logging purposes
+let alreadyUpToDateCount = 0;
+let updatedCount = 0;
 
 // Print formatted table header to console
-console.log(
-  '\n  ID '.padEnd(7) +
-    ' | ' +
-    'Product Name'.padEnd(50) +
-    ' | ' +
-    'Price' +
-    ' |' +
-    '\n--------------------------------------------------------------------'
-);
+// console.log(
+//   '\n  ID '.padEnd(7) +
+//     ' | ' +
+//     'Product Name'.padEnd(50) +
+//     ' | ' +
+//     'Price' +
+//     ' |' +
+//     '\n--------------------------------------------------------------------'
+// );
 
 // Loop through each product card and build a product object with the desired data fields
-$('a.product-entry').each((index, productCard) => {
+$('cdx-card a.product-entry').each((index, productCard) => {
   // Init empty product object
   let product = {};
 
@@ -71,7 +79,7 @@ $('a.product-entry').each((index, productCard) => {
   // The price is originally displayed with dollars in an <em>, cents in a <span>,
   // and potentially a kg unit name inside the <span> for some meat products.
   // The 2 numbers are joined, parsed, and non-number chars are removed.
-  product.price = Number(
+  product.currentPrice = Number(
     $(productCard).find('div.product-meta product-price h3 em').text().trim() +
       '.' +
       $(productCard).find('div.product-meta product-price h3 span').text().trim().replace(/\D/g, '')
@@ -80,34 +88,37 @@ $('a.product-entry').each((index, productCard) => {
   // Product size may be blank
   product.size = $(productCard).find('div.product-meta p span.size').text().trim();
 
-  product.lastUpdated = new Date().toDateString();
-
   product.sourceSite = 'countdown.co.nz';
 
   // Log completed product object into a formatted table row
-  console.log(
-    product.id.padEnd(6) +
-      ' | ' +
-      product.name
-        .slice(0, 40)
-        .concat(' - ' + product.size)
-        .padEnd(50) +
-      ' | ' +
-      product.price.toString().padStart(3).padEnd(4) +
-      ' |'
-  );
+  // console.log(
+  //   product.id.padEnd(6) +
+  //     ' | ' +
+  //     product.name
+  //       .slice(0, 40)
+  //       .concat(' - ' + product.size)
+  //       .padEnd(50) +
+  //     ' | ' +
+  //     product.currentPrice.toString().padStart(3).padEnd(4) +
+  //     ' |'
+  // );
 
-  // Insert or update item into azure cosmosdb
-  // container.items.upsert(product);
-  upsertToAzureCosmos(product);
+  // FIX
+  // Insert or update item into azure cosmosdb, use return value to update counters for logging
+  upsertProductToCosmosDB(product) ? updatedCount++ : alreadyUpToDateCount++;
 
   // Get image url, request hi-res 900px version, and then upload image to azure storage
   const originalImageUrl = $(productCard)
     .find('a.product-entry div.productImage-container figure picture img')
     .attr('src');
   const hiresImageUrl = originalImageUrl.replace('&w=200&h=200', '&w=900&h=900');
-  uploadImageToAzureStorage(product.id, hiresImageUrl);
+  uploadImageToAzureStorage(product.id, hiresImageUrl, originalImageUrl);
 });
+
+// After scraping every item is complete, check how many products were already up-to-date in cosmosdb
+console.log(
+  `${updatedCount} new or updated products  \t - \t ${alreadyUpToDateCount} products already up-to-date \n`
+);
 
 // Close playwright headless browser
 await browser.close();
