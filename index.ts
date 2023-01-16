@@ -36,79 +36,115 @@ dotenv.config();
 //             ...
 //   </container div>
 
+const urlsToScrape: string[] = [
+  'https://www.countdown.co.nz/shop/browse/fridge-deli',
+  'https://www.countdown.co.nz/shop/browse/meat-poultry',
+  'https://www.countdown.co.nz/shop/browse/fruit-veg',
+];
+
 // Create a playwright browser using webkit
-console.log(`--- Launching Headless Browser..`);
+console.log(`--- Launching Headless Browser..\n`);
 const browser = await playwright.webkit.launch({
   headless: true,
 });
 const page = await browser.newPage();
 
-// Open url
-const url = 'https://www.countdown.co.nz/shop/browse/drinks';
-console.log('--- Loading Webpage.. ' + url);
-await page.goto(url);
+// Counter and promise to help with looping through all the scrape URLs
+let pagesScrapedCount = 1;
+let promise = Promise.resolve();
 
-// Load all dynamic html into Cheerio for easy DOM selection
-const html = await page.evaluate(() => document.body.innerHTML);
-const $ = cheerio.load(html);
-console.log('--- Page Loaded with Length:' + html.length + '\n');
+// Loop through each URL to scrape
+urlsToScrape.forEach((url) => {
+  // Use promises to ensure a delay betwen each scrape
+  promise = promise.then(async () => {
+    let response = await scrapeLoadedWebpage(url);
 
-// Count number of items that are already up-to-date, for logging purposes
-let alreadyUpToDateCount = 0;
-let updatedCount = 0;
+    // Log the reponse after the scrape has completed
+    console.log(response);
 
-// Loop through each product entry
-$('cdx-card a.product-entry').map(async (index, productCard) => {
-  let product: Product = {
-    // Extract ID from h3 tag and remove non-numbers
-    id: $(productCard).find('h3').first().attr('id')?.replace(/\D/g, ''),
+    // If all scrapes have completed, close the playwright browser
+    if (pagesScrapedCount++ >= urlsToScrape.length) closePlaywright();
 
-    // Original title is all lower-case and needs to be made into start-case
-    name: _.startCase($(productCard).find('h3').first().text().trim()),
-
-    // Product size may be blank
-    size: $(productCard).find('div.product-meta p span.size').text().trim(),
-
-    // Store where the source of information came from
-    sourceSite: 'countdown.co.nz',
-  };
-
-  // The price is originally displayed with dollars in an <em>, cents in a <span>,
-  // and potentially a kg unit name inside the <span> for some meat products.
-  // The 2 numbers are joined, parsed, and non-number chars are removed.
-  const dollarString: string = $(productCard)
-    .find('div.product-meta product-price h3 em')
-    .text()
-    .trim();
-  const centString: string = $(productCard)
-    .find('div.product-meta product-price h3 span')
-    .text()
-    .trim()
-    .replace(/\D/g, '');
-  product.currentPrice = Number(dollarString + '.' + centString);
-
-  // Insert or update item into azure cosmosdb, use return value to update counters for logging
-  (await upsertProductToCosmosDB(product)) ? updatedCount++ : alreadyUpToDateCount++;
-
-  // Get image url, request hi-res 900px version, and then upload image to azure storage
-  const originalImageUrl: string | undefined = $(productCard)
-    .find('a.product-entry div.productImage-container figure picture img')
-    .attr('src');
-
-  const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
-  uploadImageToAzureStorage(
-    product.id as string,
-    hiresImageUrl as string,
-    originalImageUrl as string
-  );
+    // Add a delay of 5 seconds between each scrape
+    return new Promise((resolve) => {
+      setTimeout(resolve, 5000);
+    });
+  });
 });
 
-// After scraping every item is complete, check how many products were already up-to-date in cosmosdb
-setTimeout(() => {
-  console.log(
-    `\n${updatedCount} new or updated products  \t - \t ${alreadyUpToDateCount} products already up-to-date \n`
-  );
-}, 2000);
+async function scrapeLoadedWebpage(url: string) {
+  // Open page and log url and what stage of scraping this is
+  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Loading.. ${url}`);
+  await page.goto(url);
 
-// Close playwright headless browser
-await browser.close();
+  // Load all dynamic html into Cheerio for easy DOM selection
+  const html = await page.evaluate(() => document.body.innerHTML);
+  const $ = cheerio.load(html);
+  console.log('--- Page Loaded with Length:' + html.length);
+
+  // Count number of items that are already up-to-date, for logging purposes
+  let alreadyUpToDateCount = 0;
+  let updatedCount = 0;
+
+  // Loop through each product entry, and add desired data to a Product object
+  $('cdx-card a.product-entry').map(async (index, productCard) => {
+    let product: Product = {
+      // Extract ID from h3 tag and remove non-numbers
+      id: $(productCard).find('h3').first().attr('id')?.replace(/\D/g, '') as string,
+
+      // Original title is all lower-case and needs to be made into start-case
+      name: _.startCase($(productCard).find('h3').first().text().trim()),
+
+      // Product size may be blank
+      size: $(productCard).find('div.product-meta p span.size').text().trim(),
+
+      // Store where the source of information came from
+      sourceSite: url,
+
+      // These values will later be overwritten
+      priceHistory: [],
+      currentPrice: 0,
+    };
+
+    // The price is originally displayed with dollars in an <em>, cents in a <span>,
+    // and potentially a kg unit name inside the <span> for some meat products.
+    // The 2 numbers are joined, parsed, and non-number chars are removed.
+    const dollarString: string = $(productCard)
+      .find('div.product-meta product-price h3 em')
+      .text()
+      .trim();
+    const centString: string = $(productCard)
+      .find('div.product-meta product-price h3 span')
+      .text()
+      .trim()
+      .replace(/\D/g, '');
+    product.currentPrice = Number(dollarString + '.' + centString);
+
+    // Insert or update item into azure cosmosdb, use return value to update logging counters
+    (await upsertProductToCosmosDB(product)) ? updatedCount++ : alreadyUpToDateCount++;
+
+    // Get image url, request hi-res 900px version, and then upload image to azure storage
+    const originalImageUrl: string | undefined = $(productCard)
+      .find('a.product-entry div.productImage-container figure picture img')
+      .attr('src');
+
+    const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
+
+    uploadImageToAzureStorage(
+      product.id as string,
+      hiresImageUrl as string,
+      originalImageUrl as string
+    );
+  });
+
+  // After scraping every item is complete, log how many products were scraped
+  return `--- ${updatedCount} new or updated products\n--- ${alreadyUpToDateCount} products already up-to-date \n`;
+}
+
+function closePlaywright() {
+  // Close playwright browser after all scrapes have completed
+  setTimeout(() => {
+    browser.close();
+    console.log('--- All scrapes have been completed. \n');
+  }, 4000);
+}
