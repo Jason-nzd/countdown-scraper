@@ -1,4 +1,4 @@
-// Used by index.js for storing images into Azure Storage blob containers
+// Used by index.ts for copying images into Azure Storage blob containers
 import { BlobServiceClient } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -13,6 +13,8 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_C
 // Create ContainerClient for container 'countdownimages'
 const containerClient = blobServiceClient.getContainerClient('countdownimages');
 
+// uploadImageToAzureStorage
+// is called by the scraper when a product image url is ready to be copied
 export default async function uploadImageToAzureStorage(
   id: string,
   hiresImageUrl: string,
@@ -23,10 +25,7 @@ export default async function uploadImageToAzureStorage(
   const blobClient = containerClient.getBlockBlobClient(blobFilename);
 
   // If image doesn't already exist on azure storage, copy over
-  if (await blobClient.exists()) {
-    //console.log('Image already exists: ' + blobFilename);
-    return false;
-  } else {
+  if (await !blobClient.exists()) {
     // Atttempt to upload image to azure
     const uploadBlobResponse = await blobClient.syncCopyFromURL(hiresImageUrl);
     if (uploadBlobResponse.copyStatus === 'success') {
@@ -37,5 +36,8 @@ export default async function uploadImageToAzureStorage(
       console.log('Image upload failed: ' + hiresImageUrl);
       return false;
     }
+  } else {
+    // console.log('Image already exists: ' + blobFilename);
+    return false;
   }
 }
