@@ -4,7 +4,7 @@ import * as dotenv from 'dotenv';
 import { DatedPrice, Product } from './typings';
 dotenv.config();
 
-// Create Cosmos client using connection string stored in .env
+// Create CosmosDB client using connection string stored in .env
 console.log(`--- Connecting to CosmosDB..`);
 const COSMOS_CONSTRING = process.env.COSMOS_CONSTRING;
 if (!COSMOS_CONSTRING) {
@@ -12,51 +12,49 @@ if (!COSMOS_CONSTRING) {
 }
 const cosmosClient = new CosmosClient(COSMOS_CONSTRING);
 
-// Set CosmosDB Database and Container names
-const databaseName = 'supermarket-prices';
-const containerName = 'products';
-const partitionKey = ['/name'];
+// Connect to supermarket-prices database
+const { database } = await cosmosClient.databases.createIfNotExists({ id: 'supermarket-prices' });
 
-// Connect to price database
-const { database } = await cosmosClient.databases.createIfNotExists({ id: databaseName });
+// Set Partition Key
+const partitionKey = ['/name'];
 
 // Connect to products container
 const { container } = await database.containers.createIfNotExists({
-  id: containerName,
+  id: 'products',
   partitionKey: { paths: partitionKey },
 });
 
-// Function for insert/updating a product object to cosmosdb, returns true if updated, false if already up-to-date
-export async function upsertProductToCosmosDB(currentProduct: Product): Promise<boolean> {
-  // Check cosmosdb for any existing item using id and name as the partition key
+// Function for insert/updating a product object to CosmosDB
+// returns true if a product is inserted/updated, false if already up-to-date
+export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<boolean> {
+  // Check CosmosDB for any existing item using id and name as the partition key
   const cosmosResponse = await container
-    .item(currentProduct.id as string, currentProduct.name)
+    .item(scrapedProduct.id as string, scrapedProduct.name)
     .read();
 
-  // If an existing item was found in cosmosdb
+  // If an existing item was found in CosmosDB
   if ((await cosmosResponse.statusCode) === 200) {
+    // Get the existing item as a Product object
     let existingProduct = cosmosResponse.resource as Product;
+
     // If price has changed
-    if ((await existingProduct.currentPrice) != currentProduct.currentPrice) {
+    if ((await existingProduct.currentPrice) != scrapedProduct.currentPrice) {
       console.log(
-        `Price updated: ${currentProduct.name.slice(25)} updated from $${
+        `Price updated: ${scrapedProduct.name.slice(25)} updated from $${
           existingProduct.currentPrice
         } 
-        to $${currentProduct.currentPrice}`
+        to $${scrapedProduct.currentPrice}`
       );
 
-      // Create a DatedPrice object and push into priceHistory array
+      // Create a DatedPrice object
       const newDatedPrice: DatedPrice = {
         date: new Date().toDateString(),
-        price: currentProduct.currentPrice,
+        price: scrapedProduct.currentPrice,
       };
 
-      // Update existing product
-      // const newPriceHistory: DatedPrice[] = existingProduct.priceHistory as DatedPrice[];
-      // newPriceHistory.push(newDatedPrice);
-      // existingProduct.priceHistory = newPriceHistory;
+      // Push into priceHistory array, and update currentPrice
       existingProduct.priceHistory.push(newDatedPrice);
-      existingProduct.currentPrice = currentProduct.currentPrice;
+      existingProduct.currentPrice = scrapedProduct.currentPrice;
 
       // Upsert back to cosmosdb
       container.items.upsert(existingProduct);
@@ -64,29 +62,29 @@ export async function upsertProductToCosmosDB(currentProduct: Product): Promise<
     } else {
       // Price hasn't changed
       // console.log(
-      //   `Product ${currentProduct.id} exists with same price of ${currentProduct.currentPrice}`
+      //   `Product ${scrapedProduct.id} exists with same price of ${scrapedProduct.currentPrice}`
       // );
       return false;
     }
 
-    // If product doesn't exist in DB, create a new priceHistory array and push the first datedPricing into it
+    // If product doesn't exist in CosmosDB,
   } else if (cosmosResponse.statusCode === 404) {
+    // Create a new priceHistory array and push the initial DatedPrice into it
     const priceHistory: DatedPrice[] = [];
     const initialDatedPrice: DatedPrice = {
       date: new Date().toDateString(),
-      price: currentProduct.currentPrice as number,
+      price: scrapedProduct.currentPrice as number,
     };
     priceHistory.push(initialDatedPrice);
-    currentProduct.priceHistory = priceHistory;
+    scrapedProduct.priceHistory = priceHistory;
 
-    console.log(`Product added: ${currentProduct.name.slice(30)}`);
+    console.log(`Product added: ${scrapedProduct.name.slice(30)}`);
 
     // Send completed product object to cosmosdb
-    await container.items.create(currentProduct);
-
-    // If cosmos returns a status code other than 200 or 404, manage other errors here
+    await container.items.create(scrapedProduct);
     return true;
   } else {
+    // If cosmos returns a status code other than 200 or 404, manage other errors here
     console.log(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
     return false;
   }
