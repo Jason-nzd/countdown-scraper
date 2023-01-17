@@ -72,7 +72,7 @@ urlsToScrape.forEach((url) => {
   });
 });
 
-async function scrapeLoadedWebpage(url: string) {
+async function scrapeLoadedWebpage(url: string): Promise<string> {
   // Open page and log url and what stage of scraping this is
   console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Loading.. ${url}`);
   await page.goto(url);
@@ -87,7 +87,7 @@ async function scrapeLoadedWebpage(url: string) {
   let updatedCount = 0;
 
   // Loop through each product entry, and add desired data to a Product object
-  $('cdx-card a.product-entry').map(async (index, productCard) => {
+  let promises = $('cdx-card a.product-entry').map(async (index, productCard) => {
     let product: Product = {
       // Extract ID from h3 tag and remove non-numbers
       id: $(productCard).find('h3').first().attr('id')?.replace(/\D/g, '') as string,
@@ -137,6 +137,9 @@ async function scrapeLoadedWebpage(url: string) {
     );
   });
 
+  // Wait for entire map to finish
+  await Promise.all(promises);
+
   // After scraping every item is complete, log how many products were scraped
   return `--- ${updatedCount} new or updated products\n--- ${alreadyUpToDateCount} products already up-to-date \n`;
 }
@@ -145,6 +148,6 @@ function closePlaywright() {
   // Close playwright browser after all scrapes have completed
   setTimeout(() => {
     browser.close();
-    console.log('--- All scrapes have been completed. \n');
-  }, 4000);
+    console.log('--- All scraping has been completed \n');
+  }, 1000);
 }

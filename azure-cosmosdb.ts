@@ -33,12 +33,12 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     .read();
 
   // If an existing item was found in CosmosDB
-  if ((await cosmosResponse.statusCode) === 200) {
+  if (cosmosResponse.statusCode === 200) {
     // Get the existing item as a Product object
     let existingProduct = cosmosResponse.resource as Product;
 
     // If price has changed
-    if ((await existingProduct.currentPrice) != scrapedProduct.currentPrice) {
+    if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
       console.log(
         `Price updated: ${scrapedProduct.name.slice(25)} updated from $${
           existingProduct.currentPrice
