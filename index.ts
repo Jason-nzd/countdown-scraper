@@ -40,6 +40,7 @@ const urlsToScrape: string[] = [
   'https://www.countdown.co.nz/shop/browse/fridge-deli',
   'https://www.countdown.co.nz/shop/browse/meat-poultry',
   'https://www.countdown.co.nz/shop/browse/fruit-veg',
+  'https://www.countdown.co.nz/shop/browse/pantry',
 ];
 
 // Create a playwright browser using webkit

@@ -1,4 +1,5 @@
 // Used by index.js for creating and accessing items stored in Azure CosmosDB
+// Azure Function output binding is not used, as it lacks flexibility
 import { CosmosClient } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { DatedPrice, Product } from './typings';
@@ -35,15 +36,17 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
   // If an existing item was found in CosmosDB
   if (cosmosResponse.statusCode === 200) {
     // Get the existing item as a Product object
-    let existingProduct = cosmosResponse.resource as Product;
+    let existingProduct = (await cosmosResponse.resource) as Product;
 
     // If price has changed
     if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
       console.log(
-        `Price updated: ${scrapedProduct.name.slice(25)} updated from $${
-          existingProduct.currentPrice
-        } 
-        to $${scrapedProduct.currentPrice}`
+        'Price Updated: ' +
+          scrapedProduct.name.slice(25) +
+          ' - from $' +
+          existingProduct.currentPrice +
+          ' to $' +
+          scrapedProduct.currentPrice
       );
 
       // Create a DatedPrice object
@@ -56,8 +59,9 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       existingProduct.priceHistory.push(newDatedPrice);
       existingProduct.currentPrice = scrapedProduct.currentPrice;
 
-      // Upsert back to cosmosdb
-      container.items.upsert(existingProduct);
+      // Send completed product object to cosmosdb
+      await container.items.upsert(existingProduct);
+
       return true;
     } else {
       // Price hasn't changed
@@ -78,10 +82,11 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     priceHistory.push(initialDatedPrice);
     scrapedProduct.priceHistory = priceHistory;
 
-    console.log(`Product added: ${scrapedProduct.name.slice(30)}`);
+    console.log(`Product Added: ${scrapedProduct.name.slice(30)}`);
 
     // Send completed product object to cosmosdb
     await container.items.create(scrapedProduct);
+
     return true;
   } else {
     // If cosmos returns a status code other than 200 or 404, manage other errors here
