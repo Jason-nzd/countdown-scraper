@@ -36,7 +36,7 @@ dotenv.config();
 //             ...
 //   </container div>
 
-const urlsToScrape: string[] = [
+let urlsToScrape: string[] = [
   'https://www.countdown.co.nz/shop/browse/fridge-deli',
   'https://www.countdown.co.nz/shop/browse/meat-poultry',
   'https://www.countdown.co.nz/shop/browse/fruit-veg',
@@ -53,6 +53,11 @@ const page = await browser.newPage();
 // Counter and promise to help with looping through all the scrape URLs
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
+
+// If node is supplied with arguments, use those as URLs instead
+// The first 2 arguments are irrelevant and must be excluded
+if (process.argv.length > 2) urlsToScrape = process.argv.splice(2);
+console.log(urlsToScrape);
 
 // Loop through each URL to scrape
 urlsToScrape.forEach((url) => {
@@ -74,21 +79,26 @@ urlsToScrape.forEach((url) => {
 });
 
 async function scrapeLoadedWebpage(url: string): Promise<string> {
-  // Open page and log url and what stage of scraping this is
+  // Open page and log url plus the stage of scraping this is
   console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Loading.. ${url}`);
   await page.goto(url);
 
-  // Load all dynamic html into Cheerio for easy DOM selection
+  // Wait for <cdx-card> which is dynamically loaded in
+  await page.waitForSelector('cdx-card');
+
+  // Load all html into Cheerio for easy DOM selection
   const html = await page.evaluate(() => document.body.innerHTML);
   const $ = cheerio.load(html);
-  console.log('--- Page Loaded with Length:' + html.length);
+  const productEntries = $('cdx-card a.product-entry');
 
-  // Count number of items that are already up-to-date, for logging purposes
+  console.log('--- ' + productEntries.length + ' product entries found');
+
+  // Count number of items processed for logging purposes
   let alreadyUpToDateCount = 0;
   let updatedCount = 0;
 
   // Loop through each product entry, and add desired data to a Product object
-  let promises = $('cdx-card a.product-entry').map(async (index, productCard) => {
+  let promises = productEntries.map(async (index, productCard) => {
     let product: Product = {
       // Extract ID from h3 tag and remove non-numbers
       id: $(productCard).find('h3').first().attr('id')?.replace(/\D/g, '') as string,
@@ -131,7 +141,7 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
 
     const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-    uploadImageToAzureStorage(
+    await uploadImageToAzureStorage(
       product.id as string,
       hiresImageUrl as string,
       originalImageUrl as string
@@ -147,8 +157,8 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
 
 function closePlaywright() {
   // Close playwright browser after all scrapes have completed
-  setTimeout(() => {
-    browser.close();
-    console.log('--- All scraping has been completed \n');
-  }, 1000);
+  // setTimeout(() => {
+  browser.close();
+  console.log('--- All scraping has been completed \n');
+  // }, 1000);
 }

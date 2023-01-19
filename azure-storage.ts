@@ -23,13 +23,15 @@ export default async function uploadImageToAzureStorage(
   // Use id as the filename
   const blobFilename = id + '.jpg';
   const blobClient = containerClient.getBlockBlobClient(blobFilename);
+  const imageExists = await blobClient.exists();
 
   // If image doesn't already exist on azure storage, copy over
-  if (await !blobClient.exists()) {
+  if (!imageExists) {
     // Atttempt to upload image to azure
     const uploadBlobResponse = await blobClient.syncCopyFromURL(hiresImageUrl);
+
     if (uploadBlobResponse.copyStatus === 'success') {
-      //console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
+      // console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
       return true;
     } else {
       // Image upload can fail if the url was invalid

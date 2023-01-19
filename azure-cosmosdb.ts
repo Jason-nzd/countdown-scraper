@@ -82,7 +82,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     priceHistory.push(initialDatedPrice);
     scrapedProduct.priceHistory = priceHistory;
 
-    console.log(`Product Added: ${scrapedProduct.name.slice(30)}`);
+    console.log(`Product Added: ${scrapedProduct.name.slice(0, 50)}`);
 
     // Send completed product object to cosmosdb
     await container.items.create(scrapedProduct);
