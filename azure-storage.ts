@@ -20,26 +20,31 @@ export default async function uploadImageToAzureStorage(
   hiresImageUrl: string,
   originalImageUrl: string
 ) {
-  // Use id as the filename
-  const blobFilename = id + '.jpg';
-  const blobClient = containerClient.getBlockBlobClient(blobFilename);
-  const imageExists = await blobClient.exists();
+  try {
+    // Use id as the filename
+    const blobFilename = id + '.jpg';
+    const blobClient = containerClient.getBlockBlobClient(blobFilename);
+    const imageExists = await blobClient.exists();
 
-  // If image doesn't already exist on azure storage, copy over
-  if (!imageExists) {
-    // Atttempt to upload image to azure
-    const uploadBlobResponse = await blobClient.syncCopyFromURL(hiresImageUrl);
+    // If image doesn't already exist on azure storage, copy over
+    if (!imageExists) {
+      // Atttempt to upload image to azure
+      const uploadBlobResponse = await blobClient.syncCopyFromURL(hiresImageUrl);
 
-    if (uploadBlobResponse.copyStatus === 'success') {
-      // console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
-      return true;
+      if (uploadBlobResponse.copyStatus === 'success') {
+        // console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
+        return true;
+      } else {
+        // Image upload can fail if the url was invalid
+        console.log('Image upload failed: ' + hiresImageUrl);
+        return false;
+      }
     } else {
-      // Image upload can fail if the url was invalid
-      console.log('Image upload failed: ' + hiresImageUrl);
+      // console.log('Image already exists: ' + blobFilename);
       return false;
     }
-  } else {
-    // console.log('Image already exists: ' + blobFilename);
+  } catch {
+    // Catch other errors and return false for an unsuccessful upload
     return false;
   }
 }

@@ -1,5 +1,4 @@
 // Used by index.js for creating and accessing items stored in Azure CosmosDB
-// Azure Function output binding is not used, as it lacks flexibility
 import { CosmosClient } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { DatedPrice, Product } from './typings';
@@ -41,8 +40,8 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     // If price has changed
     if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
       console.log(
-        'Price Updated: ' +
-          scrapedProduct.name.slice(25) +
+        '- Price Updated: ' +
+          scrapedProduct.name.slice(0, 30) +
           ' - from $' +
           existingProduct.currentPrice +
           ' to $' +
@@ -82,7 +81,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     priceHistory.push(initialDatedPrice);
     scrapedProduct.priceHistory = priceHistory;
 
-    console.log(`Product Added: ${scrapedProduct.name.slice(0, 50)}`);
+    console.log(`- Product Added: ${scrapedProduct.name.slice(0, 50)}`);
 
     // Send completed product object to cosmosdb
     await container.items.create(scrapedProduct);

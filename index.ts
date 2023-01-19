@@ -36,15 +36,20 @@ dotenv.config();
 //             ...
 //   </container div>
 
+// If node is supplied with arguments, use those as URLs instead
+// else use these default sample URLs
 let urlsToScrape: string[] = [
   'https://www.countdown.co.nz/shop/browse/fridge-deli',
   'https://www.countdown.co.nz/shop/browse/meat-poultry',
   'https://www.countdown.co.nz/shop/browse/fruit-veg',
   'https://www.countdown.co.nz/shop/browse/pantry',
 ];
+// The first 2 arguments are irrelevant and must be excluded
+if (process.argv.length > 2) urlsToScrape = process.argv.splice(2);
+console.log('--- URLs to scrape:\n' + urlsToScrape);
 
 // Create a playwright browser using webkit
-console.log(`--- Launching Headless Browser..\n`);
+console.log(`--- Launching Headless Browser..`);
 const browser = await playwright.webkit.launch({
   headless: true,
 });
@@ -53,11 +58,6 @@ const page = await browser.newPage();
 // Counter and promise to help with looping through all the scrape URLs
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
-
-// If node is supplied with arguments, use those as URLs instead
-// The first 2 arguments are irrelevant and must be excluded
-if (process.argv.length > 2) urlsToScrape = process.argv.splice(2);
-console.log(urlsToScrape);
 
 // Loop through each URL to scrape
 urlsToScrape.forEach((url) => {
@@ -69,7 +69,10 @@ urlsToScrape.forEach((url) => {
     console.log(response);
 
     // If all scrapes have completed, close the playwright browser
-    if (pagesScrapedCount++ >= urlsToScrape.length) closePlaywright();
+    if (pagesScrapedCount++ >= urlsToScrape.length) {
+      browser.close();
+      console.log('--- All scraping has been completed \n');
+    }
 
     // Add a delay of 5 seconds between each scrape
     return new Promise((resolve) => {
@@ -153,12 +156,4 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
 
   // After scraping every item is complete, log how many products were scraped
   return `--- ${updatedCount} new or updated products\n--- ${alreadyUpToDateCount} products already up-to-date \n`;
-}
-
-function closePlaywright() {
-  // Close playwright browser after all scrapes have completed
-  // setTimeout(() => {
-  browser.close();
-  console.log('--- All scraping has been completed \n');
-  // }, 1000);
 }
