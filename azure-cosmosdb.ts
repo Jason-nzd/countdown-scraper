@@ -8,7 +8,7 @@ dotenv.config();
 console.log(`--- Connecting to CosmosDB..`);
 const COSMOS_CONSTRING = process.env.COSMOS_CONSTRING;
 if (!COSMOS_CONSTRING) {
-  throw Error('Azure CosmosDB Connection string not found');
+  throw Error('CosmosDB Connection string COSMOS_CONSTRING not found in .env');
 }
 const cosmosClient = new CosmosClient(COSMOS_CONSTRING);
 
@@ -37,6 +37,12 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     // Get the existing item as a Product object
     let existingProduct = (await cosmosResponse.resource) as Product;
 
+    // Create a DatedPrice object, which may be added into the product
+    const newDatedPrice: DatedPrice = {
+      date: new Date().toDateString(),
+      price: scrapedProduct.currentPrice,
+    };
+
     // If price has changed
     if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
       console.log(
@@ -48,20 +54,22 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
           scrapedProduct.currentPrice
       );
 
-      // Create a DatedPrice object
-      const newDatedPrice: DatedPrice = {
-        date: new Date().toDateString(),
-        price: scrapedProduct.currentPrice,
-      };
-
       // Push into priceHistory array, and update currentPrice
       existingProduct.priceHistory.push(newDatedPrice);
       existingProduct.currentPrice = scrapedProduct.currentPrice;
 
       // Send completed product object to cosmosdb
       await container.items.upsert(existingProduct);
-
       return true;
+    } else if (new Date().getDate() === 1) {
+      // Always add a price history entry on the 1st of every month, even if no price change
+      existingProduct.priceHistory.push(newDatedPrice);
+
+      // Send completed product object to cosmosdb
+      await container.items.upsert(existingProduct);
+
+      // Return false as no price has actually changed
+      return false;
     } else {
       // Price hasn't changed
       // console.log(
@@ -85,7 +93,6 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
     // Send completed product object to cosmosdb
     await container.items.create(scrapedProduct);
-
     return true;
   } else {
     // If cosmos returns a status code other than 200 or 404, manage other errors here

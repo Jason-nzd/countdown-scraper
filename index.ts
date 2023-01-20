@@ -83,7 +83,7 @@ urlsToScrape.forEach((url) => {
 
 async function scrapeLoadedWebpage(url: string): Promise<string> {
   // Open page and log url plus the stage of scraping this is
-  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Loading.. ${url}`);
+  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
   await page.goto(url);
 
   // Wait for <cdx-card> which is dynamically loaded in
@@ -155,5 +155,5 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
   await Promise.all(promises);
 
   // After scraping every item is complete, log how many products were scraped
-  return `--- ${updatedCount} new or updated products\n--- ${alreadyUpToDateCount} products already up-to-date \n`;
+  return `--- ${updatedCount} new or updated products added to CosmosDB\n--- ${alreadyUpToDateCount} products already up-to-date \n`;
 }
