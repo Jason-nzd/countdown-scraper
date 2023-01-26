@@ -43,10 +43,15 @@ let urlsToScrape: string[] = [
   'https://www.countdown.co.nz/shop/browse/meat-poultry',
   'https://www.countdown.co.nz/shop/browse/fruit-veg',
   'https://www.countdown.co.nz/shop/browse/pantry',
+  'https://www.countdown.co.nz/shop/browse/frozen',
+  // 'https://www.countdown.co.nz/shop/specials',
 ];
+
+const scrape48ProductsOption = '?page=1&size=48&inStockProductsOnly=true';
+
 // The first 2 arguments are irrelevant and must be excluded
 if (process.argv.length > 2) urlsToScrape = process.argv.splice(2);
-console.log('--- URLs to scrape:\n' + urlsToScrape);
+// console.log('--- URLs to scrape:\n' + urlsToScrape);
 
 // Create a playwright browser using webkit
 console.log(`--- Launching Headless Browser..`);
@@ -63,7 +68,7 @@ let promise = Promise.resolve();
 urlsToScrape.forEach((url) => {
   // Use promises to ensure a delay betwen each scrape
   promise = promise.then(async () => {
-    let response = await scrapeLoadedWebpage(url);
+    let response = await scrapeLoadedWebpage(url + scrape48ProductsOption);
 
     // Log the reponse after the scrape has completed
     console.log(response);
@@ -74,9 +79,9 @@ urlsToScrape.forEach((url) => {
       console.log('--- All scraping has been completed \n');
     }
 
-    // Add a delay of 5 seconds between each scrape
+    // Add a delay of 11 seconds between each scrape
     return new Promise((resolve) => {
-      setTimeout(resolve, 5000);
+      setTimeout(resolve, 11000);
     });
   });
 });
@@ -155,5 +160,5 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
   await Promise.all(promises);
 
   // After scraping every item is complete, log how many products were scraped
-  return `--- ${updatedCount} new or updated products added to CosmosDB\n--- ${alreadyUpToDateCount} products already up-to-date \n`;
+  return `--- ${updatedCount} new or updated products, ${alreadyUpToDateCount} already up-to-date \n`;
 }
