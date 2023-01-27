@@ -1,9 +1,9 @@
 import playwright from 'playwright';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
+import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
-import * as dotenv from 'dotenv';
 import { CategorisedUrl, Product } from './typings.js';
 import { defaultUrls } from './urlsToScrape.js';
 dotenv.config();
@@ -37,19 +37,19 @@ dotenv.config();
 //             ...
 //   </container div>
 
-// Get default urls to be scraped from file urlsToScrape.ts
+// Array of urls to be scraped is imported from file urlsToScrape.ts
 //  Is an array of CategorisedUrl objects, which contain both a url and product category
-let categorisedUrls = defaultUrls;
+let categorisedUrls: CategorisedUrl[] = defaultUrls;
 
 // Define the delay between each page scrape. This helps spread the database write load,
 //  and makes the scraper appear less bot-like.
 const secondsBetweenEachPageScrape: number = 11;
 
-// Query options to add to every url, size=48 shows upto 48 products per page
+// Query options to add to every countdown url, size=48 shows upto 48 products per page
 const urlQueryOptions = '?page=1&size=48&inStockProductsOnly=true';
 
-// If an argument is provided, use this as a url instead of the default urls
-// The first 2 arguments are irrelevant and must be excluded
+// If an argument is provided, scrape this url instead of the default urls
+// The first 2 arguments are irrelevant and are ignored
 if (process.argv.length > 2) {
   const urlfromArguments: CategorisedUrl = {
     url: process.argv[2],
@@ -65,7 +65,7 @@ const browser = await playwright.webkit.launch({
 });
 const page = await browser.newPage();
 
-// Counter and promise to help with looping through all the scrape URLs
+// Counter and promise to help with looping through each of the scrape URLs
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
 
@@ -76,18 +76,18 @@ categorisedUrls.forEach((categorisedUrl) => {
 
   // Use promises to ensure a delay betwen each scrape
   promise = promise.then(async () => {
-    let response = await scrapeLoadedWebpage(url + urlQueryOptions, category);
+    const response = await scrapeLoadedWebpage(url + urlQueryOptions, category);
 
     // Log the reponse after the scrape has completed
     console.log(response);
 
     // If all scrapes have completed, close the playwright browser
-    if (pagesScrapedCount++ >= categorisedUrls.length) {
+    if (pagesScrapedCount++ === categorisedUrls.length) {
       browser.close();
       console.log('--- All scraping has been completed \n');
     }
 
-    // Add a delay of 11 seconds between each scrape
+    // Add a delay between each scrape loop
     return new Promise((resolve) => {
       setTimeout(resolve, secondsBetweenEachPageScrape * 1000);
     });
@@ -95,11 +95,12 @@ categorisedUrls.forEach((categorisedUrl) => {
 });
 
 async function scrapeLoadedWebpage(url: string, category: string): Promise<string> {
-  // Open page and log url plus the stage of scraping this is
+  // Open page and log status
   console.log(`--- [${pagesScrapedCount}/${categorisedUrls.length}] Scraping Page.. ${url}`);
   await page.goto(url);
 
-  // Wait for <cdx-card> which is dynamically loaded in
+  // Wait for <cdx-card> html element to dynamically load in,
+  //  this is required to see product data
   await page.waitForSelector('cdx-card');
 
   // Load all html into Cheerio for easy DOM selection
@@ -113,7 +114,7 @@ async function scrapeLoadedWebpage(url: string, category: string): Promise<strin
   let alreadyUpToDateCount = 0;
   let updatedCount = 0;
 
-  // Loop through each product entry, and add desired data to a Product object
+  // Loop through each product entry, and add desired data into a Product object
   let promises = productEntries.map(async (index, productCard) => {
     let product: Product = {
       // Extract ID from h3 tag and remove non-numbers
@@ -128,7 +129,7 @@ async function scrapeLoadedWebpage(url: string, category: string): Promise<strin
       // Store where the source of information came from
       sourceSite: url,
 
-      // Category is passed in from function
+      // Category is passed in from the CategorisedURL object
       category: category,
 
       // These values will later be overwritten
@@ -160,11 +161,7 @@ async function scrapeLoadedWebpage(url: string, category: string): Promise<strin
 
     const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-    await uploadImageToAzureStorage(
-      product.id as string,
-      hiresImageUrl as string,
-      originalImageUrl as string
-    );
+    await uploadImageToAzureStorage(product.id as string, hiresImageUrl as string);
   });
 
   // Wait for entire map to finish

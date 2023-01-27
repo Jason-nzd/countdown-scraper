@@ -13,13 +13,7 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_C
 // Create ContainerClient for container 'countdownimages'
 const containerClient = blobServiceClient.getContainerClient('countdownimages');
 
-// uploadImageToAzureStorage
-// is called by the scraper when a product image url is ready to be copied
-export default async function uploadImageToAzureStorage(
-  id: string,
-  hiresImageUrl: string,
-  originalImageUrl: string
-) {
+export default async function uploadImageToAzureStorage(id: string, hiresImageUrl: string) {
   try {
     // Use id as the filename
     const blobFilename = id + '.jpg';

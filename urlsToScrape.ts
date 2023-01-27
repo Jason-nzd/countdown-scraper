@@ -2,6 +2,7 @@ import { CategorisedUrl } from './typings';
 
 // Array of default urls to scrape.
 // Category is optional and may not be applicable if the page returns products from many categories
+// Query options other than search terms should be excluded
 
 export const defaultUrls: CategorisedUrl[] = [
   { url: 'https://www.countdown.co.nz/shop/browse/frozen', category: 'frozen' },
