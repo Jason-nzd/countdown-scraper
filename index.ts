@@ -4,7 +4,8 @@ import _ from 'lodash';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import * as dotenv from 'dotenv';
-import { Product } from './typings.js';
+import { CategorisedUrl, Product } from './typings.js';
+import { defaultUrls } from './urlsToScrape.js';
 dotenv.config();
 
 // Countdown Scraper
@@ -36,22 +37,26 @@ dotenv.config();
 //             ...
 //   </container div>
 
-// If node is supplied with arguments, use those as URLs instead
-// else use these default sample URLs
-let urlsToScrape: string[] = [
-  'https://www.countdown.co.nz/shop/browse/fridge-deli',
-  'https://www.countdown.co.nz/shop/browse/meat-poultry',
-  'https://www.countdown.co.nz/shop/browse/fruit-veg',
-  'https://www.countdown.co.nz/shop/browse/pantry',
-  'https://www.countdown.co.nz/shop/browse/frozen',
-  // 'https://www.countdown.co.nz/shop/specials',
-];
+// Get default urls to be scraped from file urlsToScrape.ts
+//  Is an array of CategorisedUrl objects, which contain both a url and product category
+let categorisedUrls = defaultUrls;
 
-const scrape48ProductsOption = '?page=1&size=48&inStockProductsOnly=true';
+// Define the delay between each page scrape. This helps spread the database write load,
+//  and makes the scraper appear less bot-like.
+const secondsBetweenEachPageScrape: number = 11;
 
+// Query options to add to every url, size=48 shows upto 48 products per page
+const urlQueryOptions = '?page=1&size=48&inStockProductsOnly=true';
+
+// If an argument is provided, use this as a url instead of the default urls
 // The first 2 arguments are irrelevant and must be excluded
-if (process.argv.length > 2) urlsToScrape = process.argv.splice(2);
-// console.log('--- URLs to scrape:\n' + urlsToScrape);
+if (process.argv.length > 2) {
+  const urlfromArguments: CategorisedUrl = {
+    url: process.argv[2],
+    category: '',
+  };
+  categorisedUrls = [urlfromArguments];
+}
 
 // Create a playwright browser using webkit
 console.log(`--- Launching Headless Browser..`);
@@ -65,30 +70,33 @@ let pagesScrapedCount = 1;
 let promise = Promise.resolve();
 
 // Loop through each URL to scrape
-urlsToScrape.forEach((url) => {
+categorisedUrls.forEach((categorisedUrl) => {
+  const url = categorisedUrl.url;
+  const category = categorisedUrl.category;
+
   // Use promises to ensure a delay betwen each scrape
   promise = promise.then(async () => {
-    let response = await scrapeLoadedWebpage(url + scrape48ProductsOption);
+    let response = await scrapeLoadedWebpage(url + urlQueryOptions, category);
 
     // Log the reponse after the scrape has completed
     console.log(response);
 
     // If all scrapes have completed, close the playwright browser
-    if (pagesScrapedCount++ >= urlsToScrape.length) {
+    if (pagesScrapedCount++ >= categorisedUrls.length) {
       browser.close();
       console.log('--- All scraping has been completed \n');
     }
 
     // Add a delay of 11 seconds between each scrape
     return new Promise((resolve) => {
-      setTimeout(resolve, 11000);
+      setTimeout(resolve, secondsBetweenEachPageScrape * 1000);
     });
   });
 });
 
-async function scrapeLoadedWebpage(url: string): Promise<string> {
+async function scrapeLoadedWebpage(url: string, category: string): Promise<string> {
   // Open page and log url plus the stage of scraping this is
-  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
+  console.log(`--- [${pagesScrapedCount}/${categorisedUrls.length}] Scraping Page.. ${url}`);
   await page.goto(url);
 
   // Wait for <cdx-card> which is dynamically loaded in
@@ -119,6 +127,9 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
 
       // Store where the source of information came from
       sourceSite: url,
+
+      // Category is passed in from function
+      category: category,
 
       // These values will later be overwritten
       priceHistory: [],

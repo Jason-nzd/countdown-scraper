@@ -70,6 +70,15 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
       // Return false as no price has actually changed
       return false;
+    } else if (existingProduct.category != scrapedProduct.category) {
+      // Let the scraped product overwrite the existing category
+      existingProduct.category = scrapedProduct.category;
+
+      // Send completed product object to cosmosdb
+      await container.items.upsert(existingProduct);
+
+      // Return false as no price has actually changed
+      return false;
     } else {
       // Price hasn't changed
       // console.log(
