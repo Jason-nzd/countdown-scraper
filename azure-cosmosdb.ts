@@ -32,9 +32,8 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     .item(scrapedProduct.id as string, scrapedProduct.name)
     .read();
 
-  // If an existing item was found in CosmosDB
+  // If an existing item was found in CosmosDB, run various checks before updating
   if (cosmosResponse.statusCode === 200) {
-    // Get the existing item as a Product object
     let existingProduct = (await cosmosResponse.resource) as Product;
 
     // Create a DatedPrice object, which may be added into the product
@@ -58,11 +57,15 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       existingProduct.priceHistory.push(newDatedPrice);
       existingProduct.currentPrice = scrapedProduct.currentPrice;
 
+      // If scraped category is not null, update that as well
+      if (scrapedProduct.category != '') existingProduct.category = scrapedProduct.category;
+
       // Send completed product object to cosmosdb
       await container.items.upsert(existingProduct);
       return true;
-    } else if (new Date().getDate() === 1) {
+
       // Always add a price history entry on the 1st of every month, even if no price change
+    } else if (new Date().getDate() === 1) {
       existingProduct.priceHistory.push(newDatedPrice);
 
       // Send completed product object to cosmosdb
@@ -70,8 +73,12 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
       // Return false as no price has actually changed
       return false;
-    } else if (existingProduct.category != scrapedProduct.category) {
-      // Let the scraped product overwrite the existing category
+
+      // Let the scraped product overwrite the existing category, unless the scraped category is blank
+    } else if (
+      existingProduct.category != scrapedProduct.category &&
+      scrapedProduct.category != ''
+    ) {
       existingProduct.category = scrapedProduct.category;
 
       // Send completed product object to cosmosdb
@@ -79,11 +86,9 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
       // Return false as no price has actually changed
       return false;
-    } else {
+
       // Price hasn't changed
-      // console.log(
-      //   `Product ${scrapedProduct.id} exists with same price of ${scrapedProduct.currentPrice}`
-      // );
+    } else {
       return false;
     }
 
