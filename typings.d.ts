@@ -12,7 +12,12 @@ export interface DatedPrice {
   date: string;
   price: number;
 }
-export interface CategorisedUrl {
-  url: string;
-  category: string;
+
+export const enum upsertResponse {
+  PriceChanged,
+  CategoryChanged,
+  NewProductAdded,
+  RoutinePriceHistoryInsert,
+  AlreadyUpToDate,
+  Failed,
 }

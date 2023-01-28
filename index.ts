@@ -4,8 +4,8 @@ import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
-import { CategorisedUrl, Product } from './typings.js';
-import { defaultUrls } from './urlsToScrape.js';
+import { Product, upsertResponse } from './typings.js';
+import { defaultUrls, deriveCategoryFromUrl, setUrlOptions } from './urls.js';
 dotenv.config();
 
 // Countdown Scraper
@@ -27,7 +27,7 @@ dotenv.config();
 //                         em     {price dollar section}
 //                         span   {price cents section}
 //                 p
-//                    span.size  {size eg. 400g}
+//                     span.size  {size eg. 400g}
 //            div.productImage-container
 //                 figure
 //                     picture
@@ -38,27 +38,21 @@ dotenv.config();
 //   </container div>
 
 // Array of urls to be scraped is imported from file urlsToScrape.ts
-//  Is an array of CategorisedUrl objects, which contain both a url and product category
-let categorisedUrls: CategorisedUrl[] = defaultUrls;
+//  Is an array of url objects, which contain both a url and product category
+let urlsToScrape = defaultUrls;
+
+// If an argument is provided, scrape this url instead of the default urls
+// The first 2 arguments are irrelevant and are ignored
+if (process.argv.length > 2) {
+  const singleUrlfromArguments = process.argv[2];
+  urlsToScrape = [singleUrlfromArguments];
+}
 
 // Define the delay between each page scrape. This helps spread the database write load,
 //  and makes the scraper appear less bot-like.
 const secondsBetweenEachPageScrape: number = 11;
 
-// Query options to add to every countdown url, size=48 shows upto 48 products per page
-const urlQueryOptions = '?page=1&size=48&inStockProductsOnly=true';
-
-// If an argument is provided, scrape this url instead of the default urls
-// The first 2 arguments are irrelevant and are ignored
-if (process.argv.length > 2) {
-  const urlfromArguments: CategorisedUrl = {
-    url: process.argv[2],
-    category: '',
-  };
-  categorisedUrls = [urlfromArguments];
-}
-
-// Create a playwright browser using webkit
+// Create a playwright headless browser using webkit
 console.log(`--- Launching Headless Browser..`);
 const browser = await playwright.webkit.launch({
   headless: true,
@@ -70,19 +64,16 @@ let pagesScrapedCount = 1;
 let promise = Promise.resolve();
 
 // Loop through each URL to scrape
-categorisedUrls.forEach((categorisedUrl) => {
-  const url = categorisedUrl.url;
-  const category = categorisedUrl.category;
-
+urlsToScrape.forEach((url) => {
   // Use promises to ensure a delay betwen each scrape
   promise = promise.then(async () => {
-    const response = await scrapeLoadedWebpage(url + urlQueryOptions, category);
+    const response = await scrapeLoadedWebpage(url);
 
     // Log the reponse after the scrape has completed
     console.log(response);
 
     // If all scrapes have completed, close the playwright browser
-    if (pagesScrapedCount++ === categorisedUrls.length) {
+    if (pagesScrapedCount++ === urlsToScrape.length) {
       browser.close();
       console.log('--- All scraping has been completed \n');
     }
@@ -94,9 +85,12 @@ categorisedUrls.forEach((categorisedUrl) => {
   });
 });
 
-async function scrapeLoadedWebpage(url: string, category: string): Promise<string> {
+async function scrapeLoadedWebpage(url: string): Promise<string> {
+  // Add query options to url
+  url = setUrlOptions(url);
+
   // Open page and log status
-  console.log(`--- [${pagesScrapedCount}/${categorisedUrls.length}] Scraping Page.. ${url}`);
+  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
   await page.goto(url);
 
   // Wait for <cdx-card> html element to dynamically load in,
@@ -112,7 +106,9 @@ async function scrapeLoadedWebpage(url: string, category: string): Promise<strin
 
   // Count number of items processed for logging purposes
   let alreadyUpToDateCount = 0;
-  let updatedCount = 0;
+  let priceChangedCount = 0;
+  let categoryUpdatedCount = 0;
+  let newProductsCount = 0;
 
   // Loop through each product entry, and add desired data into a Product object
   let promises = productEntries.map(async (index, productCard) => {
@@ -129,8 +125,8 @@ async function scrapeLoadedWebpage(url: string, category: string): Promise<strin
       // Store where the source of information came from
       sourceSite: url,
 
-      // Category is passed in from the CategorisedURL object
-      category: category,
+      // Category is derived from url
+      category: deriveCategoryFromUrl(url),
 
       // These values will later be overwritten
       priceHistory: [],
@@ -151,8 +147,26 @@ async function scrapeLoadedWebpage(url: string, category: string): Promise<strin
       .replace(/\D/g, '');
     product.currentPrice = Number(dollarString + '.' + centString);
 
-    // Insert or update item into azure cosmosdb, use return value to update logging counters
-    (await upsertProductToCosmosDB(product)) ? updatedCount++ : alreadyUpToDateCount++;
+    // Insert or update item into azure cosmosdb
+    const response = await upsertProductToCosmosDB(product);
+
+    // Use response to update logging counters
+    switch (response) {
+      case upsertResponse.AlreadyUpToDate:
+        alreadyUpToDateCount++;
+        break;
+      case upsertResponse.CategoryChanged:
+        categoryUpdatedCount++;
+        break;
+      case upsertResponse.NewProductAdded:
+        newProductsCount++;
+        break;
+      case upsertResponse.PriceChanged:
+        priceChangedCount++;
+        break;
+      default:
+        break;
+    }
 
     // Get image url, request hi-res 900px version, and then upload image to azure storage
     const originalImageUrl: string | undefined = $(productCard)
@@ -161,12 +175,16 @@ async function scrapeLoadedWebpage(url: string, category: string): Promise<strin
 
     const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-    await uploadImageToAzureStorage(product.id as string, hiresImageUrl as string);
+    await uploadImageToAzureStorage(product.id, hiresImageUrl as string);
   });
 
   // Wait for entire map to finish
   await Promise.all(promises);
 
   // After scraping every item is complete, log how many products were scraped
-  return `--- ${updatedCount} new or updated products, ${alreadyUpToDateCount} already up-to-date \n`;
+  const consolidatedLogMessage =
+    `--- ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
+    `${categoryUpdatedCount} updated categories, ${alreadyUpToDateCount} already up-to-date \n`;
+
+  return consolidatedLogMessage;
 }
