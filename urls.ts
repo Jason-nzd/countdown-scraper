@@ -1,16 +1,16 @@
 // Array of default urls to scrape.
 export const defaultUrls = [
-  // 'https://www.countdown.co.nz/shop/browse/frozen',
-  // 'https://www.countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs',
-  // 'https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries',
-  // 'https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns',
-  // 'https://www.countdown.co.nz/shop/browse/fridge-deli',
-  // 'https://www.countdown.co.nz/shop/browse/meat-poultry',
-  // 'https://www.countdown.co.nz/shop/browse/fruit-veg',
-  // 'https://www.countdown.co.nz/shop/browse/pantry',
-  // 'https://www.countdown.co.nz/shop/specials',
-  // 'https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks',
-  // 'https://www.countdown.co.nz/shop/browse/fish-seafood/salmon',
+  'https://www.countdown.co.nz/shop/browse/frozen',
+  'https://www.countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs',
+  'https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries',
+  'https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns',
+  'https://www.countdown.co.nz/shop/browse/fridge-deli',
+  'https://www.countdown.co.nz/shop/browse/meat-poultry',
+  'https://www.countdown.co.nz/shop/browse/fruit-veg',
+  'https://www.countdown.co.nz/shop/browse/pantry',
+  'https://www.countdown.co.nz/shop/specials',
+  'https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks',
+  'https://www.countdown.co.nz/shop/browse/fish-seafood/salmon',
   'https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream',
 ];
 

@@ -25,7 +25,7 @@ const { container } = await database.containers.createIfNotExists({
 
 // Function for insert/updating a product object to CosmosDB, returns a upsertReponse
 export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<upsertResponse> {
-  let response: upsertResponse | undefined;
+  let response: upsertResponse | undefined = undefined;
 
   // Check CosmosDB for any existing item using id and name as the partition key
   const cosmosResponse = await container
@@ -46,7 +46,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
       console.log(
         '- Price Updated: ' +
-          scrapedProduct.name.slice(0, 30) +
+          scrapedProduct.name.slice(0, 30).padEnd(30, ' ') +
           ' - from $' +
           existingProduct.currentPrice +
           ' to $' +
@@ -73,7 +73,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     }
 
     // If a response has been set, something has changed and is now ready to send to cosmosdb
-    if (response) {
+    if (response != undefined) {
       await container.items.upsert(existingProduct);
       return response;
 
@@ -92,12 +92,17 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     scrapedProduct.priceHistory = [initialDatedPrice];
 
     console.log(
-      `- New Product: ${scrapedProduct.name.slice(0, 40)}\t $${scrapedProduct.currentPrice}`
+      `- New Product: ${scrapedProduct.name.slice(0, 40).padEnd(40, ' ')}\t $${
+        scrapedProduct.currentPrice
+      }`
     );
 
     // Send completed product object to cosmosdb
     await container.items.create(scrapedProduct);
     return upsertResponse.NewProductAdded;
+  } else if (cosmosResponse.statusCode === 409) {
+    console.log(`Conflicting ID found for product ${scrapedProduct.name}`);
+    return upsertResponse.Failed;
   } else {
     // If cosmos returns a status code other than 200 or 404, manage other errors here
     console.log(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
