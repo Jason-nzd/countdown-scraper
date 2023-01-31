@@ -168,14 +168,17 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
         break;
     }
 
-    // Get image url, request hi-res 900px version, and then upload image to azure storage
-    const originalImageUrl: string | undefined = $(productCard)
-      .find('a.product-entry div.productImage-container figure picture img')
-      .attr('src');
+    // Only attempt to upload images for new products
+    if (response === upsertResponse.NewProductAdded) {
+      // Get image url, request hi-res 900px version, and then upload image to azure storage
+      const originalImageUrl: string | undefined = $(productCard)
+        .find('a.product-entry div.productImage-container figure picture img')
+        .attr('src');
 
-    const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
+      const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-    await uploadImageToAzureStorage(product.id, hiresImageUrl as string);
+      await uploadImageToAzureStorage(product.id, hiresImageUrl as string);
+    }
   });
 
   // Wait for entire map to finish
