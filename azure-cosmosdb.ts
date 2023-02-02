@@ -92,7 +92,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     scrapedProduct.priceHistory = [initialDatedPrice];
 
     console.log(
-      `- New Product: ${scrapedProduct.name.slice(0, 40).padEnd(40, ' ')}\t - $${
+      `- New Product: ${scrapedProduct.name.slice(0, 40).padEnd(40, ' ')} \t - $${
         scrapedProduct.currentPrice
       }`
     );

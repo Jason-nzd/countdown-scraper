@@ -86,11 +86,13 @@ urlsToScrape.forEach((url) => {
 });
 
 async function scrapeLoadedWebpage(url: string): Promise<string> {
+  // Log status
+  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
+
   // Add query options to url
   url = setUrlOptions(url);
 
-  // Open page and log status
-  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
+  // Open page with url options now set
   await page.goto(url);
 
   // Wait for <cdx-card> html element to dynamically load in,
