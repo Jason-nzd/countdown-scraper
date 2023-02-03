@@ -8,7 +8,7 @@ Image files can also be scraped and placed into an Azure Blob Container.
 
 ## Setup
 
-An Azure CosmosDB connection string and Azure Storage connection string are required as environment variables in a .env file.
+An Azure CosmosDB read-write connection string and Azure Storage connection string are required as environment variables in a .env file.
 
 .env format
 
@@ -29,7 +29,7 @@ AZURE_STORAGE_CONSTRING=
 
 ## Output
 
-This a sample of a single product stored in NoSQL format.
+This is a sample of a single product stored in CosmosDB.
 
 ```json
 {
