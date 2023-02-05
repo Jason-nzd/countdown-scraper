@@ -1,5 +1,5 @@
 // Used by index.js for creating and accessing items stored in Azure CosmosDB
-import { Container, CosmosClient, Database } from '@azure/cosmos';
+import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { DatedPrice, Product, upsertResponse } from './typings';
 dotenv.config();
@@ -116,13 +116,40 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
   }
 }
 
-export async function cosmosQuery(query: string) {
-  let eq = 'SELECT * FROM products p WHERE CONTAINS(p.name, milk)';
+export async function cosmosQuery(): Promise<void> {
+  const options: FeedOptions = {
+    maxItemCount: 20,
+  };
+  const querySpec: SqlQuerySpec = {
+    query: 'SELECT * FROM products p WHERE ARRAY_LENGTH(p.priceHistory)>3',
+  };
 
-  const cosmosResponse = await await container.items.query(eq).fetchNext();
-  const results = cosmosResponse.resources as Product[];
+  const response = await container.items.query(querySpec, options);
 
-  results.forEach((product) => {
-    console.log(product.name);
-  });
+  let batchCount = 0;
+  const maxBatchCount = 3;
+  let continueFetching = true;
+
+  await (async () => {
+    while (response.hasMoreResults() && continueFetching) {
+      await delayedBatchFetch();
+    }
+  })();
+
+  function delayedBatchFetch() {
+    return new Promise<void>((resolve) =>
+      setTimeout(async () => {
+        const batch = await response.fetchNext();
+        const products = batch.resources as Product[];
+
+        products.forEach(async (product) => {
+          console.log(product.name);
+        });
+
+        if (batchCount++ === maxBatchCount) continueFetching = false;
+
+        resolve();
+      }, 8000)
+    );
+  }
 }

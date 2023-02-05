@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
-import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { cosmosQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { Product, upsertResponse } from './typings.js';
 import { defaultUrls, deriveCategoryFromUrl, setUrlOptions } from './urls.js';
 dotenv.config();
@@ -36,6 +36,9 @@ dotenv.config();
 //         a.product-entry
 //             ...
 //   </container div>
+
+await cosmosQuery().then();
+process.exit();
 
 // Array of urls to be scraped is imported from file urlsToScrape.ts
 //  Is an array of url objects, which contain both a url and product category
