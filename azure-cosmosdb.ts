@@ -115,3 +115,14 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     return upsertResponse.Failed;
   }
 }
+
+export async function cosmosQuery(query: string) {
+  let eq = 'SELECT * FROM products p WHERE CONTAINS(p.name, milk)';
+
+  const cosmosResponse = await await container.items.query(eq).fetchNext();
+  const results = cosmosResponse.resources as Product[];
+
+  results.forEach((product) => {
+    console.log(product.name);
+  });
+}
