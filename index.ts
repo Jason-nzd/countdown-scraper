@@ -76,6 +76,7 @@ urlsToScrape.forEach((url) => {
     if (pagesScrapedCount++ === urlsToScrape.length) {
       browser.close();
       console.log('--- All scraping has been completed \n');
+      return;
     }
 
     // Add a delay between each scrape loop
@@ -113,41 +114,8 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
   let newProductsCount = 0;
 
   // Loop through each product entry, and add desired data into a Product object
-  let promises = productEntries.map(async (index, productCard) => {
-    let product: Product = {
-      // Extract ID from h3 tag and remove non-numbers
-      id: $(productCard).find('h3').first().attr('id')?.replace(/\D/g, '') as string,
-
-      // Original title is all lower-case and needs to be made into start-case
-      name: _.startCase($(productCard).find('h3').first().text().trim()),
-
-      // Product size may be blank
-      size: $(productCard).find('div.product-meta p span.size').text().trim(),
-
-      // Store where the source of information came from
-      sourceSite: url,
-
-      // Category is derived from url
-      category: deriveCategoryFromUrl(url),
-
-      // These values will later be overwritten
-      priceHistory: [],
-      currentPrice: 0,
-    };
-
-    // The price is originally displayed with dollars in an <em>, cents in a <span>,
-    // and potentially a kg unit name inside the <span> for some meat products.
-    // The 2 numbers are joined, parsed, and non-number chars are removed.
-    const dollarString: string = $(productCard)
-      .find('div.product-meta product-price h3 em')
-      .text()
-      .trim();
-    const centString: string = $(productCard)
-      .find('div.product-meta product-price h3 span')
-      .text()
-      .trim()
-      .replace(/\D/g, '');
-    product.currentPrice = Number(dollarString + '.' + centString);
+  let promises = productEntries.map(async (index, productEntryElement) => {
+    const product = playwrightElementToProductObject(productEntryElement, url);
 
     // Insert or update item into azure cosmosdb
     const response = await upsertProductToCosmosDB(product);
@@ -173,7 +141,7 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
     // Only attempt to upload images for new products
     if (response === upsertResponse.NewProductAdded) {
       // Get image url, request hi-res 900px version, and then upload image to azure storage
-      const originalImageUrl: string | undefined = $(productCard)
+      const originalImageUrl: string | undefined = $(productEntryElement)
         .find('a.product-entry div.productImage-container figure picture img')
         .attr('src');
 
@@ -192,4 +160,45 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
     `${categoryUpdatedCount} updated categories, ${alreadyUpToDateCount} already up-to-date \n`;
 
   return consolidatedLogMessage;
+}
+
+function playwrightElementToProductObject(element: cheerio.Element, url: string): Product {
+  const $ = cheerio.load(element);
+
+  let product: Product = {
+    // Extract ID from h3 tag and remove non-numbers
+    id: $(element).find('h3').first().attr('id')?.replace(/\D/g, '') as string,
+
+    // Original title is all lower-case and needs to be made into start-case
+    name: _.startCase($(element).find('h3').first().text().trim()),
+
+    // Product size may be blank
+    size: $(element).find('div.product-meta p span.size').text().trim(),
+
+    // Store where the source of information came from
+    sourceSite: url,
+
+    // Category is derived from url
+    category: deriveCategoryFromUrl(url),
+
+    // These values will later be overwritten
+    priceHistory: [],
+    currentPrice: 0,
+  };
+
+  // The price is originally displayed with dollars in an <em>, cents in a <span>,
+  // and potentially a kg unit name inside the <span> for some meat products.
+  // The 2 numbers are joined, parsed, and non-number chars are removed.
+  const dollarString: string = $(element)
+    .find('div.product-meta product-price h3 em')
+    .text()
+    .trim();
+  const centString: string = $(element)
+    .find('div.product-meta product-price h3 span')
+    .text()
+    .trim()
+    .replace(/\D/g, '');
+  product.currentPrice = Number(dollarString + '.' + centString);
+
+  return product;
 }

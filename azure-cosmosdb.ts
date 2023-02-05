@@ -1,5 +1,5 @@
 // Used by index.js for creating and accessing items stored in Azure CosmosDB
-import { CosmosClient } from '@azure/cosmos';
+import { Container, CosmosClient, Database } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { DatedPrice, Product, upsertResponse } from './typings';
 dotenv.config();
@@ -16,12 +16,23 @@ if (!COSMOS_CONSTRING) {
 }
 
 // Create CosmosDB clients
-const cosmosClient = new CosmosClient(COSMOS_CONSTRING);
-const { database } = await cosmosClient.databases.createIfNotExists({ id: cosmosDatabaseName });
-const { container } = await database.containers.createIfNotExists({
-  id: cosmosContainerName,
-  partitionKey: { paths: partitionKey },
-});
+let cosmosClient: CosmosClient;
+let database: Database;
+let container: Container;
+try {
+  cosmosClient = new CosmosClient(COSMOS_CONSTRING);
+  const databaseResponse = await cosmosClient.databases.createIfNotExists({
+    id: cosmosDatabaseName,
+  });
+  database = databaseResponse.database;
+  const containerResponse = await database.containers.createIfNotExists({
+    id: cosmosContainerName,
+    partitionKey: { paths: partitionKey },
+  });
+  container = containerResponse.container;
+} catch (error) {
+  console.log('Invalid CosmosDB connection');
+}
 
 // Function for insert/updating a product object to CosmosDB, returns a upsertReponse
 export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<upsertResponse> {

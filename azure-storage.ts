@@ -1,17 +1,28 @@
 // Used by index.ts for copying images into Azure Storage blob containers
-import { BlobServiceClient } from '@azure/storage-blob';
+import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-// Create the BlobServiceClient object with connection string from .env
+const containerName = 'countdownimages';
+
+let blobServiceClient: BlobServiceClient;
+let containerClient: ContainerClient;
+
+// Check if .env contains azure storage connection string
 const AZURE_STORAGE_CONSTRING = process.env.AZURE_STORAGE_CONSTRING;
 if (!AZURE_STORAGE_CONSTRING) {
-  throw Error('Azure Storage Connection string not found');
+  throw Error('Azure Storage Connection String AZURE_STORAGE_CONSTRING not found in .env');
 }
-const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONSTRING);
 
-// Create ContainerClient for container 'countdownimages'
-const containerClient = blobServiceClient.getContainerClient('countdownimages');
+try {
+  // Connect with connection string
+  blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONSTRING);
+
+  // Create ContainerClient for container 'countdownimages'
+  containerClient = blobServiceClient.getContainerClient(containerName);
+} catch (error) {
+  throw Error('Azure Storage Connection String invalid');
+}
 
 export default async function uploadImageToAzureStorage(id: string, hiresImageUrl: string) {
   try {
