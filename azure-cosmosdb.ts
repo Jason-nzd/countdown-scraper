@@ -58,7 +58,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       console.log(
         '- Price Updated: ' +
           scrapedProduct.name.slice(0, 40).padEnd(40, ' ') +
-          ' - from $' +
+          ' \t - from $' +
           existingProduct.currentPrice +
           ' to $' +
           scrapedProduct.currentPrice

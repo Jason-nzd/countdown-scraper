@@ -37,8 +37,8 @@ dotenv.config();
 //             ...
 //   </container div>
 
-await cosmosQuery().then();
-process.exit();
+// await cosmosQuery()
+// process.exit();
 
 // Array of urls to be scraped is imported from file urlsToScrape.ts
 //  Is an array of url objects, which contain both a url and product category
@@ -141,8 +141,12 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
         break;
     }
 
-    // Only attempt to upload images for new products
-    if (response === upsertResponse.NewProductAdded) {
+    // Only attempt to upload images if not already available from CDN
+    const existingCDNImageURL = 'https://d1hhwouzawkav1.cloudfront.net/' + product.id + '.jpg';
+    const cdnResponse = await fetch(existingCDNImageURL);
+    //console.log(product.id + ' - CDN avail - ' + cdnResponse.ok);
+
+    if (!cdnResponse.ok) {
       // Get image url, request hi-res 900px version, and then upload image to azure storage
       const originalImageUrl: string | undefined = $(productEntryElement)
         .find('a.product-entry div.productImage-container figure picture img')

@@ -7,6 +7,7 @@ const containerName = 'countdownimages';
 
 let blobServiceClient: BlobServiceClient;
 let containerClient: ContainerClient;
+let transparentImageClient: ContainerClient;
 
 // Check if .env contains azure storage connection string
 const AZURE_STORAGE_CONSTRING = process.env.AZURE_STORAGE_CONSTRING;
@@ -20,6 +21,7 @@ try {
 
   // Create ContainerClient for container 'countdownimages'
   containerClient = blobServiceClient.getContainerClient(containerName);
+  transparentImageClient = blobServiceClient.getContainerClient('transparent-cd-images');
 } catch (error) {
   throw Error('Azure Storage Connection String invalid');
 }
@@ -29,15 +31,16 @@ export default async function uploadImageToAzureStorage(id: string, hiresImageUr
     // Use id as the filename
     const blobFilename = id + '.jpg';
     const blobClient = containerClient.getBlockBlobClient(blobFilename);
-    const imageExists = await blobClient.exists();
+    const transparentImageBlob = transparentImageClient.getBlobClient(blobFilename);
+    const transparentImageExists = await transparentImageBlob.exists();
 
     // If image doesn't already exist on azure storage, copy over
-    if (!imageExists) {
+    if (!transparentImageExists) {
       // Atttempt to upload image to azure
       const uploadBlobResponse = await blobClient.syncCopyFromURL(hiresImageUrl);
 
       if (uploadBlobResponse.copyStatus === 'success') {
-        // console.log('Image new upload: ' + blobFilename + ' uploaded successfully');
+        //console.log('Image: ' + blobFilename + ' uploaded successfully');
         return true;
       } else {
         // Image upload can fail if the url was invalid
@@ -45,10 +48,11 @@ export default async function uploadImageToAzureStorage(id: string, hiresImageUr
         return false;
       }
     } else {
-      // console.log('Image already exists: ' + blobFilename);
+      //console.log('Image already exists: ' + blobFilename);
       return false;
     }
-  } catch {
+  } catch (error) {
+    console.log(error);
     // Catch other errors and return false for an unsuccessful upload
     return false;
   }
