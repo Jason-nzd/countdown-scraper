@@ -17,7 +17,6 @@ export const enum upsertResponse {
   PriceChanged,
   CategoryChanged,
   NewProductAdded,
-  RoutinePriceHistoryInsert,
   AlreadyUpToDate,
   Failed,
 }

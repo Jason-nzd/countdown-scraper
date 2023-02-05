@@ -76,11 +76,6 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     ) {
       existingProduct.category = scrapedProduct.category;
       response = response ?? upsertResponse.CategoryChanged;
-
-      // Always add a price history entry on the 1st of every month, even if no price change
-    } else if (new Date().getDate() === 1) {
-      existingProduct.priceHistory.push(newDatedPrice);
-      response = response ?? upsertResponse.RoutinePriceHistoryInsert;
     }
 
     // If a response has been set, something has changed and is now ready to send to cosmosdb
