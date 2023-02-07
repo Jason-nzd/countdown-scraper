@@ -141,21 +141,14 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
         break;
     }
 
-    // Only attempt to upload images if not already available from CDN
-    const existingCDNImageURL = 'https://d1hhwouzawkav1.cloudfront.net/' + product.id + '.jpg';
-    const cdnResponse = await fetch(existingCDNImageURL);
-    //console.log(product.id + ' - CDN avail - ' + cdnResponse.ok);
+    // Get image url, request hi-res 900px version, and then upload image to azure storage
+    const originalImageUrl: string | undefined = $(productEntryElement)
+      .find('a.product-entry div.productImage-container figure picture img')
+      .attr('src');
 
-    if (!cdnResponse.ok) {
-      // Get image url, request hi-res 900px version, and then upload image to azure storage
-      const originalImageUrl: string | undefined = $(productEntryElement)
-        .find('a.product-entry div.productImage-container figure picture img')
-        .attr('src');
+    const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-      const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
-
-      await uploadImageToAzureStorage(product.id, hiresImageUrl as string);
-    }
+    await uploadImageToAzureStorage(product.id, hiresImageUrl as string, product.name.slice(0, 20));
   });
 
   // Wait for entire map to finish
