@@ -1,5 +1,5 @@
 // Used by index.ts for copying images into Azure Storage blob containers
-import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
+import { BlobServiceClient, ContainerClient, RestError } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -57,13 +57,19 @@ export default async function uploadImageToAzureStorage(
         return true;
       } else {
         // Image upload can fail if the url was invalid
-        console.log('Image upload failed: ' + url);
+        console.log('Image upload failed: ' + url + ' - status: ' + uploadBlobResponse.copyStatus);
         return false;
       }
     }
-  } catch (error) {
-    console.log(error);
-    // Catch other errors and return false for an unsuccessful upload
+  } catch (e) {
+    // RestError often occurs when the original image is missing
+    if ((e as Error).name === 'RestError') {
+      console.log('URL unavailable to copy: ' + url);
+    } else {
+      // Print the full error for other errors
+      console.log(e);
+    }
+    // Return false for an unsuccessful upload
     return false;
   }
 }
