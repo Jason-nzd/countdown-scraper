@@ -3,9 +3,10 @@ import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
-import { cosmosQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { Product, upsertResponse } from './typings.js';
 import { defaultUrls, deriveCategoryFromUrl, setUrlOptions } from './urls.js';
+import { log, colour } from './logging.js';
 dotenv.config();
 
 // Countdown Scraper
@@ -56,7 +57,7 @@ if (process.argv.length > 2) {
 const secondsBetweenEachPageScrape: number = 11;
 
 // Create a playwright headless browser using webkit
-console.log(`--- Launching Headless Browser..`);
+log(colour.yellow, 'Launching Headless Browser..');
 const browser = await playwright.webkit.launch({
   headless: true,
 });
@@ -78,7 +79,7 @@ urlsToScrape.forEach((url) => {
     // If all scrapes have completed, close the playwright browser
     if (pagesScrapedCount++ === urlsToScrape.length) {
       browser.close();
-      console.log('--- All scraping has been completed \n');
+      log(colour.cyan, 'All scraping has been completed \n');
       return;
     }
 
@@ -91,7 +92,7 @@ urlsToScrape.forEach((url) => {
 
 async function scrapeLoadedWebpage(url: string): Promise<string> {
   // Log status
-  console.log(`--- [${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
+  log(colour.yellow, `[${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
 
   // Add query options to url
   url = setUrlOptions(url);
@@ -148,7 +149,7 @@ async function scrapeLoadedWebpage(url: string): Promise<string> {
 
     const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-    await uploadImageToAzureStorage(product.id, hiresImageUrl as string, product.name.slice(0, 20));
+    await uploadImageToAzureStorage(product, hiresImageUrl as string);
   });
 
   // Wait for entire map to finish

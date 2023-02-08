@@ -1,6 +1,8 @@
 // Used by index.ts for copying images into Azure Storage blob containers
 import { BlobServiceClient, ContainerClient, RestError } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
+import { colour, log } from './logging';
+import { Product } from './typings';
 dotenv.config();
 
 const containerName = 'countdownimages';
@@ -26,14 +28,10 @@ try {
   throw Error('Azure Storage Connection String invalid');
 }
 
-export default async function uploadImageToAzureStorage(
-  id: string,
-  url: string,
-  productName: string
-) {
+export default async function uploadImageToAzureStorage(product: Product, url: string) {
   try {
     // Use id as the filename
-    const blobFilename = id + '.jpg';
+    const blobFilename = product.id + '.jpg';
 
     // First check CDN if file already exists, this saves on GET calls to Azure Storage
     // const existingCDNImageURL = 'https://d1hhwouzawkav1.cloudfront.net/' + blobFilename;
@@ -47,24 +45,23 @@ export default async function uploadImageToAzureStorage(
     const transparentImageExists = await transparentImageBlob.exists();
     if (transparentImageExists) return false;
 
-    // If image doesn't already exist on azure storage, copy over
-    if (!transparentImageExists) {
-      // Atttempt to upload image to azure
-      const uploadBlobResponse = await blobClient.syncCopyFromURL(url);
+    // If image doesn't already exist on azure storage, attempt upload
+    const uploadReponse = await blobClient.syncCopyFromURL(url);
 
-      if (uploadBlobResponse.copyStatus === 'success') {
-        console.log('Image: ' + blobFilename + ' for ' + productName + ' uploaded');
-        return true;
-      } else {
-        // Image upload can fail if the url was invalid
-        console.log('Image upload failed: ' + url + ' - status: ' + uploadBlobResponse.copyStatus);
-        return false;
-      }
+    if (uploadReponse.copyStatus === 'success') {
+      log(
+        colour.grey,
+        'New Image: ' + blobFilename.padEnd(9) + ' - ' + product.name.slice(0, 30) + ' uploaded'
+      );
+      return true;
+    } else {
+      log(colour.red, '- Image upload failed: ' + url + ' - status: ' + uploadReponse.copyStatus);
+      return false;
     }
   } catch (e) {
     // RestError often occurs when the original image is missing
     if ((e as Error).name === 'RestError') {
-      console.log('URL unavailable to copy: ' + url);
+      log(colour.grey, 'Image URL Unavailable: ' + product.id + ' - ' + product.name.slice(0, 30));
     } else {
       // Print the full error for other errors
       console.log(e);
