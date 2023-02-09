@@ -1,7 +1,7 @@
 // Used by index.ts for copying images into Azure Storage blob containers
 import { BlobServiceClient, ContainerClient, RestError } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
-import { colour, log } from './logging';
+import { colour, log } from './logging.js';
 import { Product } from './typings';
 dotenv.config();
 
@@ -51,7 +51,7 @@ export default async function uploadImageToAzureStorage(product: Product, url: s
     if (uploadReponse.copyStatus === 'success') {
       log(
         colour.grey,
-        'New Image: ' + blobFilename.padEnd(9) + ' - ' + product.name.slice(0, 30) + ' uploaded'
+        'New Image: ' + blobFilename.padStart(10) + ' - ' + product.name.slice(0, 50)
       );
       return true;
     } else {

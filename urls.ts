@@ -13,8 +13,10 @@ export const defaultUrls = [
   'https://www.countdown.co.nz/shop/browse/pantry/eggs',
   'https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa',
   'https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks',
+  'https://www.countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies',
   'https://www.countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice',
   'https://www.countdown.co.nz/shop/browse/fish-seafood/salmon',
+  'https://www.countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables',
 ];
 
 export function deriveCategoryFromUrl(url: string): string {

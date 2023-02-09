@@ -1,7 +1,7 @@
 // Used by index.js for creating and accessing items stored in Azure CosmosDB
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
-import { log, colour, logPriceChange } from './logging.js';
+import { log, colour } from './logging.js';
 import { DatedPrice, Product, upsertResponse } from './typings';
 dotenv.config();
 
@@ -92,7 +92,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     scrapedProduct.priceHistory = [initialDatedPrice];
 
     console.log(
-      `New Product: ${scrapedProduct.name.slice(0, 40).padEnd(40, ' ')} \t - $${
+      `New Product: ${scrapedProduct.name.slice(0, 50).padEnd(50)} - $${
         scrapedProduct.currentPrice
       }`
     );
@@ -146,4 +146,20 @@ export async function cosmosQuery(): Promise<void> {
       }, 8000)
     );
   }
+}
+
+// Log a specific price change message,
+//  coloured green for price reduction, red for price increase
+function logPriceChange(product: Product, newPrice: Number) {
+  const priceIncreased = newPrice > product.currentPrice;
+  log(
+    priceIncreased ? colour.red : colour.green,
+    'Price ' +
+      (priceIncreased ? 'Increased: ' : 'Decreased: ') +
+      product.name.slice(0, 50).padEnd(50) +
+      ' - from $' +
+      product.currentPrice +
+      ' to $' +
+      newPrice
+  );
 }
