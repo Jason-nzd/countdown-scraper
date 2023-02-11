@@ -33,8 +33,8 @@ This is a sample of a single product stored in CosmosDB.
 
 ```json
 {
-    "id": "290796",
-    "name": "Hellers Sausages Precooked Chinese Honey",
+    "id": "123456",
+    "name": "Sausages Precooked Chinese Honey",
     "currentPrice": 12.9,
     "size": "Prepacked 1kg pack",
     "priceHistory": [
