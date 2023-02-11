@@ -33,17 +33,11 @@ export default async function uploadImageToAzureStorage(product: Product, url: s
     // Use id as the filename
     const blobFilename = product.id + '.jpg';
 
-    // First check CDN if file already exists, this saves on GET calls to Azure Storage
-    // const existingCDNImageURL = 'https://d1hhwouzawkav1.cloudfront.net/' + blobFilename;
-    // const cdnResponse = await fetch(existingCDNImageURL);
-    // if (cdnResponse.ok) return false;
-    // console.log(blobFilename + ' not on CDN');
-
-    // Check if file already exists on Azure Storage, this saves on PUT calls
-    const blobClient = containerClient.getBlockBlobClient(blobFilename);
+    // Check if file already exists on Azure Storage
     const transparentImageBlob = transparentImageClient.getBlobClient(blobFilename);
-    const transparentImageExists = await transparentImageBlob.exists();
-    if (transparentImageExists) return false;
+    if (await transparentImageBlob.exists()) return false;
+    const blobClient = containerClient.getBlockBlobClient(blobFilename);
+    if (await blobClient.exists()) return false;
 
     // If image doesn't already exist on azure storage, attempt upload
     const uploadReponse = await blobClient.syncCopyFromURL(url);

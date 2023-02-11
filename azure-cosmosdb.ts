@@ -156,7 +156,7 @@ function logPriceChange(product: Product, newPrice: Number) {
     priceIncreased ? colour.red : colour.green,
     'Price ' +
       (priceIncreased ? 'Increased: ' : 'Decreased: ') +
-      product.name.slice(0, 50).padEnd(50) +
+      product.name.slice(0, 46).padEnd(46) +
       ' - from $' +
       product.currentPrice +
       ' to $' +
