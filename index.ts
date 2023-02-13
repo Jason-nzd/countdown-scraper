@@ -54,7 +54,7 @@ if (process.argv.length > 2) {
 
 // Define the delay between each page scrape. This helps spread the database write load,
 //  and makes the scraper appear less bot-like.
-const secondsBetweenEachPageScrape: number = 11;
+const secondsBetweenEachPageScrape: number = 31;
 
 // Create a playwright headless browser using webkit
 log(colour.yellow, 'Launching Headless Browser..');
