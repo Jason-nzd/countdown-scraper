@@ -5,7 +5,7 @@ import { colour, log } from './logging.js';
 import { Product } from './typings';
 dotenv.config();
 
-const containerForOrignalImages = 'countdownimages';
+const containerForOriginalImages = 'countdownimages';
 
 // If images copied over are also to be processed and re-saved by another program,
 //  we can check to see if these files already exist to reduce the server load
@@ -27,7 +27,7 @@ try {
   blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONSTRING);
 
   // Create ContainerClient for container 'countdownimages'
-  containerClient = blobServiceClient.getContainerClient(containerForOrignalImages);
+  containerClient = blobServiceClient.getContainerClient(containerForOriginalImages);
   if (usingProcessedImages)
     transparentImageClient = blobServiceClient.getContainerClient(containerForProcessedImages);
 } catch (error) {
@@ -50,16 +50,16 @@ export default async function uploadImageToAzureStorage(product: Product, url: s
     if (await blobClient.exists()) return false;
 
     // If image doesn't already exist on azure storage, attempt upload
-    const uploadReponse = await blobClient.syncCopyFromURL(url);
+    const uploadResponse = await blobClient.syncCopyFromURL(url);
 
-    if (uploadReponse.copyStatus === 'success') {
+    if (uploadResponse.copyStatus === 'success') {
       log(
         colour.grey,
         'New Image: ' + blobFilename.padStart(10) + ' - ' + product.name.slice(0, 50)
       );
       return true;
     } else {
-      log(colour.red, '- Image upload failed: ' + url + ' - status: ' + uploadReponse.copyStatus);
+      log(colour.red, '- Image upload failed: ' + url + ' - status: ' + uploadResponse.copyStatus);
       return false;
     }
   } catch (e) {
