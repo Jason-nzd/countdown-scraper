@@ -1,23 +1,33 @@
-// Array of default urls to scrape.
-export const defaultUrls = [
-  'https://www.countdown.co.nz/shop/specials',
-  'https://www.countdown.co.nz/shop/browse/frozen',
-  'https://www.countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs',
-  'https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries',
-  'https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns',
-  'https://www.countdown.co.nz/shop/browse/fridge-deli',
-  'https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream',
-  'https://www.countdown.co.nz/shop/browse/meat-poultry',
-  'https://www.countdown.co.nz/shop/browse/fruit-veg',
-  'https://www.countdown.co.nz/shop/browse/pantry',
+import { readFileSync } from 'fs';
+import { colour, log } from './logging.js';
+
+// Try to read file urls.txt for a list of URLs, one per line
+// If the file is missing or returns empty, use the 2 sampleURLs instead
+export const urlsFromFile = await readURLsFromOptionalFile();
+const sampleURLs = [
   'https://www.countdown.co.nz/shop/browse/pantry/eggs',
-  'https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa',
-  'https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks',
-  'https://www.countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies',
-  'https://www.countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice',
   'https://www.countdown.co.nz/shop/browse/fish-seafood/salmon',
-  'https://www.countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables',
 ];
+export const importedURLs = urlsFromFile.length > 0 ? urlsFromFile : sampleURLs;
+
+// Tries to read from file urls.txt containing many urls with one url per line
+async function readURLsFromOptionalFile() {
+  let arrayOfUrls: string[] = [];
+
+  try {
+    const file = readFileSync('urls.txt', 'utf-8');
+    const fileLines = file.split(/\r?\n/);
+
+    fileLines.forEach((line) => {
+      if (line.includes('.co.nz/')) arrayOfUrls.push(line);
+    });
+
+    return arrayOfUrls;
+  } catch (error) {
+    log(colour.yellow, 'urls.txt not found, scraping 2 sample URLs instead');
+    return [];
+  }
+}
 
 export function deriveCategoryFromUrl(url: string): string {
   // Derives category names from url, if any categories are available

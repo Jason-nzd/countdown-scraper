@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { Product, upsertResponse } from './typings.js';
-import { defaultUrls, deriveCategoryFromUrl, setUrlOptions } from './urls.js';
+import { importedURLs, deriveCategoryFromUrl, setUrlOptions } from './file-import.js';
 import { log, colour } from './logging.js';
 dotenv.config();
 
@@ -31,17 +31,34 @@ dotenv.config();
 //                         img    {img}
 
 // Array of urls to scrape is imported from urls.ts
-let urlsToScrape: string[] = defaultUrls;
+let urlsToScrape: string[] = importedURLs;
 
-// Set dryRunLogOnly to true to disable use of CosmosDB and Azure Storage,
-//  will only log results instead.
-const dryRunLogOnly = true;
+// Set dryRunMode to true to only log results to console
+// Set false to make use of CosmosDB and Azure Storage.
+let dryRunMode = false;
 
-// If an argument is provided, scrape this url instead of the default urls
-// The first 2 arguments are irrelevant and are ignored
+// Handle arguments, can potentially be nothing, dry-run-mode, or custom urls to scrape
 if (process.argv.length > 2) {
-  const singleUrlfromArguments = process.argv[2];
-  urlsToScrape = [singleUrlfromArguments];
+  // The first 2 arguments are not user-provided and are ignored
+  const userArgs = process.argv.slice(2, process.argv.length);
+
+  if (userArgs.length === 1 && userArgs[0] === 'dry-run-mode') {
+    dryRunMode = true;
+  } else {
+    // Iterate through all user args, filtering out args not recognised as URLs
+    urlsToScrape = userArgs.filter((arg) => {
+      if (arg.includes('dry-run-mode')) {
+        dryRunMode = true;
+        return false;
+      } else if (arg.includes('.co.nz')) {
+        // If a url is provided, scrape this url instead of the default urls
+        return true;
+      } else {
+        log(colour.red, 'Unknown argument provided: ' + arg);
+        return false;
+      }
+    });
+  }
 }
 
 // Define the delay between each page scrape. This helps spread the database write load,
@@ -61,13 +78,13 @@ let promise = Promise.resolve();
 
 // Loop through each URL to scrape
 urlsToScrape.forEach((url) => {
-  // Use promises to ensure a delay betwen each scrape
+  // Use promises to ensure a delay between each scrape
   promise = promise.then(async () => {
     // Log status
     log(
       colour.yellow,
       `[${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}` +
-        (dryRunLogOnly && ' (Dry Run Mode On)')
+        (dryRunMode ? ' (Dry Run Mode On)' : '')
     );
 
     // Add query options to url
@@ -85,7 +102,7 @@ urlsToScrape.forEach((url) => {
     const $ = cheerio.load(html);
     const productEntries = $('cdx-card a.product-entry');
 
-    console.log('--- ' + productEntries.length + ' product entries found');
+    log(colour.yellow, productEntries.length + ' product entries found');
 
     // Count number of items processed for logging purposes
     let alreadyUpToDateCount = 0;
@@ -97,7 +114,7 @@ urlsToScrape.forEach((url) => {
     let promises = productEntries.map(async (index, productEntryElement) => {
       const product = playwrightElementToProductObject(productEntryElement, url);
 
-      if (!dryRunLogOnly) {
+      if (!dryRunMode) {
         // Insert or update item into azure cosmosdb
         const response = await upsertProductToCosmosDB(product);
 
@@ -145,9 +162,10 @@ urlsToScrape.forEach((url) => {
     await Promise.all(promises);
 
     // After scraping every item is complete, log how many products were scraped
-    if (!dryRunLogOnly) {
-      console.log(
-        `--- ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
+    if (!dryRunMode) {
+      log(
+        colour.blue,
+        `CosmosDB Updated: ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
           `${categoryUpdatedCount} updated categories, ${alreadyUpToDateCount} already up-to-date`
       );
     }
@@ -155,10 +173,10 @@ urlsToScrape.forEach((url) => {
     // If all scrapes have completed, close the playwright browser
     if (pagesScrapedCount++ === urlsToScrape.length) {
       browser.close();
-      log(colour.cyan, 'All scraping complete \n');
+      log(colour.cyan, 'All Scraping Completed \n');
       return;
     } else {
-      console.log(`Waiting for ${secondsBetweenEachPageScrape} seconds until next scrape.. \n`);
+      log(colour.blue, `Waiting ${secondsBetweenEachPageScrape} seconds until next scrape.. \n`);
     }
 
     // Add a delay between each scrape loop
