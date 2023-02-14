@@ -1,11 +1,16 @@
 // Used by index.ts for copying images into Azure Storage blob containers
-import { BlobServiceClient, ContainerClient, RestError } from '@azure/storage-blob';
+import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
 import { colour, log } from './logging.js';
 import { Product } from './typings';
 dotenv.config();
 
-const containerName = 'countdownimages';
+const containerForOrignalImages = 'countdownimages';
+
+// If images copied over are also to be processed and re-saved by another program,
+//  we can check to see if these files already exist to reduce the server load
+const usingProcessedImages = true;
+const containerForProcessedImages = 'transparent-cd-images';
 
 let blobServiceClient: BlobServiceClient;
 let containerClient: ContainerClient;
@@ -22,8 +27,9 @@ try {
   blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONSTRING);
 
   // Create ContainerClient for container 'countdownimages'
-  containerClient = blobServiceClient.getContainerClient(containerName);
-  transparentImageClient = blobServiceClient.getContainerClient('transparent-cd-images');
+  containerClient = blobServiceClient.getContainerClient(containerForOrignalImages);
+  if (usingProcessedImages)
+    transparentImageClient = blobServiceClient.getContainerClient(containerForProcessedImages);
 } catch (error) {
   throw Error('Azure Storage Connection String invalid');
 }
@@ -33,9 +39,13 @@ export default async function uploadImageToAzureStorage(product: Product, url: s
     // Use id as the filename
     const blobFilename = product.id + '.jpg';
 
-    // Check if file already exists on Azure Storage
-    const transparentImageBlob = transparentImageClient.getBlobClient(blobFilename);
-    if (await transparentImageBlob.exists()) return false;
+    // Check if processed image already exists on Azure Storage
+    if (usingProcessedImages) {
+      const transparentImageBlob = transparentImageClient.getBlobClient(blobFilename);
+      if (await transparentImageBlob.exists()) return false;
+    }
+
+    // Check if original image already exists
     const blobClient = containerClient.getBlockBlobClient(blobFilename);
     if (await blobClient.exists()) return false;
 

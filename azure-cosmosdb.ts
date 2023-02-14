@@ -1,4 +1,4 @@
-// Used by index.js for creating and accessing items stored in Azure CosmosDB
+// Used by index.ts for creating and accessing items stored in Azure CosmosDB
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { log, colour } from './logging.js';
@@ -10,7 +10,6 @@ const cosmosContainerName = 'products';
 const partitionKey = ['/name'];
 
 // Get CosmosDB connection string stored in .env
-//console.log(`--- Connecting to CosmosDB..`);
 const COSMOS_CONSTRING = process.env.COSMOS_CONSTRING;
 if (!COSMOS_CONSTRING) {
   throw Error('CosmosDB Connection string COSMOS_CONSTRING not found in .env');
@@ -35,7 +34,8 @@ try {
   log(colour.red, 'Invalid CosmosDB connection');
 }
 
-// Function for insert/updating a product object to CosmosDB, returns a upsertReponse
+// Function for insert/updating a product object to CosmosDB,
+//  returns an upsertResponse based on if and how the Product was updated
 export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<upsertResponse> {
   let response: upsertResponse | undefined = undefined;
 
@@ -48,7 +48,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
   if (cosmosResponse.statusCode === 200) {
     let existingProduct = (await cosmosResponse.resource) as Product;
 
-    // Create a DatedPrice object, which may be added into the product
+    // Create a DatedPrice object, which may be added into the product if needed
     const newDatedPrice: DatedPrice = {
       date: new Date().toDateString(),
       price: scrapedProduct.currentPrice,
@@ -58,7 +58,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
       logPriceChange(existingProduct, scrapedProduct.currentPrice);
 
-      // Push into priceHistory array, and update currentPrice
+      // Push DatedPrice into priceHistory array, and update currentPrice
       existingProduct.priceHistory.push(newDatedPrice);
       existingProduct.currentPrice = scrapedProduct.currentPrice;
       response = response ?? upsertResponse.PriceChanged;
@@ -72,17 +72,16 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       response = response ?? upsertResponse.CategoryChanged;
     }
 
-    // If a response has been set, something has changed and is now ready to send to cosmosdb
+    // If a response has been set using nullish coalescing, Product is now ready to send to CosmosDB
     if (response != undefined) {
       await container.items.upsert(existingProduct);
       return response;
-
-      // Nothing has changed, no upsert is required
     } else {
+      // Nothing has changed, no upsert is required
       return upsertResponse.AlreadyUpToDate;
     }
 
-    // If product doesn't exist in CosmosDB,
+    // If product doesn't yet exist in CosmosDB,
   } else if (cosmosResponse.statusCode === 404) {
     // Create the initial DatedPrice and set it as the first priceHistory entry
     const initialDatedPrice: DatedPrice = {
@@ -92,24 +91,25 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     scrapedProduct.priceHistory = [initialDatedPrice];
 
     console.log(
-      `New Product: ${scrapedProduct.name.slice(0, 50).padEnd(50)} - $${
+      `    New Product: ${scrapedProduct.name.slice(0, 50).padEnd(50)} - $${
         scrapedProduct.currentPrice
       }`
     );
 
-    // Send completed product object to cosmosdb
+    // Send completed Product object to CosmosDB
     await container.items.create(scrapedProduct);
     return upsertResponse.NewProductAdded;
   } else if (cosmosResponse.statusCode === 409) {
     log(colour.red, `Conflicting ID found for product ${scrapedProduct.name}`);
     return upsertResponse.Failed;
   } else {
-    // If cosmos returns a status code other than 200 or 404, manage other errors here
+    // If CosmoDB returns a status code other than 200 or 404, manage other errors here
     log(colour.red, `CosmosDB returned status code: ${cosmosResponse.statusCode}`);
     return upsertResponse.Failed;
   }
 }
 
+// Function for running custom queries - used primarily for debugging
 export async function cosmosQuery(): Promise<void> {
   const options: FeedOptions = {
     maxItemCount: 20,

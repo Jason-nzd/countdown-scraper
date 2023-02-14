@@ -13,12 +13,8 @@ dotenv.config();
 // -----------------
 // Scrapes pricing and other info from Countdown's website
 //
-// Countdown sample search results DOM (as of Jan-2023)
+// Sample DOM for each product (as of Jan-2023)
 // ----------------------------------------------------
-//   <container div>
-//      cdx-card
-//        a.product-entry
-//            ...
 //      cdx-card
 //        a.product-entry
 //            h3                 {title}
@@ -33,17 +29,13 @@ dotenv.config();
 //                 figure
 //                     picture
 //                         img    {img}
-//      cdx-card
-//         a.product-entry
-//             ...
-//   </container div>
 
-// await cosmosQuery()
-// process.exit();
+// Array of urls to scrape is imported from urls.ts
+let urlsToScrape: string[] = defaultUrls;
 
-// Array of urls to be scraped is imported from file urlsToScrape.ts
-//  Is an array of url objects, which contain both a url and product category
-let urlsToScrape = defaultUrls;
+// Set dryRunLogOnly to true to disable use of CosmosDB and Azure Storage,
+//  will only log results instead.
+const dryRunLogOnly = true;
 
 // If an argument is provided, scrape this url instead of the default urls
 // The first 2 arguments are irrelevant and are ignored
@@ -71,16 +63,102 @@ let promise = Promise.resolve();
 urlsToScrape.forEach((url) => {
   // Use promises to ensure a delay betwen each scrape
   promise = promise.then(async () => {
-    const response = await scrapeLoadedWebpage(url);
+    // Log status
+    log(
+      colour.yellow,
+      `[${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}` +
+        (dryRunLogOnly && ' (Dry Run Mode On)')
+    );
 
-    // Log the reponse after the scrape has completed
-    console.log(response);
+    // Add query options to url
+    url = setUrlOptions(url);
+
+    // Open page with url options now set
+    await page.goto(url);
+
+    // Wait for <cdx-card> html element to dynamically load in,
+    //  this is required to see product data
+    await page.waitForSelector('cdx-card');
+
+    // Load all html into Cheerio for easy DOM selection
+    const html = await page.evaluate(() => document.body.innerHTML);
+    const $ = cheerio.load(html);
+    const productEntries = $('cdx-card a.product-entry');
+
+    console.log('--- ' + productEntries.length + ' product entries found');
+
+    // Count number of items processed for logging purposes
+    let alreadyUpToDateCount = 0;
+    let priceChangedCount = 0;
+    let categoryUpdatedCount = 0;
+    let newProductsCount = 0;
+
+    // Loop through each product entry, and add desired data into a Product object
+    let promises = productEntries.map(async (index, productEntryElement) => {
+      const product = playwrightElementToProductObject(productEntryElement, url);
+
+      if (!dryRunLogOnly) {
+        // Insert or update item into azure cosmosdb
+        const response = await upsertProductToCosmosDB(product);
+
+        // Use response to update logging counters
+        switch (response) {
+          case upsertResponse.AlreadyUpToDate:
+            alreadyUpToDateCount++;
+            break;
+          case upsertResponse.CategoryChanged:
+            categoryUpdatedCount++;
+            break;
+          case upsertResponse.NewProductAdded:
+            newProductsCount++;
+            break;
+          case upsertResponse.PriceChanged:
+            priceChangedCount++;
+            break;
+          default:
+            break;
+        }
+
+        // Get image url, request hi-res 900px version, and then upload image to azure storage
+        const originalImageUrl: string | undefined = $(productEntryElement)
+          .find('a.product-entry div.productImage-container figure picture img')
+          .attr('src');
+        const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
+
+        await uploadImageToAzureStorage(product, hiresImageUrl as string);
+      } else {
+        // When doing a dry run, log product name - size - price in table format
+        console.log(
+          product.id.padStart(6) +
+            ' | ' +
+            product.name.slice(0, 50).padEnd(50) +
+            ' | ' +
+            product.size?.slice(0, 16).padEnd(16) +
+            ' | ' +
+            '$' +
+            product.currentPrice
+        );
+      }
+    });
+
+    // Wait for entire map of product entries to finish
+    await Promise.all(promises);
+
+    // After scraping every item is complete, log how many products were scraped
+    if (!dryRunLogOnly) {
+      console.log(
+        `--- ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
+          `${categoryUpdatedCount} updated categories, ${alreadyUpToDateCount} already up-to-date`
+      );
+    }
 
     // If all scrapes have completed, close the playwright browser
     if (pagesScrapedCount++ === urlsToScrape.length) {
       browser.close();
-      log(colour.cyan, 'All scraping has been completed \n');
+      log(colour.cyan, 'All scraping complete \n');
       return;
+    } else {
+      console.log(`Waiting for ${secondsBetweenEachPageScrape} seconds until next scrape.. \n`);
     }
 
     // Add a delay between each scrape loop
@@ -90,79 +168,8 @@ urlsToScrape.forEach((url) => {
   });
 });
 
-async function scrapeLoadedWebpage(url: string): Promise<string> {
-  // Log status
-  log(colour.yellow, `[${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}`);
-
-  // Add query options to url
-  url = setUrlOptions(url);
-
-  // Open page with url options now set
-  await page.goto(url);
-
-  // Wait for <cdx-card> html element to dynamically load in,
-  //  this is required to see product data
-  await page.waitForSelector('cdx-card');
-
-  // Load all html into Cheerio for easy DOM selection
-  const html = await page.evaluate(() => document.body.innerHTML);
-  const $ = cheerio.load(html);
-  const productEntries = $('cdx-card a.product-entry');
-
-  console.log('--- ' + productEntries.length + ' product entries found');
-
-  // Count number of items processed for logging purposes
-  let alreadyUpToDateCount = 0;
-  let priceChangedCount = 0;
-  let categoryUpdatedCount = 0;
-  let newProductsCount = 0;
-
-  // Loop through each product entry, and add desired data into a Product object
-  let promises = productEntries.map(async (index, productEntryElement) => {
-    const product = playwrightElementToProductObject(productEntryElement, url);
-
-    // Insert or update item into azure cosmosdb
-    const response = await upsertProductToCosmosDB(product);
-
-    // Use response to update logging counters
-    switch (response) {
-      case upsertResponse.AlreadyUpToDate:
-        alreadyUpToDateCount++;
-        break;
-      case upsertResponse.CategoryChanged:
-        categoryUpdatedCount++;
-        break;
-      case upsertResponse.NewProductAdded:
-        newProductsCount++;
-        break;
-      case upsertResponse.PriceChanged:
-        priceChangedCount++;
-        break;
-      default:
-        break;
-    }
-
-    // Get image url, request hi-res 900px version, and then upload image to azure storage
-    const originalImageUrl: string | undefined = $(productEntryElement)
-      .find('a.product-entry div.productImage-container figure picture img')
-      .attr('src');
-
-    const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
-
-    await uploadImageToAzureStorage(product, hiresImageUrl as string);
-  });
-
-  // Wait for entire map to finish
-  await Promise.all(promises);
-
-  // After scraping every item is complete, log how many products were scraped
-  const consolidatedLogMessage =
-    `--- ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
-    `${categoryUpdatedCount} updated categories, ${alreadyUpToDateCount} already up-to-date \n`;
-
-  return consolidatedLogMessage;
-}
-
+// Function takes a single playwright element for 'a.product-entry',
+//   then builds and returns a single Product object with desired data
 function playwrightElementToProductObject(element: cheerio.Element, url: string): Product {
   const $ = cheerio.load(element);
 

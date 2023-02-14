@@ -11,7 +11,8 @@ export const colour = {
   orange: '\x1b[38;5;214m',
 };
 
-// Console log with specified colour, then clear colour with \x1b[0m
+// Console log with specified colour, then clear colour
 export function log(colour: string, text: string) {
-  console.log(`${colour}%s\x1b[0m`, text);
+  const clear = '\x1b[0m';
+  console.log(`${colour}%s${clear}`, text);
 }
