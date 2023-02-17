@@ -1,37 +1,26 @@
 import playwright from 'playwright';
 import * as cheerio from 'cheerio';
+import { readFileSync } from 'fs';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
-import { Product, upsertResponse } from './typings.js';
-import { importedURLs, deriveCategoryFromUrl, setUrlOptions } from './file-import.js';
+import { DatedPrice, Product, upsertResponse } from './typings.js';
 import { log, colour } from './logging.js';
 dotenv.config();
 
 // Countdown Scraper
 // -----------------
 // Scrapes pricing and other info from Countdown's website
-//
-// Sample DOM for each product (as of Jan-2023)
-// ----------------------------------------------------
-//      cdx-card
-//        a.product-entry
-//            h3                 {title}
-//            div.product-meta
-//                product-price
-//                     h3
-//                         em     {price dollar section}
-//                         span   {price cents section}
-//                 p
-//                     span.size  {size eg. 400g}
-//            div.productImage-container
-//                 figure
-//                     picture
-//                         img    {img}
 
-// Array of urls to scrape is imported from urls.ts
-let urlsToScrape: string[] = importedURLs;
+// Try to read file urls.txt for a list of URLs, one per line
+const urlsFromFile = await readURLsFromOptionalFile('urls.txt');
+const sampleURLs = [
+  'https://www.countdown.co.nz/shop/browse/pantry/eggs',
+  'https://www.countdown.co.nz/shop/browse/fish-seafood/salmon',
+];
+// If the file is missing or returns empty, use the 2 sampleURLs instead
+let urlsToScrape = urlsFromFile.length > 0 ? urlsFromFile : sampleURLs;
 
 // Set dryRunMode to true to only log results to console
 // Set false to make use of CosmosDB and Azure Storage.
@@ -39,7 +28,7 @@ let dryRunMode = false;
 
 // Handle arguments, can potentially be nothing, dry-run-mode, or custom urls to scrape
 if (process.argv.length > 2) {
-  // The first 2 arguments are not user-provided and are ignored
+  // Slice out the first 2 arguments, as they are not user-provided
   const userArgs = process.argv.slice(2, process.argv.length);
 
   if (userArgs.length === 1 && userArgs[0] === 'dry-run-mode') {
@@ -189,6 +178,22 @@ urlsToScrape.forEach((url) => {
 // Function takes a single playwright element for 'a.product-entry',
 //   then builds and returns a single Product object with desired data
 function playwrightElementToProductObject(element: cheerio.Element, url: string): Product {
+  // Sample DOM for each product (as of Jan-2023)
+  // ----------------------------------------------------
+  //        a.product-entry
+  //            h3                 {title}
+  //            div.product-meta
+  //                product-price
+  //                     h3
+  //                         em     {price dollar section}
+  //                         span   {price cents section}
+  //                 p
+  //                     span.size  {size eg. 400g}
+  //            div.productImage-container
+  //                 figure
+  //                     picture
+  //                         img    {img}
+
   const $ = cheerio.load(element);
 
   let product: Product = {
@@ -226,5 +231,58 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
     .replace(/\D/g, '');
   product.currentPrice = Number(dollarString + '.' + centString);
 
+  // Create a DatedPrice object, which may be added into the product if needed
+  const todaysDatedPrice: DatedPrice = {
+    date: new Date().toDateString(),
+    price: product.currentPrice,
+  };
+  product.priceHistory = [todaysDatedPrice];
+
   return product;
+}
+
+// Tries to read from file urls.txt containing many urls with one url per line
+async function readURLsFromOptionalFile(filename: string) {
+  let arrayOfUrls: string[] = [];
+
+  try {
+    const file = readFileSync(filename, 'utf-8');
+    const fileLines = file.split(/\r?\n/);
+
+    fileLines.forEach((line) => {
+      if (line.includes('.co.nz/')) arrayOfUrls.push(line);
+    });
+
+    return arrayOfUrls;
+  } catch (error) {
+    log(colour.yellow, 'urls.txt not found, scraping 2 sample URLs instead');
+    return [];
+  }
+}
+
+export function deriveCategoryFromUrl(url: string): string {
+  // Derives category names from url, if any categories are available
+  // www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
+  // returns 'frozen'
+
+  // If url doesn't contain /browse/, return no category
+  if (url.indexOf('/browse/') < 0) return '';
+
+  const categoriesStartIndex = url.indexOf('/browse/');
+  const categoriesEndIndex = url.lastIndexOf('/');
+  const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
+
+  const splitCategories = categoriesString.split('/').slice(2);
+
+  return splitCategories[0];
+}
+
+function setUrlOptions(url: string): string {
+  let processedUrl = url;
+
+  // Remove existing query options from url
+  if (url.includes('?')) url.slice(0, url.indexOf('?') + 1);
+
+  // Add recommend query options, size=48 shows upto 48 products per page
+  return processedUrl + '?page=1&size=48&inStockProductsOnly=true';
 }

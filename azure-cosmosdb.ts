@@ -12,10 +12,10 @@ const partitionKey = ['/name'];
 // Get CosmosDB connection string stored in .env
 const COSMOS_CONSTRING = process.env.COSMOS_CONSTRING;
 if (!COSMOS_CONSTRING) {
-  throw Error('CosmosDB Connection string COSMOS_CONSTRING not found in .env');
+  throw Error('CosmosDB connection string COSMOS_CONSTRING not found in .env');
 }
 
-// Create CosmosDB clients
+// Establish CosmosDB connection
 let cosmosClient: CosmosClient;
 let database: Database;
 let container: Container;
@@ -31,7 +31,7 @@ try {
   });
   container = containerResponse.container;
 } catch (error) {
-  log(colour.red, 'Invalid CosmosDB connection');
+  log(colour.red, 'Invalid CosmosDB connection - check for valid connection string');
 }
 
 // Function for insert/updating a product object to CosmosDB,
@@ -48,18 +48,12 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
   if (cosmosResponse.statusCode === 200) {
     let existingProduct = (await cosmosResponse.resource) as Product;
 
-    // Create a DatedPrice object, which may be added into the product if needed
-    const newDatedPrice: DatedPrice = {
-      date: new Date().toDateString(),
-      price: scrapedProduct.currentPrice,
-    };
-
     // If price has changed
     if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
       logPriceChange(existingProduct, scrapedProduct.currentPrice);
 
-      // Push DatedPrice into priceHistory array, and update currentPrice
-      existingProduct.priceHistory.push(newDatedPrice);
+      // Push scraped priceHistory into existing priceHistory array, and update currentPrice
+      existingProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
       existingProduct.currentPrice = scrapedProduct.currentPrice;
       response = response ?? upsertResponse.PriceChanged;
 
@@ -83,13 +77,6 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
     // If product doesn't yet exist in CosmosDB,
   } else if (cosmosResponse.statusCode === 404) {
-    // Create the initial DatedPrice and set it as the first priceHistory entry
-    const initialDatedPrice: DatedPrice = {
-      date: new Date().toDateString(),
-      price: scrapedProduct.currentPrice as number,
-    };
-    scrapedProduct.priceHistory = [initialDatedPrice];
-
     console.log(
       `    New Product: ${scrapedProduct.name.slice(0, 50).padEnd(50)} - $${
         scrapedProduct.currentPrice
