@@ -61,6 +61,43 @@ const browser = await playwright.webkit.launch({
 });
 const page = await browser.newPage();
 
+// Define unnecessary types and ad/tracking urls to reject
+let typeExclusions = ['image', 'stylesheet', 'media', 'font', 'other'];
+let urlExclusions = [
+  'googleoptimize.com',
+  'gtm.js',
+  'visitoridentification.js',
+  'js-agent.newrelic.com',
+  'cquotient.com',
+  'googletagmanager.com',
+  'cloudflareinsights.com',
+  'dwanalytics',
+  'edge.adobedc.net',
+];
+
+// Route with exclusions processed
+await page.route('**/*', async (route) => {
+  const req = route.request();
+  let excludeThisRequest = false;
+  let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
+
+  urlExclusions.forEach((excludedURL) => {
+    if (req.url().includes(excludedURL)) excludeThisRequest = true;
+  });
+
+  typeExclusions.forEach((excludedType) => {
+    if (req.resourceType() === excludedType) excludeThisRequest = true;
+  });
+
+  if (excludeThisRequest) {
+    //log(colour.red, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+    await route.abort();
+  } else {
+    //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+    await route.continue();
+  }
+});
+
 // Counter and promise to help with looping through each of the scrape URLs
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
