@@ -78,7 +78,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     // If product doesn't yet exist in CosmosDB,
   } else if (cosmosResponse.statusCode === 404) {
     console.log(
-      `    New Product: ${scrapedProduct.name.slice(0, 50).padEnd(50)} - $${
+      `    New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)} - $${
         scrapedProduct.currentPrice
       }`
     );
