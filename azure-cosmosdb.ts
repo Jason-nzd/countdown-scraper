@@ -1,8 +1,15 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
-import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
+import {
+  Container,
+  CosmosClient,
+  Database,
+  FeedOptions,
+  ResourceResponse,
+  SqlQuerySpec,
+} from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { log, colour } from './logging.js';
-import { DatedPrice, Product, upsertResponse } from './typings';
+import { Product, upsertResponse } from './typings';
 dotenv.config();
 
 const cosmosDatabaseName = 'supermarket-prices';
@@ -56,10 +63,11 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       existingProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
       existingProduct.currentPrice = scrapedProduct.currentPrice;
       response = response ?? upsertResponse.PriceChanged;
+    }
 
-      // If scraped category is not null and has changed, update it
-    } else if (
-      scrapedProduct.category != '' &&
+    // If scraped categories are not null and have changed, update it
+    if (
+      scrapedProduct.category != undefined &&
       scrapedProduct.category !== existingProduct.category
     ) {
       existingProduct.category = scrapedProduct.category;
@@ -143,7 +151,7 @@ function logPriceChange(product: Product, newPrice: Number) {
     priceIncreased ? colour.red : colour.green,
     'Price ' +
       (priceIncreased ? 'Increased: ' : 'Decreased: ') +
-      product.name.slice(0, 46).padEnd(46) +
+      product.name.slice(0, 47).padEnd(47) +
       ' - from $' +
       product.currentPrice +
       ' to $' +

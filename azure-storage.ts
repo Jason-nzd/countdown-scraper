@@ -55,7 +55,7 @@ export default async function uploadImageToAzureStorage(product: Product, url: s
     if (uploadResponse.copyStatus === 'success') {
       log(
         colour.grey,
-        '   New Image: ' + blobFilename.padStart(10) + ' - ' + product.name.slice(0, 50)
+        '      New Image: ' + blobFilename.padStart(10) + ' - ' + product.name.slice(0, 50)
       );
       return true;
     } else {

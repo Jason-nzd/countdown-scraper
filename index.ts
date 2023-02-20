@@ -202,7 +202,7 @@ urlsToScrape.forEach((url) => {
       log(colour.cyan, 'All Scraping Completed \n');
       return;
     } else {
-      log(colour.blue, `Waiting ${secondsBetweenEachPageScrape} seconds until next scrape.. \n`);
+      log(colour.grey, `Waiting ${secondsBetweenEachPageScrape} seconds until next scrape.. \n`);
     }
 
     // Add a delay between each scrape loop
@@ -246,8 +246,8 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
     // Store where the source of information came from
     sourceSite: url,
 
-    // Category is derived from url
-    category: deriveCategoryFromUrl(url),
+    // Categories are derived from url
+    category: deriveCategoriesFromUrl(url),
 
     // These values will later be overwritten
     priceHistory: [],
@@ -297,21 +297,20 @@ async function readURLsFromOptionalFile(filename: string) {
   }
 }
 
-export function deriveCategoryFromUrl(url: string): string {
-  // Derives category names from url, if any categories are available
-  // www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
-  // returns 'frozen'
-
+// Derives category names from url, if any categories are available
+// www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
+// returns '[frozen, ice-cream-sorbet, tubs]'
+export function deriveCategoriesFromUrl(url: string): string[] | undefined {
   // If url doesn't contain /browse/, return no category
-  if (url.indexOf('/browse/') < 0) return '';
+  if (url.indexOf('/browse/') < 0) return undefined;
 
   const categoriesStartIndex = url.indexOf('/browse/');
-  const categoriesEndIndex = url.lastIndexOf('/');
+  const categoriesEndIndex = url.indexOf('?');
   const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
-
   const splitCategories = categoriesString.split('/').slice(2);
+  //console.log(splitCategories);
 
-  return splitCategories[0];
+  return splitCategories;
 }
 
 function setUrlOptions(url: string): string {
