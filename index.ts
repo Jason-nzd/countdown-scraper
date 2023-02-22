@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
-import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { customQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
 import { log, colour } from './logging.js';
 dotenv.config();
@@ -12,6 +12,9 @@ dotenv.config();
 // Countdown Scraper
 // -----------------
 // Scrapes pricing and other info from Countdown's website
+
+// await customQuery();
+// process.exit();
 
 // Try to read file urls.txt for a list of URLs, one per line
 const urlsFromFile = await readURLsFromOptionalFile('urls.txt');

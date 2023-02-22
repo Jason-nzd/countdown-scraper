@@ -105,18 +105,19 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 }
 
 // Function for running custom queries - used primarily for debugging
-export async function cosmosQuery(): Promise<void> {
+export async function customQuery(): Promise<void> {
   const options: FeedOptions = {
-    maxItemCount: 20,
+    maxItemCount: 10,
   };
+  const secondsDelayBetweenBatches = 4;
   const querySpec: SqlQuerySpec = {
-    query: 'SELECT * FROM products p WHERE ARRAY_LENGTH(p.priceHistory)>3',
+    query: 'SELECT * FROM products p WHERE ARRAY_LENGTH(p.priceHistory)<1',
   };
 
   const response = await container.items.query(querySpec, options);
 
   let batchCount = 0;
-  const maxBatchCount = 3;
+  const maxBatchCount = 10;
   let continueFetching = true;
 
   await (async () => {
@@ -125,6 +126,9 @@ export async function cosmosQuery(): Promise<void> {
     }
   })();
 
+  console.log('Custom Query Complete');
+  return;
+
   function delayedBatchFetch() {
     return new Promise<void>((resolve) =>
       setTimeout(async () => {
@@ -132,13 +136,14 @@ export async function cosmosQuery(): Promise<void> {
         const products = batch.resources as Product[];
 
         products.forEach(async (product) => {
-          console.log(product.name);
+          console.log(product.name + ' deleted');
+          await container.item(product.id, product.name).delete();
         });
 
         if (batchCount++ === maxBatchCount) continueFetching = false;
 
         resolve();
-      }, 8000)
+      }, secondsDelayBetweenBatches * 1000)
     );
   }
 }
