@@ -1,12 +1,5 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
-import {
-  Container,
-  CosmosClient,
-  Database,
-  FeedOptions,
-  ResourceResponse,
-  SqlQuerySpec,
-} from '@azure/cosmos';
+import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { log, colour } from './logging.js';
 import { Product, upsertResponse } from './typings';
@@ -111,7 +104,7 @@ export async function customQuery(): Promise<void> {
   };
   const secondsDelayBetweenBatches = 4;
   const querySpec: SqlQuerySpec = {
-    query: 'SELECT * FROM products p WHERE ARRAY_LENGTH(p.priceHistory)<1',
+    query: 'SELECT * FROM products p WHERE ARRAY_CONTAINS(p.priceHistory, null)',
   };
 
   const response = await container.items.query(querySpec, options);
@@ -136,8 +129,11 @@ export async function customQuery(): Promise<void> {
         const products = batch.resources as Product[];
 
         products.forEach(async (product) => {
-          console.log(product.name + ' deleted');
-          await container.item(product.id, product.name).delete();
+          console.log('Deleting: ' + product.name);
+          var item = await container.item(product.id, product.name);
+          console.log(item.id);
+          var response = await item.delete<Product>();
+          console.log(response.statusCode);
         });
 
         if (batchCount++ === maxBatchCount) continueFetching = false;

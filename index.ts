@@ -143,7 +143,9 @@ urlsToScrape.forEach((url) => {
     let promises = productEntries.map(async (index, productEntryElement) => {
       const product = playwrightElementToProductObject(productEntryElement, url);
 
-      if (!dryRunMode) {
+      if (!validateProduct(product)) log(colour.red, 'Product Scrape Invalid: ' + product.name);
+
+      if (!dryRunMode && validateProduct(product)) {
         // Insert or update item into azure cosmosdb
         const response = await upsertProductToCosmosDB(product);
 
@@ -247,7 +249,7 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
     size: $(element).find('div.product-meta p span.size').text().trim(),
 
     // Store where the source of information came from
-    sourceSite: url,
+    sourceSite: 'countdown.co.nz',
 
     // Categories are derived from url
     category: deriveCategoriesFromUrl(url),
@@ -324,4 +326,19 @@ function setUrlOptions(url: string): string {
 
   // Add recommend query options, size=48 shows upto 48 products per page
   return processedUrl + '?page=1&size=48&inStockProductsOnly=true';
+}
+
+// Runs basic validation on scraped product
+function validateProduct(product: Product): boolean {
+  if (product.name.length === 0 || product.name.length > 100) return false;
+  if (product.id.length === 0 || product.name.length > 100) return false;
+  if (
+    product.currentPrice === 0 ||
+    product.currentPrice === null ||
+    product.currentPrice === undefined ||
+    product.currentPrice > 999
+  ) {
+    return false;
+  }
+  return true;
 }
