@@ -4,17 +4,14 @@ import { readFileSync } from 'fs';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
-import { customQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
-import { log, colour } from './logging.js';
+import { log, colour, logProductRow } from './logging.js';
 dotenv.config();
 
 // Countdown Scraper
 // -----------------
 // Scrapes pricing and other info from Countdown's website
-
-// await customQuery();
-// process.exit();
 
 // Try to read file urls.txt for a list of URLs, one per line
 const urlsFromFile = await readURLsFromOptionalFile('urls.txt');
@@ -55,7 +52,7 @@ if (process.argv.length > 2) {
 
 // Define the delay between each page scrape. This helps spread the database write load,
 //  and makes the scraper appear less bot-like.
-const secondsBetweenEachPageScrape: number = 31;
+const secondsBetweenEachPageScrape = 31;
 
 // Create a playwright headless browser using webkit
 log(colour.yellow, 'Launching Headless Browser..');
@@ -64,42 +61,43 @@ const browser = await playwright.webkit.launch({
 });
 const page = await browser.newPage();
 
-// Define unnecessary types and ad/tracking urls to reject
-let typeExclusions = ['image', 'stylesheet', 'media', 'font', 'other'];
-let urlExclusions = [
-  'googleoptimize.com',
-  'gtm.js',
-  'visitoridentification.js',
-  'js-agent.newrelic.com',
-  'cquotient.com',
-  'googletagmanager.com',
-  'cloudflareinsights.com',
-  'dwanalytics',
-  'edge.adobedc.net',
-];
+// // Define unnecessary types and ad/tracking urls to reject
+await routePlaywrightExclusions();
+// let typeExclusions = ['image', 'stylesheet', 'media', 'font', 'other'];
+// let urlExclusions = [
+//   'googleoptimize.com',
+//   'gtm.js',
+//   'visitoridentification.js',
+//   'js-agent.newrelic.com',
+//   'cquotient.com',
+//   'googletagmanager.com',
+//   'cloudflareinsights.com',
+//   'dwanalytics',
+//   'edge.adobedc.net',
+// ];
 
-// Route with exclusions processed
-await page.route('**/*', async (route) => {
-  const req = route.request();
-  let excludeThisRequest = false;
-  let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
+// // Route with exclusions processed
+// await page.route('**/*', async (route) => {
+//   const req = route.request();
+//   let excludeThisRequest = false;
+//   let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
 
-  urlExclusions.forEach((excludedURL) => {
-    if (req.url().includes(excludedURL)) excludeThisRequest = true;
-  });
+//   urlExclusions.forEach((excludedURL) => {
+//     if (req.url().includes(excludedURL)) excludeThisRequest = true;
+//   });
 
-  typeExclusions.forEach((excludedType) => {
-    if (req.resourceType() === excludedType) excludeThisRequest = true;
-  });
+//   typeExclusions.forEach((excludedType) => {
+//     if (req.resourceType() === excludedType) excludeThisRequest = true;
+//   });
 
-  if (excludeThisRequest) {
-    //log(colour.red, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
-    await route.abort();
-  } else {
-    //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
-    await route.continue();
-  }
-});
+//   if (excludeThisRequest) {
+//     //log(colour.red, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+//     await route.abort();
+//   } else {
+//     //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+//     await route.continue();
+//   }
+// });
 
 // Counter and promise to help with looping through each of the scrape URLs
 let pagesScrapedCount = 1;
@@ -176,16 +174,7 @@ urlsToScrape.forEach((url) => {
         await uploadImageToAzureStorage(product, hiresImageUrl as string);
       } else {
         // When doing a dry run, log product name - size - price in table format
-        console.log(
-          product.id.padStart(6) +
-            ' | ' +
-            product.name.slice(0, 50).padEnd(50) +
-            ' | ' +
-            product.size?.slice(0, 16).padEnd(16) +
-            ' | ' +
-            '$' +
-            product.currentPrice
-        );
+        logProductRow(product);
       }
     });
 
@@ -254,6 +243,9 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
     // Categories are derived from url
     category: deriveCategoriesFromUrl(url),
 
+    // Store today's date
+    lastUpdated: new Date().toDateString(),
+
     // These values will later be overwritten
     priceHistory: [],
     currentPrice: 0,
@@ -318,6 +310,7 @@ export function deriveCategoriesFromUrl(url: string): string[] | undefined {
   return splitCategories;
 }
 
+// Sets url query options for optimal results
 function setUrlOptions(url: string): string {
   let processedUrl = url;
 
@@ -341,4 +334,45 @@ function validateProduct(product: Product): boolean {
     return false;
   }
   return true;
+}
+
+// Excludes ads, tracking, and bandwidth intensive resources from being downloaded by Playwright
+async function routePlaywrightExclusions() {
+  let typeExclusions = ['image', 'stylesheet', 'media', 'font', 'other'];
+  let urlExclusions = [
+    'googleoptimize.com',
+    'gtm.js',
+    'visitoridentification.js',
+    'js-agent.newrelic.com',
+    'cquotient.com',
+    'googletagmanager.com',
+    'cloudflareinsights.com',
+    'dwanalytics',
+    'edge.adobedc.net',
+  ];
+
+  // Route with exclusions processed
+  await page.route('**/*', async (route) => {
+    const req = route.request();
+    let excludeThisRequest = false;
+    let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
+
+    urlExclusions.forEach((excludedURL) => {
+      if (req.url().includes(excludedURL)) excludeThisRequest = true;
+    });
+
+    typeExclusions.forEach((excludedType) => {
+      if (req.resourceType() === excludedType) excludeThisRequest = true;
+    });
+
+    if (excludeThisRequest) {
+      //log(colour.red, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+      await route.abort();
+    } else {
+      //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+      await route.continue();
+    }
+  });
+
+  return;
 }

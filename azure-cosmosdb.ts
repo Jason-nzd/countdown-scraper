@@ -1,7 +1,7 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
-import { log, colour } from './logging.js';
+import { log, colour, logPriceChange } from './logging.js';
 import { Product, upsertResponse } from './typings';
 dotenv.config();
 
@@ -48,29 +48,31 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
   if (cosmosResponse.statusCode === 200) {
     let existingProduct = (await cosmosResponse.resource) as Product;
 
-    // If price has changed
-    if (existingProduct.currentPrice != scrapedProduct.currentPrice) {
+    // If price has changed, and not on the same day
+    if (
+      existingProduct.currentPrice != scrapedProduct.currentPrice &&
+      existingProduct.lastUpdated != scrapedProduct.lastUpdated
+    ) {
       logPriceChange(existingProduct, scrapedProduct.currentPrice);
 
-      // Push scraped priceHistory into existing priceHistory array, and update currentPrice
+      // Push scraped priceHistory into existing priceHistory array
       existingProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
-      existingProduct.currentPrice = scrapedProduct.currentPrice;
-      response = response ?? upsertResponse.PriceChanged;
+
+      // Replace the scraped priceHistory with the updated version
+      scrapedProduct.priceHistory = existingProduct.priceHistory;
+
+      // Send updated product to CosmosDB
+      await container.items.upsert(scrapedProduct);
+      return upsertResponse.PriceChanged;
     }
 
     // If scraped categories are not null and have changed, update it
-    if (
+    else if (
       scrapedProduct.category != undefined &&
       scrapedProduct.category !== existingProduct.category
     ) {
-      existingProduct.category = scrapedProduct.category;
-      response = response ?? upsertResponse.CategoryChanged;
-    }
-
-    // If a response has been set using nullish coalescing, Product is now ready to send to CosmosDB
-    if (response != undefined) {
-      await container.items.upsert(existingProduct);
-      return response;
+      await container.items.upsert(scrapedProduct);
+      return upsertResponse.CategoryChanged;
     } else {
       // Nothing has changed, no upsert is required
       return upsertResponse.AlreadyUpToDate;
@@ -142,20 +144,4 @@ export async function customQuery(): Promise<void> {
       }, secondsDelayBetweenBatches * 1000)
     );
   }
-}
-
-// Log a specific price change message,
-//  coloured green for price reduction, red for price increase
-function logPriceChange(product: Product, newPrice: Number) {
-  const priceIncreased = newPrice > product.currentPrice;
-  log(
-    priceIncreased ? colour.red : colour.green,
-    'Price ' +
-      (priceIncreased ? 'Increased: ' : 'Decreased: ') +
-      product.name.slice(0, 47).padEnd(47) +
-      ' - from $' +
-      product.currentPrice +
-      ' to $' +
-      newPrice
-  );
 }

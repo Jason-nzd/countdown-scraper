@@ -1,9 +1,10 @@
 export interface Product {
   id: string;
   name: string;
-  currentPrice: number;
-  priceHistory: DatedPrice[];
   size?: string;
+  currentPrice: number;
+  lastUpdated: string;
+  priceHistory: DatedPrice[];
   sourceSite: string;
   category?: string[];
 }
