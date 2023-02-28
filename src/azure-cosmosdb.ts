@@ -1,7 +1,7 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
-import { log, colour, logPriceChange } from './logging.js';
+import { logPriceChange, logError } from './logging.js';
 import { Product, upsertResponse } from './typings';
 dotenv.config();
 
@@ -31,7 +31,7 @@ try {
   });
   container = containerResponse.container;
 } catch (error) {
-  log(colour.red, 'Invalid CosmosDB connection - check for valid connection string');
+  logError('Invalid CosmosDB connection - check for valid connection string');
 }
 
 // Function for insert/updating a product object to CosmosDB,
@@ -90,11 +90,11 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     await container.items.create(scrapedProduct);
     return upsertResponse.NewProductAdded;
   } else if (cosmosResponse.statusCode === 409) {
-    log(colour.red, `Conflicting ID found for product ${scrapedProduct.name}`);
+    logError(`Conflicting ID found for product ${scrapedProduct.name}`);
     return upsertResponse.Failed;
   } else {
     // If CosmoDB returns a status code other than 200 or 404, manage other errors here
-    log(colour.red, `CosmosDB returned status code: ${cosmosResponse.statusCode}`);
+    logError(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
     return upsertResponse.Failed;
   }
 }

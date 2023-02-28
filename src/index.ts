@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
-import { log, colour, logProductRow } from './logging.js';
+import { log, colour, logProductRow, logError } from './logging.js';
 dotenv.config();
 
 // Countdown Scraper
@@ -43,7 +43,7 @@ if (process.argv.length > 2) {
         // If a url is provided, scrape this url instead of the default urls
         return true;
       } else {
-        log(colour.red, 'Unknown argument provided: ' + arg);
+        logError('Unknown argument provided: ' + arg);
         return false;
       }
     });
@@ -63,41 +63,6 @@ const page = await browser.newPage();
 
 // // Define unnecessary types and ad/tracking urls to reject
 await routePlaywrightExclusions();
-// let typeExclusions = ['image', 'stylesheet', 'media', 'font', 'other'];
-// let urlExclusions = [
-//   'googleoptimize.com',
-//   'gtm.js',
-//   'visitoridentification.js',
-//   'js-agent.newrelic.com',
-//   'cquotient.com',
-//   'googletagmanager.com',
-//   'cloudflareinsights.com',
-//   'dwanalytics',
-//   'edge.adobedc.net',
-// ];
-
-// // Route with exclusions processed
-// await page.route('**/*', async (route) => {
-//   const req = route.request();
-//   let excludeThisRequest = false;
-//   let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
-
-//   urlExclusions.forEach((excludedURL) => {
-//     if (req.url().includes(excludedURL)) excludeThisRequest = true;
-//   });
-
-//   typeExclusions.forEach((excludedType) => {
-//     if (req.resourceType() === excludedType) excludeThisRequest = true;
-//   });
-
-//   if (excludeThisRequest) {
-//     //log(colour.red, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
-//     await route.abort();
-//   } else {
-//     //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
-//     await route.continue();
-//   }
-// });
 
 // Counter and promise to help with looping through each of the scrape URLs
 let pagesScrapedCount = 1;
@@ -117,19 +82,19 @@ urlsToScrape.forEach((url) => {
     // Add query options to url
     url = setUrlOptions(url);
 
-    // Open page with url options now set
-    await page.goto(url);
+    let pageLoadValid = false;
+    try {
+      // Open page with url options now set
+      await page.goto(url);
 
-    // Wait for <cdx-card> html element to dynamically load in,
-    //  this is required to see product data
-    await page.waitForSelector('cdx-card');
+      // Wait for <cdx-card> html element to dynamically load in,
+      //  this is required to see product data
+      await page.waitForSelector('cdx-card');
 
-    // Load all html into Cheerio for easy DOM selection
-    const html = await page.evaluate(() => document.body.innerHTML);
-    const $ = cheerio.load(html);
-    const productEntries = $('cdx-card a.product-entry');
-
-    log(colour.yellow, productEntries.length + ' product entries found');
+      pageLoadValid = true;
+    } catch (error) {
+      logError('Page Timeout after 30 seconds - Skipping this page');
+    }
 
     // Count number of items processed for logging purposes
     let alreadyUpToDateCount = 0;
@@ -137,52 +102,59 @@ urlsToScrape.forEach((url) => {
     let categoryUpdatedCount = 0;
     let newProductsCount = 0;
 
-    // Loop through each product entry, and add desired data into a Product object
-    let promises = productEntries.map(async (index, productEntryElement) => {
-      const product = playwrightElementToProductObject(productEntryElement, url);
+    // If page load is valid, load all html into Cheerio for easy DOM selection
+    if (pageLoadValid) {
+      const html = await page.evaluate(() => document.body.innerHTML);
+      const $ = cheerio.load(html);
+      const productEntries = $('cdx-card a.product-entry');
+      log(colour.yellow, productEntries.length + ' product entries found');
 
-      if (!validateProduct(product)) log(colour.red, 'Product Scrape Invalid: ' + product.name);
+      // Loop through each product entry, and add desired data into a Product object
+      let promises = productEntries.map(async (index, productEntryElement) => {
+        const product = playwrightElementToProductObject(productEntryElement, url);
 
-      if (!dryRunMode && validateProduct(product)) {
-        // Insert or update item into azure cosmosdb
-        const response = await upsertProductToCosmosDB(product);
+        if (!validateProduct(product)) logError('Product Scrape Invalid: ' + product.name);
 
-        // Use response to update logging counters
-        switch (response) {
-          case upsertResponse.AlreadyUpToDate:
-            alreadyUpToDateCount++;
-            break;
-          case upsertResponse.CategoryChanged:
-            categoryUpdatedCount++;
-            break;
-          case upsertResponse.NewProductAdded:
-            newProductsCount++;
-            break;
-          case upsertResponse.PriceChanged:
-            priceChangedCount++;
-            break;
-          default:
-            break;
+        if (!dryRunMode && validateProduct(product)) {
+          // Insert or update item into azure cosmosdb
+          const response = await upsertProductToCosmosDB(product);
+
+          // Use response to update logging counters
+          switch (response) {
+            case upsertResponse.AlreadyUpToDate:
+              alreadyUpToDateCount++;
+              break;
+            case upsertResponse.CategoryChanged:
+              categoryUpdatedCount++;
+              break;
+            case upsertResponse.NewProductAdded:
+              newProductsCount++;
+              break;
+            case upsertResponse.PriceChanged:
+              priceChangedCount++;
+              break;
+            default:
+              break;
+          }
+
+          // Get image url, request hi-res 900px version, and then upload image to azure storage
+          const originalImageUrl: string | undefined = $(productEntryElement)
+            .find('a.product-entry div.productImage-container figure picture img')
+            .attr('src');
+          const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
+
+          await uploadImageToAzureStorage(product, hiresImageUrl as string);
+        } else {
+          // When doing a dry run, log product name - size - price in table format
+          logProductRow(product);
         }
-
-        // Get image url, request hi-res 900px version, and then upload image to azure storage
-        const originalImageUrl: string | undefined = $(productEntryElement)
-          .find('a.product-entry div.productImage-container figure picture img')
-          .attr('src');
-        const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
-
-        await uploadImageToAzureStorage(product, hiresImageUrl as string);
-      } else {
-        // When doing a dry run, log product name - size - price in table format
-        logProductRow(product);
-      }
-    });
-
-    // Wait for entire map of product entries to finish
-    await Promise.all(promises);
+      });
+      // Wait for entire map of product entries to finish
+      await Promise.all(promises);
+    }
 
     // After scraping every item is complete, log how many products were scraped
-    if (!dryRunMode) {
+    if (!dryRunMode && pageLoadValid) {
       log(
         colour.blue,
         `CosmosDB Updated: ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
@@ -366,7 +338,7 @@ async function routePlaywrightExclusions() {
     });
 
     if (excludeThisRequest) {
-      //log(colour.red, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+      //logError(`${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
       await route.abort();
     } else {
       //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);

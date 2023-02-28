@@ -19,13 +19,29 @@ export function log(colour: string, text: string) {
   console.log(`${colour}%s${clear}`, text);
 }
 
-// Log a single product in a one line row
+// Shorthand function for logging with red colour
+export function logError(text: string) {
+  log(colour.red, text);
+}
+
+// Takes 2 colours and flip-flops between them on each function call
+//  is used for printing tables with better readability
+let alternatingRowColour = false;
+function getAlternatingRowColour(colourA: string, colourB: string) {
+  if (alternatingRowColour) alternatingRowColour = false;
+  else if (!alternatingRowColour) alternatingRowColour = true;
+
+  return alternatingRowColour ? colourA : colourB;
+}
+
+// Log a single product in one row, using alternating colours for readability
 export function logProductRow(product: Product) {
-  console.log(`
-    ${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ${product.size
-    ?.slice(0, 16)
-    .padEnd(16)} | $ ${product.currentPrice}
-  `);
+  log(
+    getAlternatingRowColour(colour.cyan, colour.white),
+    `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
+      `${product.size?.slice(0, 16).padEnd(16)} | ` +
+      `$${product.currentPrice.toString().padStart(2)}`
+  );
 }
 
 // Log a specific price change message,

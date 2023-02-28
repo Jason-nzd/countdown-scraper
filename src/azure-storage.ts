@@ -1,14 +1,14 @@
 // Used by index.ts for copying images into Azure Storage blob containers
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
 import * as dotenv from 'dotenv';
-import { colour, log } from './logging.js';
+import { colour, log, logError } from './logging.js';
 import { Product } from './typings';
 dotenv.config();
 
 const containerForOriginalImages = 'countdownimages';
 
 // If images copied over are also to be processed and re-saved by another program,
-//  we can check to see if these files already exist to reduce the server load
+//  we can check to see if these files already exist to reduce the server load.
 const usingProcessedImages = true;
 const containerForProcessedImages = 'transparent-cd-images';
 
@@ -59,7 +59,7 @@ export default async function uploadImageToAzureStorage(product: Product, url: s
       );
       return true;
     } else {
-      log(colour.red, '- Image upload failed: ' + url + ' - status: ' + uploadResponse.copyStatus);
+      logError('- Image upload failed: ' + url + ' - status: ' + uploadResponse.copyStatus);
       return false;
     }
   } catch (e) {
