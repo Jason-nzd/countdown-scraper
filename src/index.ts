@@ -14,13 +14,7 @@ dotenv.config();
 // Scrapes pricing and other info from Countdown's website
 
 // Try to read file urls.txt for a list of URLs, one per line
-const urlsFromFile = await readURLsFromOptionalFile('urls.txt');
-const sampleURLs = [
-  'https://www.countdown.co.nz/shop/browse/pantry/eggs',
-  'https://www.countdown.co.nz/shop/browse/fish-seafood/salmon',
-];
-// If the file is missing or returns empty, use the 2 sampleURLs instead
-let urlsToScrape = urlsFromFile.length > 0 ? urlsFromFile : sampleURLs;
+let urlsToScrape = await readURLsFromOptionalFile('urls.txt');
 
 // Set dryRunMode to true to only log results to console
 // Set false to make use of CosmosDB and Azure Storage.
@@ -61,10 +55,10 @@ const browser = await playwright.webkit.launch({
 });
 const page = await browser.newPage();
 
-// // Define unnecessary types and ad/tracking urls to reject
+// Define unnecessary types and ad/tracking urls to reject
 await routePlaywrightExclusions();
 
-// Counter and promise to help with looping through each of the scrape URLs
+// Counter and promise to help with delayed looping through each of the scrape URLs
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
 
@@ -87,8 +81,7 @@ urlsToScrape.forEach((url) => {
       // Open page with url options now set
       await page.goto(url);
 
-      // Wait for <cdx-card> html element to dynamically load in,
-      //  this is required to see product data
+      // Wait for <cdx-card> html element to dynamically load in, this is required to see product data
       await page.waitForSelector('cdx-card');
 
       pageLoadValid = true;
@@ -179,24 +172,8 @@ urlsToScrape.forEach((url) => {
 });
 
 // Function takes a single playwright element for 'a.product-entry',
-//   then builds and returns a single Product object with desired data
+//   then builds and returns a Product object with desired data
 function playwrightElementToProductObject(element: cheerio.Element, url: string): Product {
-  // Sample DOM for each product (as of Jan-2023)
-  // ----------------------------------------------------
-  //        a.product-entry
-  //            h3                 {title}
-  //            div.product-meta
-  //                product-price
-  //                     h3
-  //                         em     {price dollar section}
-  //                         span   {price cents section}
-  //                 p
-  //                     span.size  {size eg. 400g}
-  //            div.productImage-container
-  //                 figure
-  //                     picture
-  //                         img    {img}
-
   const $ = cheerio.load(element);
 
   let product: Product = {
