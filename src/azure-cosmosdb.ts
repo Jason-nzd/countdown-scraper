@@ -68,7 +68,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
     // If scraped categories are not null and have changed, update it
     else if (
-      scrapedProduct.category != undefined &&
+      scrapedProduct.category?.length != 0 &&
       scrapedProduct.category !== existingProduct.category
     ) {
       await container.items.upsert(scrapedProduct);

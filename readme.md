@@ -39,9 +39,12 @@ AZURE_STORAGE_CONSTRING=
 This is a log output sample when running in dry run mode:
 
 ```cmd
-123567 | Essentials Baby Wipes Fragrance Free               | 80pack           | $2.7
-543789 | Thick Baby Wipes Fragrance Free                    | Refill 240pack   | $15
-567234 | Antiseptic Soothing Cream                          | Tube 50g         | $9.5
+ID     | Name                                               | Size             | Price  | Categories
+--------------------------------------------------------------------------------------------------------------
+762844 | Ocean Blue Smoked Salmon Slices                    | 100g             | $    9 | fish-seafood, salmon
+697201 | Clearly Premium Smoked Salmon Superior Sliced      | 200g             | $ 13.5 | fish-seafood, salmon
+830035 | Ocean Blue Smoked Salmon Slices                    | 180g             | $   12 | fish-seafood, salmon
+ 76719 | Fresh NZ Salmon Fillet 1 2 Pack                    | Min order 400g   | $   51 | fish-seafood, salmon
 ```
 
 This is a sample of a single product stored in CosmosDB. It was re-run at multiple dates to store changing prices:

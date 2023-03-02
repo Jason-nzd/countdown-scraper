@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
 import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
-import { log, colour, logProductRow, logError } from './logging.js';
+import { log, colour, logProductRow, logError, logTableHeader } from './logging.js';
 dotenv.config();
 
 // Countdown Scraper
@@ -14,7 +14,7 @@ dotenv.config();
 // Scrapes pricing and other info from Countdown's website
 
 // Try to read file urls.txt for a list of URLs, one per line
-let urlsToScrape = await readURLsFromOptionalFile('urls.txt');
+let urlsToScrape = await readURLsFromOptionalFile('src/urls.txt');
 
 // Set dryRunMode to true to only log results to console
 // Set false to make use of CosmosDB and Azure Storage.
@@ -101,6 +101,9 @@ urlsToScrape.forEach((url) => {
       const $ = cheerio.load(html);
       const productEntries = $('cdx-card a.product-entry');
       log(colour.yellow, productEntries.length + ' product entries found');
+
+      // Log a per-page table header if using dry mode
+      if (dryRunMode) logTableHeader();
 
       // Loop through each product entry, and add desired data into a Product object
       let promises = productEntries.map(async (index, productEntryElement) => {
@@ -238,14 +241,14 @@ async function readURLsFromOptionalFile(filename: string) {
 
     return arrayOfUrls;
   } catch (error) {
-    log(colour.yellow, 'urls.txt not found, scraping 2 sample URLs instead');
-    return [];
+    log(colour.yellow, 'urls.txt not found, scraping sample URL instead');
+    return ['https://www.countdown.co.nz/shop/browse/pantry/eggs'];
   }
 }
 
 // Derives category names from url, if any categories are available
 // www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
-// returns '[frozen, ice-cream-sorbet, tubs]'
+// returns '[ice-cream-sorbet]'
 export function deriveCategoriesFromUrl(url: string): string[] | undefined {
   // If url doesn't contain /browse/, return no category
   if (url.indexOf('/browse/') < 0) return undefined;
@@ -254,6 +257,14 @@ export function deriveCategoriesFromUrl(url: string): string[] | undefined {
   const categoriesEndIndex = url.indexOf('?');
   const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
   const splitCategories = categoriesString.split('/').slice(2);
+
+  // Exclude categories that are too broad or aren't useful
+  const excludedCategories = ['pantry', 'frozen', 'tubs', 'fridge-deli'];
+  splitCategories.filter((category) => {
+    if (excludedCategories.includes(category)) return false;
+    else return true;
+  });
+
   //console.log(splitCategories);
 
   return splitCategories;

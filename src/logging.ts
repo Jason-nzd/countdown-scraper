@@ -36,12 +36,27 @@ function getAlternatingRowColour(colourA: string, colourB: string) {
 
 // Log a single product in one row, using alternating colours for readability
 export function logProductRow(product: Product) {
+  const categories = product.category != null ? product.category?.join(', ') : '';
   log(
     getAlternatingRowColour(colour.cyan, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
       `${product.size?.slice(0, 16).padEnd(16)} | ` +
-      `$${product.currentPrice.toString().padStart(2)}`
+      `$ ${product.currentPrice.toString().padStart(4).padEnd(4)} | ${categories}`
   );
+}
+
+export function logTableHeader() {
+  console.log(
+    'ID'.padEnd(6) +
+      ' | ' +
+      'Name'.padEnd(50) +
+      ' | ' +
+      'Size'.padEnd(16) +
+      ' | ' +
+      'Price'.padEnd(6) +
+      ' | Categories'
+  );
+  console.log(''.padEnd(120, '-'));
 }
 
 // Log a specific price change message,
