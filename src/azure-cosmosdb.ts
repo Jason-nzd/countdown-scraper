@@ -1,7 +1,14 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
-import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
+import {
+  Container,
+  CosmosClient,
+  Database,
+  FeedOptions,
+  PatchRequestBody,
+  SqlQuerySpec,
+} from '@azure/cosmos';
 import * as dotenv from 'dotenv';
-import { logPriceChange, logError } from './logging.js';
+import { logPriceChange, logError, log, colour } from './logging.js';
 import { Product, upsertResponse } from './typings';
 dotenv.config();
 
@@ -66,15 +73,20 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       return upsertResponse.PriceChanged;
     }
 
-    // If scraped categories are not null and have changed, update it
-    else if (
-      scrapedProduct.category?.length != 0 &&
-      scrapedProduct.category !== existingProduct.category
-    ) {
-      await container.items.upsert(scrapedProduct);
-      return upsertResponse.CategoryChanged;
-    } else {
+    // Categories have changed and should be updated
+    else if (scrapedProduct.category !== existingProduct.category) {
+      // If no specific categories were scraped, and the existing product already has some,
+      //  then skip updating
+      if (scrapedProduct.category[0] == 'Uncategorised' && existingProduct.category != null) {
+        return upsertResponse.AlreadyUpToDate;
+
+        // If categories are new, we can update the product
+      } else {
+        await container.items.upsert(scrapedProduct);
+        return upsertResponse.CategoryChanged;
+      }
       // Nothing has changed, no upsert is required
+    } else {
       return upsertResponse.AlreadyUpToDate;
     }
 
@@ -104,15 +116,15 @@ export async function customQuery(): Promise<void> {
   const options: FeedOptions = {
     maxItemCount: 10,
   };
-  const secondsDelayBetweenBatches = 4;
+  const secondsDelayBetweenBatches = 20;
   const querySpec: SqlQuerySpec = {
-    query: 'SELECT * FROM products p WHERE ARRAY_CONTAINS(p.priceHistory, null)',
+    query: 'SELECT * FROM products p WHERE NOT IS_DEFINED(p.lastUpdated)',
   };
 
   const response = await container.items.query(querySpec, options);
 
   let batchCount = 0;
-  const maxBatchCount = 10;
+  const maxBatchCount = 100;
   let continueFetching = true;
 
   await (async () => {
@@ -128,14 +140,20 @@ export async function customQuery(): Promise<void> {
     return new Promise<void>((resolve) =>
       setTimeout(async () => {
         const batch = await response.fetchNext();
+        log(colour.green, 'Fetch Cost: ' + batch.requestCharge);
         const products = batch.resources as Product[];
 
         products.forEach(async (product) => {
-          console.log('Deleting: ' + product.name);
+          console.log('Updating: ' + product.name);
           var item = await container.item(product.id, product.name);
-          console.log(item.id);
-          var response = await item.delete<Product>();
-          console.log(response.statusCode);
+
+          let dbProduct: Product = (await item.read()).resource;
+          dbProduct.lastUpdated = dbProduct.priceHistory[dbProduct.priceHistory.length - 1].date;
+
+          dbProduct.sourceSite = 'countdown.co.nz';
+
+          var response = await container.items.upsert(dbProduct);
+          //console.log(response.statusCode);
         });
 
         if (batchCount++ === maxBatchCount) continueFetching = false;

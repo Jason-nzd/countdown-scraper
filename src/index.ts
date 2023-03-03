@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
-import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { customQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
 import { log, colour, logProductRow, logError, logTableHeader } from './logging.js';
 dotenv.config();
@@ -249,25 +249,26 @@ async function readURLsFromOptionalFile(filename: string) {
 // Derives category names from url, if any categories are available
 // www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
 // returns '[ice-cream-sorbet]'
-export function deriveCategoriesFromUrl(url: string): string[] | undefined {
+export function deriveCategoriesFromUrl(url: string): string[] {
   // If url doesn't contain /browse/, return no category
-  if (url.indexOf('/browse/') < 0) return undefined;
+  if (url.indexOf('/browse/') > 0) {
+    const categoriesStartIndex = url.indexOf('/browse/');
+    const categoriesEndIndex = url.indexOf('?');
+    const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
+    const splitCategories = categoriesString.split('/').slice(2);
 
-  const categoriesStartIndex = url.indexOf('/browse/');
-  const categoriesEndIndex = url.indexOf('?');
-  const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
-  const splitCategories = categoriesString.split('/').slice(2);
+    // Exclude categories that are too broad or aren't useful
+    const excludedCategories = ['pantry', 'frozen', 'tubs', 'fridge-deli'];
+    splitCategories.filter((category) => {
+      if (excludedCategories.includes(category)) return false;
+      else return true;
+    });
 
-  // Exclude categories that are too broad or aren't useful
-  const excludedCategories = ['pantry', 'frozen', 'tubs', 'fridge-deli'];
-  splitCategories.filter((category) => {
-    if (excludedCategories.includes(category)) return false;
-    else return true;
-  });
-
-  //console.log(splitCategories);
-
-  return splitCategories;
+    return splitCategories;
+  } else {
+    // If no useful categories were found, return Uncategorised
+    return ['Uncategorised'];
+  }
 }
 
 // Sets url query options for optimal results
