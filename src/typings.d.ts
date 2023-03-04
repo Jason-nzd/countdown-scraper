@@ -15,9 +15,9 @@ export interface DatedPrice {
 }
 
 export const enum upsertResponse {
+  NewProduct,
   PriceChanged,
-  CategoryChanged,
-  NewProductAdded,
+  InfoChanged,
   AlreadyUpToDate,
   Failed,
 }

@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
-import { customQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
 import { log, colour, logProductRow, logError, logTableHeader } from './logging.js';
 dotenv.config();
@@ -15,6 +15,10 @@ dotenv.config();
 
 // Try to read file urls.txt for a list of URLs, one per line
 let urlsToScrape = await readURLsFromOptionalFile('src/urls.txt');
+
+// Define the delay between each page scrape. This helps spread the database write load,
+//  and makes the scraper appear less bot-like.
+const secondsBetweenEachPageScrape = 22;
 
 // Set dryRunMode to true to only log results to console
 // Set false to make use of CosmosDB and Azure Storage.
@@ -43,10 +47,6 @@ if (process.argv.length > 2) {
     });
   }
 }
-
-// Define the delay between each page scrape. This helps spread the database write load,
-//  and makes the scraper appear less bot-like.
-const secondsBetweenEachPageScrape = 31;
 
 // Create a playwright headless browser using webkit
 log(colour.yellow, 'Launching Headless Browser..');
@@ -92,7 +92,7 @@ urlsToScrape.forEach((url) => {
     // Count number of items processed for logging purposes
     let alreadyUpToDateCount = 0;
     let priceChangedCount = 0;
-    let categoryUpdatedCount = 0;
+    let infoUpdatedCount = 0;
     let newProductsCount = 0;
 
     // If page load is valid, load all html into Cheerio for easy DOM selection
@@ -120,10 +120,10 @@ urlsToScrape.forEach((url) => {
             case upsertResponse.AlreadyUpToDate:
               alreadyUpToDateCount++;
               break;
-            case upsertResponse.CategoryChanged:
-              categoryUpdatedCount++;
+            case upsertResponse.InfoChanged:
+              infoUpdatedCount++;
               break;
-            case upsertResponse.NewProductAdded:
+            case upsertResponse.NewProduct:
               newProductsCount++;
               break;
             case upsertResponse.PriceChanged:
@@ -154,7 +154,7 @@ urlsToScrape.forEach((url) => {
       log(
         colour.blue,
         `CosmosDB Updated: ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
-          `${categoryUpdatedCount} updated categories, ${alreadyUpToDateCount} already up-to-date`
+          `${infoUpdatedCount} updated info, ${alreadyUpToDateCount} already up-to-date`
       );
     }
 
@@ -249,12 +249,16 @@ async function readURLsFromOptionalFile(filename: string) {
 // Derives category names from url, if any categories are available
 // www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
 // returns '[ice-cream-sorbet]'
-export function deriveCategoriesFromUrl(url: string): string[] {
+function deriveCategoriesFromUrl(url: string): string[] {
   // If url doesn't contain /browse/, return no category
   if (url.indexOf('/browse/') > 0) {
     const categoriesStartIndex = url.indexOf('/browse/');
     const categoriesEndIndex = url.indexOf('?');
     const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
+
+    // Rename categories to normalised category names
+    categoriesString.replace('/ice-cream-sorbet/tubs', '/ice-cream');
+
     const splitCategories = categoriesString.split('/').slice(2);
 
     // Exclude categories that are too broad or aren't useful

@@ -1,12 +1,5 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
-import {
-  Container,
-  CosmosClient,
-  Database,
-  FeedOptions,
-  PatchRequestBody,
-  SqlQuerySpec,
-} from '@azure/cosmos';
+import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { logPriceChange, logError, log, colour } from './logging.js';
 import { Product, upsertResponse } from './typings';
@@ -44,70 +37,118 @@ try {
 // Function for insert/updating a product object to CosmosDB,
 //  returns an upsertResponse based on if and how the Product was updated
 export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<upsertResponse> {
-  let response: upsertResponse | undefined = undefined;
+  try {
+    // Check CosmosDB for any existing item using id and name as the partition key
+    const cosmosResponse = await container
+      .item(scrapedProduct.id as string, scrapedProduct.name)
+      .read();
 
-  // Check CosmosDB for any existing item using id and name as the partition key
-  const cosmosResponse = await container
-    .item(scrapedProduct.id as string, scrapedProduct.name)
-    .read();
+    // If an existing item was found in CosmosDB, check for update values before uploading
+    if (cosmosResponse.statusCode === 200) {
+      const dbProduct = (await cosmosResponse.resource) as Product;
+      const updatedProduct = buildUpdatedProduct(scrapedProduct, dbProduct);
 
-  // If an existing item was found in CosmosDB, run various checks before updating
-  if (cosmosResponse.statusCode === 200) {
-    let existingProduct = (await cosmosResponse.resource) as Product;
+      if (updatedProduct === undefined) return upsertResponse.AlreadyUpToDate;
+      else {
+        // Send updated product to CosmosDB
+        await container.items.upsert(updatedProduct);
 
-    // If price has changed, and not on the same day
-    if (
-      existingProduct.currentPrice != scrapedProduct.currentPrice &&
-      existingProduct.lastUpdated != scrapedProduct.lastUpdated
-    ) {
-      logPriceChange(existingProduct, scrapedProduct.currentPrice);
-
-      // Push scraped priceHistory into existing priceHistory array
-      existingProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
-
-      // Replace the scraped priceHistory with the updated version
-      scrapedProduct.priceHistory = existingProduct.priceHistory;
-
-      // Send updated product to CosmosDB
-      await container.items.upsert(scrapedProduct);
-      return upsertResponse.PriceChanged;
-    }
-
-    // Categories have changed and should be updated
-    else if (scrapedProduct.category !== existingProduct.category) {
-      // If no specific categories were scraped, and the existing product already has some,
-      //  then skip updating
-      if (scrapedProduct.category[0] == 'Uncategorised' && existingProduct.category != null) {
-        return upsertResponse.AlreadyUpToDate;
-
-        // If categories are new, we can update the product
-      } else {
-        await container.items.upsert(scrapedProduct);
-        return upsertResponse.CategoryChanged;
+        // UpsertResponse based on price or info changed
+        if (dbProduct.currentPrice != updatedProduct.currentPrice) {
+          return upsertResponse.PriceChanged;
+        } else {
+          return upsertResponse.InfoChanged;
+        }
       }
-      // Nothing has changed, no upsert is required
-    } else {
-      return upsertResponse.AlreadyUpToDate;
-    }
+    } else if (cosmosResponse.statusCode === 404) {
+      // If product doesn't yet exist in CosmosDB, upsert as-is
+      await container.items.create(scrapedProduct);
 
-    // If product doesn't yet exist in CosmosDB,
-  } else if (cosmosResponse.statusCode === 404) {
+      console.log(
+        `    New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
+          ` - $${scrapedProduct.currentPrice}`
+      );
+
+      return upsertResponse.NewProduct;
+    } else if (cosmosResponse.statusCode === 409) {
+      logError(`Conflicting ID found for product ${scrapedProduct.name}`);
+      return upsertResponse.Failed;
+    } else {
+      // If CosmoDB returns a status code other than 200 or 404, manage other errors here
+      logError(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
+      return upsertResponse.Failed;
+    }
+  } catch (error) {
+    return upsertResponse.Failed;
+  }
+}
+
+function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Product | undefined {
+  // If price has changed, and not on the same day
+  if (
+    dbProduct.currentPrice != scrapedProduct.currentPrice &&
+    dbProduct.lastUpdated != scrapedProduct.lastUpdated
+  ) {
+    // Push scraped priceHistory into existing priceHistory array
+    dbProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
+
+    // Set the scrapedProduct to use the updated priceHistory
+    scrapedProduct.priceHistory = dbProduct.priceHistory;
+
+    // Return completed Product ready for uploading
+    logPriceChange(dbProduct, scrapedProduct.currentPrice);
+    return scrapedProduct;
+  }
+
+  // If category has changed and is not Uncategorised, update Product
+  else if (
+    dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') &&
+    scrapedProduct.category[0] !== 'Uncategorised'
+  ) {
     console.log(
-      `    New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)} - $${
-        scrapedProduct.currentPrice
-      }`
+      dbProduct.name.padEnd(60) +
+        'categories changed:\t' +
+        `${dbProduct.category.join(' ')} / ${scrapedProduct.category.join(' ')}`
     );
 
-    // Send completed Product object to CosmosDB
-    await container.items.create(scrapedProduct);
-    return upsertResponse.NewProductAdded;
-  } else if (cosmosResponse.statusCode === 409) {
-    logError(`Conflicting ID found for product ${scrapedProduct.name}`);
-    return upsertResponse.Failed;
+    // Update category
+    dbProduct.category = scrapedProduct.category;
+
+    // Also set size and sourceSite
+    dbProduct.sourceSite = scrapedProduct.sourceSite;
+    dbProduct.size = scrapedProduct.size;
+
+    // Return completed Product ready for uploading
+    return dbProduct;
+
+    // If only size or sourceSite have changed, update Product
+  } else if (
+    dbProduct.sourceSite !== scrapedProduct.sourceSite ||
+    dbProduct.size !== scrapedProduct.size
+  ) {
+    console.log(
+      dbProduct.name.padEnd(60) +
+        'source/size changed:\t' +
+        dbProduct.sourceSite +
+        ' / ' +
+        scrapedProduct.sourceSite +
+        '\t' +
+        dbProduct.name.padEnd(60) +
+        'changed:\t' +
+        dbProduct.size +
+        ' / ' +
+        scrapedProduct.size
+    );
+
+    // Set size and sourceSite
+    dbProduct.sourceSite = scrapedProduct.sourceSite;
+    dbProduct.size = scrapedProduct.size;
+
+    // Return completed Product ready for uploading
+    return dbProduct;
   } else {
-    // If CosmoDB returns a status code other than 200 or 404, manage other errors here
-    logError(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
-    return upsertResponse.Failed;
+    // Nothing has changed, no upsert is required
+    return undefined;
   }
 }
 
