@@ -66,7 +66,7 @@ export function logPriceChange(product: Product, newPrice: Number) {
   log(
     priceIncreased ? colour.red : colour.green,
     'Price ' +
-      (priceIncreased ? 'Increased: ' : 'Decreased: ') +
+      (priceIncreased ? 'Up  : ' : 'Down: ') +
       product.name.slice(0, 47).padEnd(47) +
       ' - from $' +
       product.currentPrice +

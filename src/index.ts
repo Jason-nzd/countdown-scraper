@@ -13,50 +13,23 @@ dotenv.config();
 // -----------------
 // Scrapes pricing and other info from Countdown's website
 
-// Try to read file urls.txt for a list of URLs, one per line
-let urlsToScrape = await readURLsFromOptionalFile('src/urls.txt');
+// Playwright
+let browser: playwright.Browser;
+let page: playwright.Page;
 
-// Define the delay between each page scrape. This helps spread the database write load,
-//  and makes the scraper appear less bot-like.
+// Define delay between each page scrape. This spreads the DB write load, and is less bot-like.
 const secondsBetweenEachPageScrape = 22;
+
+// Try to read file urls.txt for a list of URLs, one per line
+let urlsToScrape = readURLsFromOptionalFile('src/urls.txt');
 
 // Set dryRunMode to true to only log results to console
 // Set false to make use of CosmosDB and Azure Storage.
 let dryRunMode = false;
 
-// Handle arguments, can potentially be nothing, dry-run-mode, or custom urls to scrape
-if (process.argv.length > 2) {
-  // Slice out the first 2 arguments, as they are not user-provided
-  const userArgs = process.argv.slice(2, process.argv.length);
+handleArguments();
 
-  if (userArgs.length === 1 && userArgs[0] === 'dry-run-mode') {
-    dryRunMode = true;
-  } else {
-    // Iterate through all user args, filtering out args not recognised as URLs
-    urlsToScrape = userArgs.filter((arg) => {
-      if (arg.includes('dry-run-mode')) {
-        dryRunMode = true;
-        return false;
-      } else if (arg.includes('.co.nz')) {
-        // If a url is provided, scrape this url instead of the default urls
-        return true;
-      } else {
-        logError('Unknown argument provided: ' + arg);
-        return false;
-      }
-    });
-  }
-}
-
-// Create a playwright headless browser using webkit
-log(colour.yellow, 'Launching Headless Browser..');
-const browser = await playwright.webkit.launch({
-  headless: true,
-});
-const page = await browser.newPage();
-
-// Define unnecessary types and ad/tracking urls to reject
-await routePlaywrightExclusions();
+await establishPlaywrightPage();
 
 // Counter and promise to help with delayed looping through each of the scrape URLs
 let pagesScrapedCount = 1;
@@ -153,7 +126,7 @@ urlsToScrape.forEach((url) => {
     if (!dryRunMode && pageLoadValid) {
       log(
         colour.blue,
-        `CosmosDB Updated: ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
+        `CosmosDB: ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
           `${infoUpdatedCount} updated info, ${alreadyUpToDateCount} already up-to-date`
       );
     }
@@ -173,6 +146,44 @@ urlsToScrape.forEach((url) => {
     });
   });
 });
+
+function handleArguments() {
+  // Handle arguments, can potentially be nothing, dry-run-mode, or custom urls to scrape
+  if (process.argv.length > 2) {
+    // Slice out the first 2 arguments, as they are not user-provided
+    const userArgs = process.argv.slice(2, process.argv.length);
+
+    if (userArgs.length === 1 && userArgs[0] === 'dry-run-mode') {
+      dryRunMode = true;
+    } else {
+      // Iterate through all user args, filtering out args not recognised as URLs
+      urlsToScrape = userArgs.filter((arg) => {
+        if (arg.includes('dry-run-mode')) {
+          dryRunMode = true;
+          return false;
+        } else if (arg.includes('.co.nz')) {
+          // If a url is provided, scrape this url instead of the default urls
+          return true;
+        } else {
+          logError('Unknown argument provided: ' + arg);
+          return false;
+        }
+      });
+    }
+  }
+}
+
+async function establishPlaywrightPage() {
+  // Create a playwright headless browser using webkit
+  log(colour.yellow, 'Launching Headless Browser..');
+  browser = await playwright.webkit.launch({
+    headless: true,
+  });
+  page = await browser.newPage();
+
+  // Define unnecessary types and ad/tracking urls to reject
+  await routePlaywrightExclusions();
+}
 
 // Function takes a single playwright element for 'a.product-entry',
 //   then builds and returns a Product object with desired data
@@ -228,7 +239,7 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
 }
 
 // Tries to read from file urls.txt containing many urls with one url per line
-async function readURLsFromOptionalFile(filename: string) {
+function readURLsFromOptionalFile(filename: string) {
   let arrayOfUrls: string[] = [];
 
   try {
@@ -249,7 +260,7 @@ async function readURLsFromOptionalFile(filename: string) {
 // Derives category names from url, if any categories are available
 // www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
 // returns '[ice-cream-sorbet]'
-function deriveCategoriesFromUrl(url: string): string[] {
+export function deriveCategoriesFromUrl(url: string): string[] {
   // If url doesn't contain /browse/, return no category
   if (url.indexOf('/browse/') > 0) {
     const categoriesStartIndex = url.indexOf('/browse/');
@@ -259,11 +270,11 @@ function deriveCategoriesFromUrl(url: string): string[] {
     // Rename categories to normalised category names
     categoriesString.replace('/ice-cream-sorbet/tubs', '/ice-cream');
 
-    const splitCategories = categoriesString.split('/').slice(2);
-
     // Exclude categories that are too broad or aren't useful
     const excludedCategories = ['pantry', 'frozen', 'tubs', 'fridge-deli'];
-    splitCategories.filter((category) => {
+
+    // Extract individual categories into array
+    let splitCategories = categoriesString.split('/').filter((category) => {
       if (excludedCategories.includes(category)) return false;
       else return true;
     });

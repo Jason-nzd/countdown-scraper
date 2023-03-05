@@ -106,9 +106,9 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     scrapedProduct.category[0] !== 'Uncategorised'
   ) {
     console.log(
-      dbProduct.name.padEnd(60) +
-        'categories changed:\t' +
-        `${dbProduct.category.join(' ')} / ${scrapedProduct.category.join(' ')}`
+      dbProduct.name.padEnd(40) +
+        'categories: ' +
+        `${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
     );
 
     // Update category
