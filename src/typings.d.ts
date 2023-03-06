@@ -3,14 +3,14 @@ export interface Product {
   name: string;
   size?: string;
   currentPrice: number;
-  lastUpdated: string;
+  lastUpdated: Date;
   priceHistory: DatedPrice[];
   sourceSite: string;
   category: string[];
 }
 
 export interface DatedPrice {
-  date: string;
+  date: Date;
   price: number;
 }
 

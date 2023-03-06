@@ -87,7 +87,7 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
   // If price has changed, and not on the same day
   if (
     dbProduct.currentPrice != scrapedProduct.currentPrice &&
-    dbProduct.lastUpdated != scrapedProduct.lastUpdated
+    dbProduct.lastUpdated.toDateString() != scrapedProduct.lastUpdated.toDateString()
   ) {
     // Push scraped priceHistory into existing priceHistory array
     dbProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
@@ -148,13 +148,22 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
 
 // Function for running custom queries - used primarily for debugging
 export async function customQuery(): Promise<void> {
+  // Establish CosmosDB connection
+  const containerResponse = await database.containers.createIfNotExists({
+    id: 'products-temp',
+    partitionKey: { paths: partitionKey },
+  });
+  let container2 = containerResponse.container;
+
   const options: FeedOptions = {
-    maxItemCount: 10,
+    maxItemCount: 20,
   };
-  const secondsDelayBetweenBatches = 20;
+  const secondsDelayBetweenBatches = 30;
   const querySpec: SqlQuerySpec = {
-    query: 'SELECT * FROM products p WHERE NOT IS_DEFINED(p.lastUpdated)',
+    query: "SELECT * FROM products p where p.name='Countdown NZ Beef Mince 18 Fat Grass Fed'",
   };
+
+  log(colour.yellow, querySpec.query);
 
   const response = await container.items.query(querySpec, options);
 
@@ -175,20 +184,31 @@ export async function customQuery(): Promise<void> {
     return new Promise<void>((resolve) =>
       setTimeout(async () => {
         const batch = await response.fetchNext();
-        log(colour.green, 'Fetch Cost: ' + batch.requestCharge);
         const products = batch.resources as Product[];
 
+        log(colour.green, 'Batch: ' + batchCount + ' - Items: ' + products.length);
+
         products.forEach(async (product) => {
-          console.log('Updating: ' + product.name);
+          console.log('Duplicating: ' + product.name);
+
           var item = await container.item(product.id, product.name);
 
-          let dbProduct: Product = (await item.read()).resource;
-          dbProduct.lastUpdated = dbProduct.priceHistory[dbProduct.priceHistory.length - 1].date;
+          //let dbProduct: Product = (await item.read()).resource;
+          let dbItem = (await item.read()).resource;
 
-          dbProduct.sourceSite = 'countdown.co.nz';
+          let oldDateString = dbItem.lastUpdated;
+          let utcDate = new Date(oldDateString);
+          dbItem.lastUpdated = utcDate;
+          dbItem.id = 'delete' + batchCount;
 
-          var response = await container.items.upsert(dbProduct);
-          //console.log(response.statusCode);
+          var response = await container2.items.upsert(dbItem);
+
+          //dbProduct.lastUpdated = dbProduct.priceHistory[dbProduct.priceHistory.length - 1].date;
+
+          //dbProduct.sourceSite = 'countdown.co.nz';
+
+          //var response = await container.items.upsert(dbProduct);
+          console.log(response.statusCode);
         });
 
         if (batchCount++ === maxBatchCount) continueFetching = false;

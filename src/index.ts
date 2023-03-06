@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import uploadImageToAzureStorage from './azure-storage.js';
-import { upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { customQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
 import { log, colour, logProductRow, logError, logTableHeader } from './logging.js';
 dotenv.config();
@@ -213,7 +213,7 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
     category: deriveCategoriesFromUrl(url),
 
     // Store today's date
-    lastUpdated: new Date().toDateString(),
+    lastUpdated: new Date(),
 
     // These values will later be overwritten
     priceHistory: [],
@@ -236,7 +236,7 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
 
   // Create a DatedPrice object, which may be added into the product if needed
   const todaysDatedPrice: DatedPrice = {
-    date: new Date().toDateString(),
+    date: new Date(),
     price: product.currentPrice,
   };
   product.priceHistory = [todaysDatedPrice];
