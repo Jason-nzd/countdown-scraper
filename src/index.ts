@@ -73,7 +73,13 @@ urlsToScrape.forEach((url) => {
       const html = await page.evaluate(() => document.body.innerHTML);
       const $ = cheerio.load(html);
       const productEntries = $('cdx-card a.product-entry');
-      log(colour.yellow, productEntries.length + ' product entries found');
+      log(
+        colour.yellow,
+        productEntries.length +
+          ' product entries found with categories: [' +
+          deriveCategoriesFromUrl(url).join(', ') +
+          ']'
+      );
 
       // Log a per-page table header if using dry mode
       if (dryRunMode) logTableHeader();
@@ -112,7 +118,7 @@ urlsToScrape.forEach((url) => {
             .attr('src');
           const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-          await uploadImageToAzureStorage(product, hiresImageUrl as string);
+          //await uploadImageToAzureStorage(product, hiresImageUrl as string);
         } else {
           // When doing a dry run, log product name - size - price in table format
           logProductRow(product);
@@ -239,7 +245,7 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
 }
 
 // Tries to read from file urls.txt containing many urls with one url per line
-function readURLsFromOptionalFile(filename: string) {
+export function readURLsFromOptionalFile(filename: string): string[] {
   let arrayOfUrls: string[] = [];
 
   try {
@@ -271,7 +277,17 @@ export function deriveCategoriesFromUrl(url: string): string[] {
     categoriesString.replace('/ice-cream-sorbet/tubs', '/ice-cream');
 
     // Exclude categories that are too broad or aren't useful
-    const excludedCategories = ['pantry', 'frozen', 'tubs', 'fridge-deli'];
+    const excludedCategories = [
+      'browse',
+      'biscuits-crackers',
+      'snacks-sweets',
+      'frozen-meals-snacks',
+      'pantry',
+      'frozen',
+      'tubs',
+      'fridge-deli',
+      'other-frozen-vegetables',
+    ];
 
     // Extract individual categories into array
     let splitCategories = categoriesString.split('/').filter((category) => {
@@ -279,11 +295,11 @@ export function deriveCategoriesFromUrl(url: string): string[] {
       else return true;
     });
 
-    return splitCategories;
-  } else {
-    // If no useful categories were found, return Uncategorised
-    return ['Uncategorised'];
+    // Return categories if any,
+    if (splitCategories.length > 0) return splitCategories;
   }
+  // If no useful categories were found, return Uncategorised
+  return ['Uncategorised'];
 }
 
 // Sets url query options for optimal results

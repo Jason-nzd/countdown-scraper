@@ -65,7 +65,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       await container.items.create(scrapedProduct);
 
       console.log(
-        `    New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
+        `New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
           ` - $${scrapedProduct.currentPrice}`
       );
 
@@ -105,12 +105,6 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') &&
     scrapedProduct.category[0] !== 'Uncategorised'
   ) {
-    console.log(
-      dbProduct.name.padEnd(40) +
-        'categories: ' +
-        `${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
-    );
-
     // Update category
     dbProduct.category = scrapedProduct.category;
 
