@@ -41,7 +41,8 @@ export function logProductRow(product: Product) {
     getAlternatingRowColour(colour.cyan, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
       `${product.size?.slice(0, 16).padEnd(16)} | ` +
-      `$ ${product.currentPrice.toString().padStart(4).padEnd(4)} | ${categories}`
+      `$ ${product.currentPrice.toString().padStart(4).padEnd(4)} | ${categories}` +
+      ` | ${product.lastUpdated.toDateString()}`
   );
 }
 

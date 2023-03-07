@@ -2,7 +2,7 @@
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { logPriceChange, logError, log, colour } from './logging.js';
-import { Product, upsertResponse } from './typings';
+import { DatedPrice, Product, upsertResponse } from './typings';
 dotenv.config();
 
 const cosmosDatabaseName = 'supermarket-prices';
@@ -120,19 +120,19 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
     dbProduct.size !== scrapedProduct.size
   ) {
-    console.log(
-      dbProduct.name.padEnd(60) +
-        'source/size changed:\t' +
-        dbProduct.sourceSite +
-        ' / ' +
-        scrapedProduct.sourceSite +
-        '\t' +
-        dbProduct.name.padEnd(60) +
-        'changed:\t' +
-        dbProduct.size +
-        ' / ' +
-        scrapedProduct.size
-    );
+    // console.log(
+    //   dbProduct.name.padEnd(60) +
+    //     'source/size changed:\t' +
+    //     dbProduct.sourceSite +
+    //     ' / ' +
+    //     scrapedProduct.sourceSite +
+    //     '\t' +
+    //     dbProduct.name.padEnd(60) +
+    //     'changed:\t' +
+    //     dbProduct.size +
+    //     ' / ' +
+    //     scrapedProduct.size
+    // );
 
     // Set size and sourceSite
     dbProduct.sourceSite = scrapedProduct.sourceSite;
@@ -148,19 +148,12 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
 
 // Function for running custom queries - used primarily for debugging
 export async function customQuery(): Promise<void> {
-  // Establish CosmosDB connection
-  const containerResponse = await database.containers.createIfNotExists({
-    id: 'products-temp',
-    partitionKey: { paths: partitionKey },
-  });
-  let container2 = containerResponse.container;
-
   const options: FeedOptions = {
-    maxItemCount: 20,
+    maxItemCount: 10,
   };
-  const secondsDelayBetweenBatches = 30;
+  const secondsDelayBetweenBatches = 5;
   const querySpec: SqlQuerySpec = {
-    query: "SELECT * FROM products p where p.name='Countdown NZ Beef Mince 18 Fat Grass Fed'",
+    query: "SELECT * FROM products p where startswith(p.lastUpdated, 'Sun', false)",
   };
 
   log(colour.yellow, querySpec.query);
@@ -185,30 +178,44 @@ export async function customQuery(): Promise<void> {
       setTimeout(async () => {
         const batch = await response.fetchNext();
         const products = batch.resources as Product[];
+        const items = batch.resources;
 
         log(colour.green, 'Batch: ' + batchCount + ' - Items: ' + products.length);
 
-        products.forEach(async (product) => {
-          console.log('Duplicating: ' + product.name);
+        items.forEach(async (item) => {
+          console.log(batchCount + ' - ' + item.name);
 
-          var item = await container.item(product.id, product.name);
+          // Fix date format
+          let oldDateString: string = item.lastUpdated;
+          let utcDate: Date = new Date(oldDateString);
+          item.lastUpdated = utcDate;
 
-          //let dbProduct: Product = (await item.read()).resource;
-          let dbItem = (await item.read()).resource;
+          item.priceHistory.forEach((element: DatedPrice) => {
+            let utcDate: Date = new Date(element.date);
+            element.date = utcDate;
+          });
 
-          let oldDateString = dbItem.lastUpdated;
-          let utcDate = new Date(oldDateString);
-          dbItem.lastUpdated = utcDate;
-          dbItem.id = 'delete' + batchCount;
+          let p: Product = item as Product;
 
-          var response = await container2.items.upsert(dbItem);
+          // Fix blank categories
+          if (typeof p.category === typeof ['string']) {
+            if (p.category.length === 0) p.category = ['Uncategorised'];
+            p.category = p.category.filter((value) => {
+              if (value === '' || value === null) return false;
+              else return true;
+            });
+          } else {
+            p.category = ['Uncategorised'];
+          }
 
-          //dbProduct.lastUpdated = dbProduct.priceHistory[dbProduct.priceHistory.length - 1].date;
+          // Fix sourceSite
+          if (p.sourceSite.includes('countdown.co.nz') && p.sourceSite.length > 17)
+            p.sourceSite = 'countdown.co.nz';
 
-          //dbProduct.sourceSite = 'countdown.co.nz';
+          let cleanedProduct = cleanProductFields(p);
 
-          //var response = await container.items.upsert(dbProduct);
-          console.log(response.statusCode);
+          var response = await container.items.upsert<Product>(cleanedProduct);
+          //console.log(response.statusCode);
         });
 
         if (batchCount++ === maxBatchCount) continueFetching = false;
@@ -217,4 +224,20 @@ export async function customQuery(): Promise<void> {
       }, secondsDelayBetweenBatches * 1000)
     );
   }
+}
+
+// Removes undesired fields that CosmosDB creates
+export function cleanProductFields(document: Product): Product {
+  let { id, name, currentPrice, size, sourceSite, priceHistory, category, lastUpdated } = document;
+  const cleanedProduct: Product = {
+    id,
+    name,
+    currentPrice,
+    size,
+    sourceSite,
+    priceHistory,
+    category,
+    lastUpdated,
+  };
+  return cleanedProduct;
 }

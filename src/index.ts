@@ -18,7 +18,7 @@ let browser: playwright.Browser;
 let page: playwright.Page;
 
 // Define delay between each page scrape. This spreads the DB write load, and is less bot-like.
-const secondsBetweenEachPageScrape = 22;
+const secondsBetweenEachPageScrape = 14;
 
 // Try to read file urls.txt for a list of URLs, one per line
 let urlsToScrape = readURLsFromOptionalFile('src/urls.txt');
@@ -292,6 +292,8 @@ export function deriveCategoriesFromUrl(url: string): string[] {
     // Extract individual categories into array
     let splitCategories = categoriesString.split('/').filter((category) => {
       if (excludedCategories.includes(category)) return false;
+      if (category === '') return false;
+      if (category.length < 3) return false;
       else return true;
     });
 
