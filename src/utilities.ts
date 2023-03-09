@@ -1,4 +1,5 @@
 import { Product } from './typings';
+import { readFileSync } from 'fs';
 
 export const colour = {
   red: '\x1b[31m',
@@ -74,4 +75,43 @@ export function logPriceChange(product: Product, newPrice: Number) {
       ' to $' +
       newPrice
   );
+}
+
+// Parses urls and optimises query parameters
+export function parseAndOptimiseURL(
+  url: string,
+  urlShouldContain: string,
+  replaceQueryParams: string = ''
+): string | undefined {
+  // If string contains desired string, such as .co.nz, it should be a URL
+  if (url.includes(urlShouldContain)) {
+    let cleanURL = url;
+
+    // If url contains ? it has query options already set
+    if (url.includes('?')) {
+      // Strip any existing query options off of URL
+      cleanURL = url.substring(0, url.indexOf('?'));
+    }
+    // Replace query parameters with optimised ones,
+    //  such as limiting to certain sellers,
+    //  or showing a higher number of products
+    cleanURL += replaceQueryParams;
+
+    // Return cleaned url
+    return cleanURL;
+  } else return undefined;
+}
+
+// Tries to read from file containing one url per line
+export function readLinesFromTextFile(filename: string): string[] {
+  try {
+    const file = readFileSync(filename, 'utf-8');
+    const result = file.split(/\r?\n/).filter((line) => {
+      if (line.trim().length > 0) return true;
+      else return false;
+    });
+    return result;
+  } catch (error) {
+    throw 'Error reading ' + filename;
+  }
 }

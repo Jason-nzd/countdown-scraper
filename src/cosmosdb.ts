@@ -1,7 +1,7 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
-import { logPriceChange, logError, log, colour } from './logging.js';
+import { logPriceChange, logError, log, colour } from './utilities.js';
 import { DatedPrice, Product, upsertResponse } from './typings';
 dotenv.config();
 

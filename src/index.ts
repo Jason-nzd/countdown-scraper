@@ -1,34 +1,47 @@
 import playwright from 'playwright';
 import * as cheerio from 'cheerio';
-import { readFileSync } from 'fs';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
-import uploadImageToAzureStorage from './azure-storage.js';
-import { customQuery, upsertProductToCosmosDB } from './azure-cosmosdb.js';
+import { upsertProductToCosmosDB } from './cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
-import { log, colour, logProductRow, logError, logTableHeader } from './logging.js';
+import {
+  log,
+  colour,
+  logProductRow,
+  logError,
+  logTableHeader,
+  parseAndOptimiseURL,
+  readLinesFromTextFile,
+} from './utilities.js';
 dotenv.config();
 
 // Countdown Scraper
-// -----------------
-// Scrapes pricing and other info from Countdown's website
+// Scrapes pricing and other info from Countdown NZ's website.
 
-// Playwright
+const secondsDelayBetweenPageScrapes = 15;
+const uploadImagesToAzureFunc = true;
+
+// Playwright variables
 let browser: playwright.Browser;
 let page: playwright.Page;
 
-// Define delay between each page scrape. This spreads the DB write load, and is less bot-like.
-const secondsBetweenEachPageScrape = 14;
+// Try to read file urls.txt for a list of URLs
+let rawLinesFromFile: string[] = readLinesFromTextFile('src/urls.txt');
 
-// Try to read file urls.txt for a list of URLs, one per line
-let urlsToScrape = readURLsFromOptionalFile('src/urls.txt');
+// Parse and optimise urls
+let urlsToScrape: string[] = [];
+rawLinesFromFile.map((line) => {
+  parseAndOptimiseURL(line, 'countdown.co.nz', '?page=1&size=48&inStockProductsOnly=true');
+  if (line != undefined) urlsToScrape.push(line);
+});
 
-// Set dryRunMode to true to only log results to console
-// Set false to make use of CosmosDB and Azure Storage.
+// Can change dryRunMode to true to only log results to console
 let dryRunMode = false;
 
+// Handle command-line arguments
 handleArguments();
 
+// Establish playwright browser
 await establishPlaywrightPage();
 
 // Counter and promise to help with delayed looping through each of the scrape URLs
@@ -45,9 +58,6 @@ urlsToScrape.forEach((url) => {
       `[${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}` +
         (dryRunMode ? ' (Dry Run Mode On)' : '')
     );
-
-    // Add query options to url
-    url = setUrlOptions(url);
 
     let pageLoadValid = false;
     try {
@@ -86,7 +96,7 @@ urlsToScrape.forEach((url) => {
 
       // Loop through each product entry, and add desired data into a Product object
       let promises = productEntries.map(async (index, productEntryElement) => {
-        const product = playwrightElementToProductObject(productEntryElement, url);
+        const product = playwrightElementToProduct(productEntryElement, url);
 
         if (!validateProduct(product)) logError('Product Scrape Invalid: ' + product.name);
 
@@ -112,13 +122,14 @@ urlsToScrape.forEach((url) => {
               break;
           }
 
-          // Get image url, request hi-res 900px version, and then upload image to azure storage
-          const originalImageUrl: string | undefined = $(productEntryElement)
+          // Get image url and swap parameters for hi-res 900px version
+          const originalImageUrl = $(productEntryElement)
             .find('a.product-entry div.productImage-container figure picture img')
             .attr('src');
           const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
 
-          //await uploadImageToAzureStorage(product, hiresImageUrl as string);
+          // Upload image to Azure Function
+          if (uploadImagesToAzureFunc) await uploadImageUsingRestAPI(hiresImageUrl!, product);
         } else {
           // When doing a dry run, log product name - size - price in table format
           logProductRow(product);
@@ -143,15 +154,47 @@ urlsToScrape.forEach((url) => {
       log(colour.cyan, 'All Scraping Completed \n');
       return;
     } else {
-      log(colour.grey, `Waiting ${secondsBetweenEachPageScrape} seconds until next scrape.. \n`);
+      log(colour.grey, `Waiting ${secondsDelayBetweenPageScrapes} seconds until next scrape.. \n`);
     }
 
     // Add a delay between each scrape loop
     return new Promise((resolve) => {
-      setTimeout(resolve, secondsBetweenEachPageScrape * 1000);
+      setTimeout(resolve, secondsDelayBetweenPageScrapes * 1000);
     });
   });
 });
+
+// Image URL - get product image url from page, then upload using an Azure Function
+async function uploadImageUsingRestAPI(imgUrl: string, product: Product) {
+  // Get AZURE_FUNC_URL from env
+  // Example format:
+  // https://<azurefunc>.azurewebsites.net/api/ImageToS3?code=1234asdf==
+  const funcUrl = process.env.AZURE_FUNC_URL;
+
+  // Check funcUrl is valid
+  if (!funcUrl?.includes('http')) {
+    throw Error(
+      '\nAZURE_FUNC_URL in .env is invalid. Should be in .env :\n\n' +
+        'AZURE_FUNC_URL=https://<azurefunc>.azurewebsites.net/api/ImageToS3?code=1234asdf==\n\n'
+    );
+  }
+  const restUrl = funcUrl + '&filename=' + product.id + '&url=' + imgUrl;
+
+  // Perform http get
+  var res = await fetch(new URL(restUrl), { method: 'GET' });
+  var responseMsg = await (await res.blob()).text();
+
+  if (responseMsg.includes('Successfully Converted to Transparent WebP')) {
+    // Log for successful upload of new image
+    log(colour.grey, `  New Image: ${product.id.padStart(7)} | ${product.name}`);
+  } else if (responseMsg.includes('already exists')) {
+    // Do not log for existing images
+  } else {
+    // Log any other errors that may have occurred
+    console.log(responseMsg);
+  }
+  return;
+}
 
 function handleArguments() {
   // Handle arguments, can potentially be nothing, dry-run-mode, or custom urls to scrape
@@ -159,21 +202,12 @@ function handleArguments() {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
 
-    if (userArgs.length === 1 && userArgs[0] === 'dry-run-mode') {
+    if (userArgs.includes('dry-run-mode')) {
       dryRunMode = true;
-    } else {
-      // Iterate through all user args, filtering out args not recognised as URLs
+    } else if (userArgs.includes('.co.nz')) {
       urlsToScrape = userArgs.filter((arg) => {
-        if (arg.includes('dry-run-mode')) {
-          dryRunMode = true;
-          return false;
-        } else if (arg.includes('.co.nz')) {
-          // If a url is provided, scrape this url instead of the default urls
-          return true;
-        } else {
-          logError('Unknown argument provided: ' + arg);
-          return false;
-        }
+        if (arg.includes('.co.nz')) return true;
+        else return false;
       });
     }
   }
@@ -193,7 +227,7 @@ async function establishPlaywrightPage() {
 
 // Function takes a single playwright element for 'a.product-entry',
 //   then builds and returns a Product object with desired data
-function playwrightElementToProductObject(element: cheerio.Element, url: string): Product {
+function playwrightElementToProduct(element: cheerio.Element, url: string): Product {
   const $ = cheerio.load(element);
 
   let product: Product = {
@@ -213,7 +247,7 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
     category: deriveCategoriesFromUrl(url),
 
     // Store today's date
-    lastUpdated: new Date(),
+    lastUpdated: new Date(), // todo - check correct timezone
 
     // These values will later be overwritten
     priceHistory: [],
@@ -244,25 +278,6 @@ function playwrightElementToProductObject(element: cheerio.Element, url: string)
   return product;
 }
 
-// Tries to read from file urls.txt containing many urls with one url per line
-export function readURLsFromOptionalFile(filename: string): string[] {
-  let arrayOfUrls: string[] = [];
-
-  try {
-    const file = readFileSync(filename, 'utf-8');
-    const fileLines = file.split(/\r?\n/);
-
-    fileLines.forEach((line) => {
-      if (line.includes('.co.nz/')) arrayOfUrls.push(line);
-    });
-
-    return arrayOfUrls;
-  } catch (error) {
-    log(colour.yellow, 'urls.txt not found, scraping sample URL instead');
-    return ['https://www.countdown.co.nz/shop/browse/pantry/eggs'];
-  }
-}
-
 // Derives category names from url, if any categories are available
 // www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
 // returns '[ice-cream-sorbet]'
@@ -270,8 +285,9 @@ export function deriveCategoriesFromUrl(url: string): string[] {
   // If url doesn't contain /browse/, return no category
   if (url.indexOf('/browse/') > 0) {
     const categoriesStartIndex = url.indexOf('/browse/');
-    const categoriesEndIndex = url.indexOf('?');
+    const categoriesEndIndex = url.indexOf('?') > 0 ? url.indexOf('?') : url.length;
     const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
+    //console.log(categoriesString);
 
     // Rename categories to normalised category names
     categoriesString.replace('/ice-cream-sorbet/tubs', '/ice-cream');
@@ -302,17 +318,6 @@ export function deriveCategoriesFromUrl(url: string): string[] {
   }
   // If no useful categories were found, return Uncategorised
   return ['Uncategorised'];
-}
-
-// Sets url query options for optimal results
-function setUrlOptions(url: string): string {
-  let processedUrl = url;
-
-  // Remove existing query options from url
-  if (url.includes('?')) url.slice(0, url.indexOf('?') + 1);
-
-  // Add recommend query options, size=48 shows upto 48 products per page
-  return processedUrl + '?page=1&size=48&inStockProductsOnly=true';
 }
 
 // Runs basic validation on scraped product
