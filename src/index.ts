@@ -189,6 +189,9 @@ async function uploadImageUsingRestAPI(imgUrl: string, product: Product) {
     log(colour.grey, `  New Image: ${product.id.padStart(7)} | ${product.name}`);
   } else if (responseMsg.includes('already exists')) {
     // Do not log for existing images
+  } else if (responseMsg.includes('Unable to be download:')) {
+    // Log for missing images
+    log(colour.grey, `   Image ${product.id} unavailable to be downloaded`);
   } else {
     // Log any other errors that may have occurred
     console.log(responseMsg);
