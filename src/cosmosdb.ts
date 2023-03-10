@@ -153,7 +153,7 @@ export async function customQuery(): Promise<void> {
   };
   const secondsDelayBetweenBatches = 5;
   const querySpec: SqlQuerySpec = {
-    query: "SELECT * FROM products p where startswith(p.lastUpdated, 'Sun', false)",
+    query: "SELECT * FROM products p where startswith(p.lastUpdated, 'Wed', false)",
   };
 
   log(colour.yellow, querySpec.query);
@@ -198,23 +198,32 @@ export async function customQuery(): Promise<void> {
           let p: Product = item as Product;
 
           // Fix blank categories
-          if (typeof p.category === typeof ['string']) {
-            if (p.category.length === 0) p.category = ['Uncategorised'];
-            p.category = p.category.filter((value) => {
-              if (value === '' || value === null) return false;
-              else return true;
-            });
-          } else {
-            p.category = ['Uncategorised'];
-          }
+          // if (typeof p.category === typeof ['string']) {
+          //   if (p.category.length === 0) p.category = ['Uncategorised'];
+          //   p.category = p.category.filter((value) => {
+          //     if (value === '' || value === null) return false;
+          //     else return true;
+          //   });
+          // } else {
+          //   p.category = ['Uncategorised'];
+          // }
 
           // Fix sourceSite
-          if (p.sourceSite.includes('countdown.co.nz') && p.sourceSite.length > 17)
-            p.sourceSite = 'countdown.co.nz';
+          // if (p.sourceSite.includes('countdown.co.nz') && p.sourceSite.length > 17)
+          //   p.sourceSite = 'countdown.co.nz';
 
           let cleanedProduct = cleanProductFields(p);
 
-          var response = await container.items.upsert<Product>(cleanedProduct);
+          console.log(cleanedProduct.lastUpdated);
+
+          const res = await container
+            .item(cleanedProduct.id, cleanedProduct.name)
+            .replace(cleanedProduct);
+          //const res = await container.items.upsert(p);
+
+          console.log(res);
+          console.log(container.id);
+
           //console.log(response.statusCode);
         });
 
