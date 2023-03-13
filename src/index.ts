@@ -64,11 +64,10 @@ urlsToScrape.forEach((url) => {
       // Open page with url options now set
       await page.goto(url);
 
-      // Wait for div.productImage-container html element to dynamically load in, this is required to see all data
-      //await page.waitForSelector('div.productImage-container figure img');
-      const regex = /https...assets.woolworths.com.au.images.\w/;
-      await page.waitForRequest(regex);
-      await page.waitForTimeout(5000);
+      // Wait for <cdx-card> html element to dynamically load in, this is required to see product data
+      await page.waitForSelector('cdx-card');
+      // const regex = /https...assets.woolworths.com.au.images.\w/;
+      // await page.waitForRequest(regex);
 
       pageLoadValid = true;
     } catch (error) {
