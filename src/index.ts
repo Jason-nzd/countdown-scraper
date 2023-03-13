@@ -2,7 +2,7 @@ import playwright from 'playwright';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
-import { upsertProductToCosmosDB } from './cosmosdb.js';
+import { customQuery, upsertProductToCosmosDB } from './cosmosdb.js';
 import { DatedPrice, Product, upsertResponse } from './typings.js';
 import {
   log,
@@ -18,8 +18,8 @@ dotenv.config();
 // Countdown Scraper
 // Scrapes pricing and other info from Countdown NZ's website.
 
-const secondsDelayBetweenPageScrapes = 15;
-const uploadImagesToAzureFunc = true;
+const secondsDelayBetweenPageScrapes = 22;
+const uploadImagesToAzureFunc = false;
 
 // Playwright variables
 let browser: playwright.Browser;
@@ -64,8 +64,11 @@ urlsToScrape.forEach((url) => {
       // Open page with url options now set
       await page.goto(url);
 
-      // Wait for <cdx-card> html element to dynamically load in, this is required to see product data
-      await page.waitForSelector('cdx-card');
+      // Wait for div.productImage-container html element to dynamically load in, this is required to see all data
+      //await page.waitForSelector('div.productImage-container figure img');
+      const regex = /https...assets.woolworths.com.au.images.\w/;
+      await page.waitForRequest(regex);
+      await page.waitForTimeout(5000);
 
       pageLoadValid = true;
     } catch (error) {
@@ -77,6 +80,7 @@ urlsToScrape.forEach((url) => {
     let priceChangedCount = 0;
     let infoUpdatedCount = 0;
     let newProductsCount = 0;
+    let failedCount = 0;
 
     // If page load is valid, load all html into Cheerio for easy DOM selection
     if (pageLoadValid) {
@@ -98,9 +102,7 @@ urlsToScrape.forEach((url) => {
       let promises = productEntries.map(async (index, productEntryElement) => {
         const product = playwrightElementToProduct(productEntryElement, url);
 
-        if (!validateProduct(product)) logError('Product Scrape Invalid: ' + product.name);
-
-        if (!dryRunMode && validateProduct(product)) {
+        if (!dryRunMode && product !== undefined) {
           // Insert or update item into azure cosmosdb
           const response = await upsertProductToCosmosDB(product);
 
@@ -118,21 +120,27 @@ urlsToScrape.forEach((url) => {
             case upsertResponse.PriceChanged:
               priceChangedCount++;
               break;
+            case upsertResponse.Failed:
             default:
+              failedCount++;
               break;
           }
 
+          // Todo fix url scraping
           // Get image url and swap parameters for hi-res 900px version
-          const originalImageUrl = $(productEntryElement)
-            .find('a.product-entry div.productImage-container figure picture img')
-            .attr('src');
-          const hiresImageUrl = originalImageUrl?.replace('&w=200&h=200', '&w=900&h=900');
+          // const originalImageUrl = $(productEntryElement)
+          //   .find('div.productImage-container figure img')
+          //   .attr('src');
+
+          // const hiresImageUrl = originalImageUrl!.replace('&w=200&h=200', '&w=900&h=900');
+
+          const hiresImageUrl = `https://assets.woolworths.com.au/images/2010/${product.id}.jpg?impolicy=wowcdxwbjbx&w=900&h=900`;
 
           // Upload image to Azure Function
           if (uploadImagesToAzureFunc) await uploadImageUsingRestAPI(hiresImageUrl!, product);
         } else {
           // When doing a dry run, log product name - size - price in table format
-          logProductRow(product);
+          logProductRow(product!);
         }
       });
       // Wait for entire map of product entries to finish
@@ -166,6 +174,12 @@ urlsToScrape.forEach((url) => {
 
 // Image URL - get product image url from page, then upload using an Azure Function
 async function uploadImageUsingRestAPI(imgUrl: string, product: Product) {
+  // Check if passed in url is valid, return if not
+  if (imgUrl === undefined || !imgUrl.includes('http')) {
+    log(colour.grey, `   Image ${product.id} has invalid url: ${imgUrl}`);
+    return;
+  }
+
   // Get AZURE_FUNC_URL from env
   // Example format:
   // https://<azurefunc>.azurewebsites.net/api/ImageToS3?code=1234asdf==
@@ -178,41 +192,51 @@ async function uploadImageUsingRestAPI(imgUrl: string, product: Product) {
         'AZURE_FUNC_URL=https://<azurefunc>.azurewebsites.net/api/ImageToS3?code=1234asdf==\n\n'
     );
   }
-  const restUrl = funcUrl + '&filename=' + product.id + '&url=' + imgUrl;
+  const restUrl =
+    funcUrl +
+    '&destination=s3://supermarketimages/product-images/' +
+    product.id +
+    '&source=' +
+    imgUrl;
 
   // Perform http get
   var res = await fetch(new URL(restUrl), { method: 'GET' });
   var responseMsg = await (await res.blob()).text();
 
-  if (responseMsg.includes('Successfully Converted to Transparent WebP')) {
+  if (responseMsg.includes('S3 Upload of Full-Size')) {
     // Log for successful upload of new image
+
     log(colour.grey, `  New Image: ${product.id.padStart(7)} | ${product.name}`);
   } else if (responseMsg.includes('already exists')) {
     // Do not log for existing images
-  } else if (responseMsg.includes('Unable to be download:')) {
+  } else if (responseMsg.includes('Unable to download:')) {
     // Log for missing images
+
     log(colour.grey, `   Image ${product.id} unavailable to be downloaded`);
+  } else if (responseMsg.includes('unable to be processed')) {
+    log(colour.grey, `   Image ${product.id} unable to be processed`);
   } else {
     // Log any other errors that may have occurred
+
     console.log(responseMsg);
   }
   return;
 }
 
 function handleArguments() {
-  // Handle arguments, can potentially be nothing, dry-run-mode, or custom urls to scrape
+  // Handle arguments, can potentially be reverse mode, dry-run-mode, or custom url
   if (process.argv.length > 2) {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
 
-    if (userArgs.includes('dry-run-mode')) {
-      dryRunMode = true;
-    } else if (userArgs.includes('.co.nz')) {
-      urlsToScrape = userArgs.filter((arg) => {
-        if (arg.includes('.co.nz')) return true;
-        else return false;
-      });
-    }
+    userArgs.forEach((arg) => {
+      if (arg === 'dry-run-mode') dryRunMode = true;
+      else if (arg.includes('.co.nz')) {
+        urlsToScrape = [arg];
+      } else if (arg === 'reverse') {
+        urlsToScrape = urlsToScrape.reverse();
+      }
+    });
   }
 }
 
@@ -230,7 +254,7 @@ async function establishPlaywrightPage() {
 
 // Function takes a single playwright element for 'a.product-entry',
 //   then builds and returns a Product object with desired data
-function playwrightElementToProduct(element: cheerio.Element, url: string): Product {
+function playwrightElementToProduct(element: cheerio.Element, url: string): Product | undefined {
   const $ = cheerio.load(element);
 
   let product: Product = {
@@ -278,7 +302,11 @@ function playwrightElementToProduct(element: cheerio.Element, url: string): Prod
   };
   product.priceHistory = [todaysDatedPrice];
 
-  return product;
+  if (validateProduct(product)) return product;
+  else {
+    logError('Product Scrape Invalid: ' + product.name);
+    return undefined;
+  }
 }
 
 // Derives category names from url, if any categories are available
