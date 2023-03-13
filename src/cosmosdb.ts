@@ -78,17 +78,23 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       logError(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
       return upsertResponse.Failed;
     }
-  } catch (error) {
+  } catch (e: any) {
+    logError(e);
     return upsertResponse.Failed;
   }
 }
 
+// This takes a freshly scraped product and compares it with a found database product.
+//  It returns an updated product with data from both product versions,
+//  or undefined if no changes were found.
 function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Product | undefined {
+  // Date objects pulled from CosmosDB need to re-parsed as strings in format yyyy-mm-dd
+  let dbDay = dbProduct.lastUpdated.toString();
+  dbDay = dbDay.slice(0, 10);
+  let scrapedDay = scrapedProduct.lastUpdated.toISOString().slice(0, 10);
+
   // If price has changed, and not on the same day
-  if (
-    dbProduct.currentPrice != scrapedProduct.currentPrice &&
-    dbProduct.lastUpdated.toDateString() != scrapedProduct.lastUpdated.toDateString()
-  ) {
+  if (dbProduct.currentPrice != scrapedProduct.currentPrice && dbDay != scrapedDay) {
     // Push scraped priceHistory into existing priceHistory array
     dbProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
 
@@ -120,20 +126,6 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
     dbProduct.size !== scrapedProduct.size
   ) {
-    // console.log(
-    //   dbProduct.name.padEnd(60) +
-    //     'source/size changed:\t' +
-    //     dbProduct.sourceSite +
-    //     ' / ' +
-    //     scrapedProduct.sourceSite +
-    //     '\t' +
-    //     dbProduct.name.padEnd(60) +
-    //     'changed:\t' +
-    //     dbProduct.size +
-    //     ' / ' +
-    //     scrapedProduct.size
-    // );
-
     // Set size and sourceSite
     dbProduct.sourceSite = scrapedProduct.sourceSite;
     dbProduct.size = scrapedProduct.size;
@@ -153,7 +145,7 @@ export async function customQuery(): Promise<void> {
   };
   const secondsDelayBetweenBatches = 5;
   const querySpec: SqlQuerySpec = {
-    query: "SELECT * FROM products p where startswith(p.lastUpdated, 'Wed', false)",
+    query: "SELECT * FROM products p where endswith(p.lastUpdated, '2023', false)",
   };
 
   log(colour.yellow, querySpec.query);
@@ -183,7 +175,7 @@ export async function customQuery(): Promise<void> {
         log(colour.green, 'Batch: ' + batchCount + ' - Items: ' + products.length);
 
         items.forEach(async (item) => {
-          console.log(batchCount + ' - ' + item.name);
+          console.log(batchCount + ' - ' + item.name + ' - ' + item.lastUpdated);
 
           // Fix date format
           let oldDateString: string = item.lastUpdated;
@@ -216,12 +208,12 @@ export async function customQuery(): Promise<void> {
 
           console.log(cleanedProduct.lastUpdated);
 
-          const res = await container
-            .item(cleanedProduct.id, cleanedProduct.name)
-            .replace(cleanedProduct);
-          //const res = await container.items.upsert(p);
+          // const res = await container
+          //   .item(cleanedProduct.id, cleanedProduct.name)
+          //   .replace(cleanedProduct);
+          const res = await container.items.upsert(cleanedProduct);
 
-          console.log(res);
+          console.log(res.statusCode);
           console.log(container.id);
 
           //console.log(response.statusCode);
