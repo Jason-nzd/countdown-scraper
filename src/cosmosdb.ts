@@ -1,7 +1,7 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
-import { logPriceChange, logError, log, colour } from './utilities.js';
+import { logError, log, colour } from './utilities.js';
 import { DatedPrice, Product, upsertResponse } from './typings';
 dotenv.config();
 
@@ -241,4 +241,20 @@ export function cleanProductFields(document: Product): Product {
     lastUpdated,
   };
   return cleanedProduct;
+}
+
+// Log a specific price change message,
+//  coloured green for price reduction, red for price increase
+export function logPriceChange(product: Product, newPrice: Number) {
+  const priceIncreased = newPrice > product.currentPrice;
+  log(
+    priceIncreased ? colour.red : colour.green,
+    'Price ' +
+      (priceIncreased ? 'Up  : ' : 'Down: ') +
+      product.name.slice(0, 47).padEnd(47) +
+      ' - from $' +
+      product.currentPrice +
+      ' to $' +
+      newPrice
+  );
 }

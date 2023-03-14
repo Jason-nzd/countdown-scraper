@@ -9,7 +9,6 @@ import {
   colour,
   logProductRow,
   logError,
-  logTableHeader,
   parseAndOptimiseURL,
   readLinesFromTextFile,
 } from './utilities.js';
@@ -19,7 +18,7 @@ dotenv.config();
 // Scrapes pricing and other info from Countdown NZ's website.
 
 const secondsDelayBetweenPageScrapes = 22;
-const uploadImagesToAzureFunc = false;
+const uploadImagesToAzureFunc = true;
 
 // Playwright variables
 let browser: playwright.Browser;
@@ -31,8 +30,12 @@ let rawLinesFromFile: string[] = readLinesFromTextFile('src/urls.txt');
 // Parse and optimise urls
 let urlsToScrape: string[] = [];
 rawLinesFromFile.map((line) => {
-  parseAndOptimiseURL(line, 'countdown.co.nz', '?page=1&size=48&inStockProductsOnly=true');
-  if (line != undefined) urlsToScrape.push(line);
+  let parsedLine = parseAndOptimiseURL(
+    line,
+    'countdown.co.nz',
+    '?page=1&size=48&inStockProductsOnly=true'
+  );
+  if (parsedLine != undefined) urlsToScrape.push(parsedLine);
 });
 
 // Can change dryRunMode to true to only log results to console
@@ -93,9 +96,6 @@ urlsToScrape.forEach((url) => {
           deriveCategoriesFromUrl(url).join(', ') +
           ']'
       );
-
-      // Log a per-page table header if using dry mode
-      if (dryRunMode) logTableHeader();
 
       // Loop through each product entry, and add desired data into a Product object
       let promises = productEntries.map(async (index, productEntryElement) => {
@@ -172,17 +172,18 @@ urlsToScrape.forEach((url) => {
 });
 
 // Image URL - get product image url from page, then upload using an Azure Function
-async function uploadImageUsingRestAPI(imgUrl: string, product: Product) {
+async function uploadImageUsingRestAPI(imgUrl: string, product: Product): Promise<boolean> {
   // Check if passed in url is valid, return if not
   if (imgUrl === undefined || !imgUrl.includes('http')) {
     log(colour.grey, `   Image ${product.id} has invalid url: ${imgUrl}`);
-    return;
+    return false;
   }
 
   // Get AZURE_FUNC_URL from env
   // Example format:
   // https://<azurefunc>.azurewebsites.net/api/ImageToS3?code=1234asdf==
   const funcUrl = process.env.AZURE_FUNC_URL;
+  const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
 
   // Check funcUrl is valid
   if (!funcUrl?.includes('http')) {
@@ -197,6 +198,7 @@ async function uploadImageUsingRestAPI(imgUrl: string, product: Product) {
     product.id +
     '&source=' +
     imgUrl;
+  //'&overwrite=true';
 
   // Perform http get
   var res = await fetch(new URL(restUrl), { method: 'GET' });
@@ -204,22 +206,20 @@ async function uploadImageUsingRestAPI(imgUrl: string, product: Product) {
 
   if (responseMsg.includes('S3 Upload of Full-Size')) {
     // Log for successful upload of new image
-
-    log(colour.grey, `  New Image: ${product.id.padStart(7)} | ${product.name}`);
+    log(colour.grey, `  New Image: ${cdnCheckUrlBase}200/${product.id}.webp \t | ${product.name}`);
+    //log(colour.green, responseMsg);
   } else if (responseMsg.includes('already exists')) {
     // Do not log for existing images
   } else if (responseMsg.includes('Unable to download:')) {
     // Log for missing images
-
-    log(colour.grey, `   Image ${product.id} unavailable to be downloaded`);
+    log(colour.grey, `  Image ${product.id} unavailable to be downloaded`);
   } else if (responseMsg.includes('unable to be processed')) {
-    log(colour.grey, `   Image ${product.id} unable to be processed`);
+    log(colour.grey, `  Image ${product.id} unable to be processed`);
   } else {
     // Log any other errors that may have occurred
-
     console.log(responseMsg);
   }
-  return;
+  return true;
 }
 
 function handleArguments() {
@@ -231,7 +231,12 @@ function handleArguments() {
     userArgs.forEach((arg) => {
       if (arg === 'dry-run-mode') dryRunMode = true;
       else if (arg.includes('.co.nz')) {
-        urlsToScrape = [arg];
+        const parsedUrl = parseAndOptimiseURL(
+          arg,
+          'countdown.co.nz',
+          '?page=1&size=48&inStockProductsOnly=true'
+        );
+        if (parsedUrl !== undefined) urlsToScrape = [parsedUrl];
       } else if (arg === 'reverse') {
         urlsToScrape = urlsToScrape.reverse();
       }
