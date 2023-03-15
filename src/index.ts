@@ -2,8 +2,8 @@ import playwright from 'playwright';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
-import { customQuery, upsertProductToCosmosDB } from './cosmosdb.js';
-import { DatedPrice, Product, upsertResponse } from './typings.js';
+import { upsertProductToCosmosDB } from './cosmosdb.js';
+import { DatedPrice, Product, UpsertResponse } from './typings';
 import {
   log,
   colour,
@@ -59,7 +59,7 @@ urlsToScrape.forEach((url) => {
     log(
       colour.yellow,
       `[${pagesScrapedCount}/${urlsToScrape.length}] ` +
-        `Scraping Page.. ${url.substring(11, url.length - 15)}` +
+        `Scraping Page.. ${url.substring(12, url.length - 21)}` +
         (dryRunMode ? ' (Dry Run Mode On)' : '')
     );
 
@@ -71,8 +71,6 @@ urlsToScrape.forEach((url) => {
       // Wait for <cdx-card> html element to dynamically load in,
       //  this is required to see product data
       await page.waitForSelector('cdx-card');
-      // const regex = /https...assets.woolworths.com.au.images.\w/;
-      // await page.waitForRequest(regex);
 
       pageLoadValid = true;
     } catch (error) {
@@ -109,19 +107,19 @@ urlsToScrape.forEach((url) => {
 
           // Use response to update logging counters
           switch (response) {
-            case upsertResponse.AlreadyUpToDate:
+            case UpsertResponse.AlreadyUpToDate:
               alreadyUpToDateCount++;
               break;
-            case upsertResponse.InfoChanged:
+            case UpsertResponse.InfoChanged:
               infoUpdatedCount++;
               break;
-            case upsertResponse.NewProduct:
+            case UpsertResponse.NewProduct:
               newProductsCount++;
               break;
-            case upsertResponse.PriceChanged:
+            case UpsertResponse.PriceChanged:
               priceChangedCount++;
               break;
-            case upsertResponse.Failed:
+            case UpsertResponse.Failed:
             default:
               failedCount++;
               break;
@@ -286,7 +284,8 @@ function playwrightElementToProduct(element: cheerio.Element, url: string): Prod
     category: deriveCategoriesFromUrl(url),
 
     // Store today's date
-    lastUpdated: new Date(), // todo - check correct timezone
+    lastChecked: new Date(),
+    lastUpdated: new Date(),
 
     // These values will later be overwritten
     priceHistory: [],

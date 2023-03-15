@@ -2,7 +2,7 @@
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { logError, log, colour } from './utilities.js';
-import { DatedPrice, Product, upsertResponse } from './typings';
+import { DatedPrice, Product, UpsertResponse, ProductResponse } from './typings';
 dotenv.config();
 
 const cosmosDatabaseName = 'supermarket-prices';
@@ -34,9 +34,11 @@ try {
   logError('Invalid CosmosDB connection - check for valid connection string');
 }
 
-// Function for insert/updating a product object to CosmosDB,
-//  returns an upsertResponse based on if and how the Product was updated
-export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<upsertResponse> {
+// upsertProductToCosmosDB()
+// -------------------------
+// Inserts or updates a product object to CosmosDB,
+//  returns an UpsertResponse based on if and how the Product was updated
+export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<UpsertResponse> {
   try {
     // Check CosmosDB for any existing item using id and name as the partition key
     const cosmosResponse = await container
@@ -46,48 +48,44 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
     // If an existing item was found in CosmosDB, check for update values before uploading
     if (cosmosResponse.statusCode === 200) {
       const dbProduct = (await cosmosResponse.resource) as Product;
-      const updatedProduct = buildUpdatedProduct(scrapedProduct, dbProduct);
+      const response = buildUpdatedProduct(scrapedProduct, dbProduct);
 
-      if (updatedProduct === undefined) return upsertResponse.AlreadyUpToDate;
-      else {
-        // Send updated product to CosmosDB
-        await container.items.upsert(updatedProduct);
+      // Send updated product to CosmosDB
+      await container.items.upsert(response.product);
+      return response.upsertType;
+    }
 
-        // UpsertResponse based on price or info changed
-        if (dbProduct.currentPrice != updatedProduct.currentPrice) {
-          return upsertResponse.PriceChanged;
-        } else {
-          return upsertResponse.InfoChanged;
-        }
-      }
-    } else if (cosmosResponse.statusCode === 404) {
-      // If product doesn't yet exist in CosmosDB, upsert as-is
+    // If product doesn't yet exist in CosmosDB, upsert as-is
+    else if (cosmosResponse.statusCode === 404) {
       await container.items.create(scrapedProduct);
 
       console.log(
-        `New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
+        `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
           ` - $${scrapedProduct.currentPrice}`
       );
 
-      return upsertResponse.NewProduct;
-    } else if (cosmosResponse.statusCode === 409) {
+      return UpsertResponse.NewProduct;
+    }
+    // Manage any failed cosmos updates
+    else if (cosmosResponse.statusCode === 409) {
       logError(`Conflicting ID found for product ${scrapedProduct.name}`);
-      return upsertResponse.Failed;
+      return UpsertResponse.Failed;
     } else {
       // If CosmoDB returns a status code other than 200 or 404, manage other errors here
       logError(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
-      return upsertResponse.Failed;
+      return UpsertResponse.Failed;
     }
   } catch (e: any) {
     logError(e);
-    return upsertResponse.Failed;
+    return UpsertResponse.Failed;
   }
 }
 
+// buildUpdatedProduct()
+// ---------------------
 // This takes a freshly scraped product and compares it with a found database product.
-//  It returns an updated product with data from both product versions,
-//  or undefined if no changes were found.
-function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Product | undefined {
+//  It returns an updated product with data from both product versions
+function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): ProductResponse {
   // Date objects pulled from CosmosDB need to re-parsed as strings in format yyyy-mm-dd
   let dbDay = dbProduct.lastUpdated.toString();
   dbDay = dbDay.slice(0, 10);
@@ -103,7 +101,10 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
 
     // Return completed Product ready for uploading
     logPriceChange(dbProduct, scrapedProduct.currentPrice);
-    return scrapedProduct;
+    return {
+      upsertType: UpsertResponse.PriceChanged,
+      product: scrapedProduct,
+    };
   }
 
   // If category has changed and is not Uncategorised, update Product
@@ -111,15 +112,17 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') &&
     scrapedProduct.category[0] !== 'Uncategorised'
   ) {
-    // Update category
+    // Update category, size and sourceSite
     dbProduct.category = scrapedProduct.category;
-
-    // Also set size and sourceSite
     dbProduct.sourceSite = scrapedProduct.sourceSite;
     dbProduct.size = scrapedProduct.size;
+    dbProduct.lastChecked = scrapedProduct.lastChecked;
 
     // Return completed Product ready for uploading
-    return dbProduct;
+    return {
+      upsertType: UpsertResponse.InfoChanged,
+      product: dbProduct,
+    };
 
     // If only size or sourceSite have changed, update Product
   } else if (
@@ -129,16 +132,73 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     // Set size and sourceSite
     dbProduct.sourceSite = scrapedProduct.sourceSite;
     dbProduct.size = scrapedProduct.size;
+    dbProduct.lastChecked = scrapedProduct.lastChecked;
 
     // Return completed Product ready for uploading
-    return dbProduct;
+    return {
+      upsertType: UpsertResponse.InfoChanged,
+      product: dbProduct,
+    };
   } else {
-    // Nothing has changed, no upsert is required
-    return undefined;
+    // Nothing has changed, only update lastChecked
+    dbProduct.lastChecked = scrapedProduct.lastChecked;
+    return {
+      upsertType: UpsertResponse.AlreadyUpToDate,
+      product: dbProduct,
+    };
   }
 }
 
-// Function for running custom queries - used primarily for debugging
+// cleanProductFields()
+// --------------------
+// Removes undesired fields that CosmosDB creates
+export function cleanProductFields(document: Product): Product {
+  let {
+    id,
+    name,
+    currentPrice,
+    size,
+    sourceSite,
+    priceHistory,
+    category,
+    lastUpdated,
+    lastChecked,
+  } = document;
+  const cleanedProduct: Product = {
+    id,
+    name,
+    currentPrice,
+    size,
+    sourceSite,
+    priceHistory,
+    category,
+    lastUpdated,
+    lastChecked,
+  };
+  return cleanedProduct;
+}
+
+// logPriceChange()
+// ----------------
+// Log a per product price change message,
+//  coloured green for price reduction, red for price increase
+export function logPriceChange(product: Product, newPrice: Number) {
+  const priceIncreased = newPrice > product.currentPrice;
+  log(
+    priceIncreased ? colour.red : colour.green,
+    '  Price ' +
+      (priceIncreased ? 'Up  : ' : 'Down: ') +
+      product.name.slice(0, 47).padEnd(47) +
+      ' - from $' +
+      product.currentPrice +
+      ' to $' +
+      newPrice
+  );
+}
+
+// customQuery()
+// -------------
+// Function for running custom DB queries - used primarily for debugging
 export async function customQuery(): Promise<void> {
   const options: FeedOptions = {
     maxItemCount: 10,
@@ -225,36 +285,4 @@ export async function customQuery(): Promise<void> {
       }, secondsDelayBetweenBatches * 1000)
     );
   }
-}
-
-// Removes undesired fields that CosmosDB creates
-export function cleanProductFields(document: Product): Product {
-  let { id, name, currentPrice, size, sourceSite, priceHistory, category, lastUpdated } = document;
-  const cleanedProduct: Product = {
-    id,
-    name,
-    currentPrice,
-    size,
-    sourceSite,
-    priceHistory,
-    category,
-    lastUpdated,
-  };
-  return cleanedProduct;
-}
-
-// Log a specific price change message,
-//  coloured green for price reduction, red for price increase
-export function logPriceChange(product: Product, newPrice: Number) {
-  const priceIncreased = newPrice > product.currentPrice;
-  log(
-    priceIncreased ? colour.red : colour.green,
-    'Price ' +
-      (priceIncreased ? 'Up  : ' : 'Down: ') +
-      product.name.slice(0, 47).padEnd(47) +
-      ' - from $' +
-      product.currentPrice +
-      ' to $' +
-      newPrice
-  );
 }
