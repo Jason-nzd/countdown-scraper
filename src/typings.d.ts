@@ -4,6 +4,7 @@ export interface Product {
   size?: string;
   currentPrice: number;
   lastUpdated: Date;
+  lastChecked: Date;
   priceHistory: DatedPrice[];
   sourceSite: string;
   category: string[];
@@ -14,7 +15,12 @@ export interface DatedPrice {
   price: number;
 }
 
-export const enum upsertResponse {
+export interface ProductResponse {
+  upsertType: UpsertResponse;
+  product: Product;
+}
+
+export const enum UpsertResponse {
   NewProduct,
   PriceChanged,
   InfoChanged,
