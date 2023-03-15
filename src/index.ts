@@ -47,7 +47,7 @@ handleArguments();
 // Establish playwright browser
 await establishPlaywrightPage();
 
-// Counter and promise to help with delayed looping through each of the scrape URLs
+// Counter and promise to help with delayed looping of each page load
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
 
@@ -58,7 +58,8 @@ urlsToScrape.forEach((url) => {
     // Log status
     log(
       colour.yellow,
-      `[${pagesScrapedCount}/${urlsToScrape.length}] Scraping Page.. ${url}` +
+      `[${pagesScrapedCount}/${urlsToScrape.length}] ` +
+        `Scraping Page.. ${url.substring(11, url.length - 15)}` +
         (dryRunMode ? ' (Dry Run Mode On)' : '')
     );
 
@@ -67,7 +68,8 @@ urlsToScrape.forEach((url) => {
       // Open page with url options now set
       await page.goto(url);
 
-      // Wait for <cdx-card> html element to dynamically load in, this is required to see product data
+      // Wait for <cdx-card> html element to dynamically load in,
+      //  this is required to see product data
       await page.waitForSelector('cdx-card');
       // const regex = /https...assets.woolworths.com.au.images.\w/;
       // await page.waitForRequest(regex);
@@ -84,7 +86,7 @@ urlsToScrape.forEach((url) => {
     let newProductsCount = 0;
     let failedCount = 0;
 
-    // If page load is valid, load all html into Cheerio for easy DOM selection
+    // If page load is valid, load html into Cheerio for easy DOM selection
     if (pageLoadValid) {
       const html = await page.evaluate(() => document.body.innerHTML);
       const $ = cheerio.load(html);
@@ -97,7 +99,7 @@ urlsToScrape.forEach((url) => {
           ']'
       );
 
-      // Loop through each product entry, and add desired data into a Product object
+      // Loop through each product entry, add desired data into a Product object
       let promises = productEntries.map(async (index, productEntryElement) => {
         const product = playwrightElementToProduct(productEntryElement, url);
 
@@ -126,17 +128,16 @@ urlsToScrape.forEach((url) => {
           }
 
           // Todo fix url scraping
-          // Get image url and swap parameters for hi-res 900px version
           // const originalImageUrl = $(productEntryElement)
           //   .find('div.productImage-container figure img')
           //   .attr('src');
 
-          // const hiresImageUrl = originalImageUrl!.replace('&w=200&h=200', '&w=900&h=900');
-
-          const hiresImageUrl = `https://assets.woolworths.com.au/images/2010/${product.id}.jpg?impolicy=wowcdxwbjbx&w=900&h=900`;
+          const imageUrlBase = 'https://assets.woolworths.com.au/images/2010/';
+          const imageUrlExtensionAndQueryParams = '.jpg?impolicy=wowcdxwbjbx&w=900&h=900';
+          const imageUrl = imageUrlBase + product.id + imageUrlExtensionAndQueryParams;
 
           // Upload image to Azure Function
-          if (uploadImagesToAzureFunc) await uploadImageUsingRestAPI(hiresImageUrl!, product);
+          if (uploadImagesToAzureFunc) await uploadImageRestAPI(imageUrl!, product);
         } else {
           // When doing a dry run, log product name - size - price in table format
           logProductRow(product!);
@@ -150,8 +151,11 @@ urlsToScrape.forEach((url) => {
     if (!dryRunMode && pageLoadValid) {
       log(
         colour.blue,
-        `CosmosDB: ${newProductsCount} new products, ${priceChangedCount} updated prices, ` +
-          `${infoUpdatedCount} updated info, ${alreadyUpToDateCount} already up-to-date`
+        `CosmosDB: ${newProductsCount} new products, ` +
+          `${priceChangedCount} updated prices, ` +
+          `${infoUpdatedCount} updated info, ` +
+          `${alreadyUpToDateCount} already up-to-date, ` +
+          `${failedCount} failed updates`
       );
     }
 
@@ -161,7 +165,7 @@ urlsToScrape.forEach((url) => {
       log(colour.cyan, 'All Scraping Completed \n');
       return;
     } else {
-      log(colour.grey, `Waiting ${secondsDelayBetweenPageScrapes} seconds until next scrape.. \n`);
+      log(colour.grey, `Waiting ${secondsDelayBetweenPageScrapes}s until next scrape..\n`);
     }
 
     // Add a delay between each scrape loop
@@ -172,7 +176,7 @@ urlsToScrape.forEach((url) => {
 });
 
 // Image URL - get product image url from page, then upload using an Azure Function
-async function uploadImageUsingRestAPI(imgUrl: string, product: Product): Promise<boolean> {
+async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boolean> {
   // Check if passed in url is valid, return if not
   if (imgUrl === undefined || !imgUrl.includes('http')) {
     log(colour.grey, `   Image ${product.id} has invalid url: ${imgUrl}`);
@@ -181,15 +185,14 @@ async function uploadImageUsingRestAPI(imgUrl: string, product: Product): Promis
 
   // Get AZURE_FUNC_URL from env
   // Example format:
-  // https://<azurefunc>.azurewebsites.net/api/ImageToS3?code=1234asdf==
+  // https://<func-app>.azurewebsites.net/api/ImageToS3?code=<auth-code>
   const funcUrl = process.env.AZURE_FUNC_URL;
-  const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
 
   // Check funcUrl is valid
   if (!funcUrl?.includes('http')) {
     throw Error(
       '\nAZURE_FUNC_URL in .env is invalid. Should be in .env :\n\n' +
-        'AZURE_FUNC_URL=https://<azurefunc>.azurewebsites.net/api/ImageToS3?code=1234asdf==\n\n'
+        'AZURE_FUNC_URL=https://<func-app>.azurewebsites.net/api/ImageToS3?code=<auth-code>\n\n'
     );
   }
   const restUrl =
@@ -198,16 +201,19 @@ async function uploadImageUsingRestAPI(imgUrl: string, product: Product): Promis
     product.id +
     '&source=' +
     imgUrl;
-  //'&overwrite=true';
 
   // Perform http get
   var res = await fetch(new URL(restUrl), { method: 'GET' });
   var responseMsg = await (await res.blob()).text();
 
   if (responseMsg.includes('S3 Upload of Full-Size')) {
-    // Log for successful upload of new image
-    log(colour.grey, `  New Image: ${cdnCheckUrlBase}200/${product.id}.webp \t | ${product.name}`);
-    //log(colour.green, responseMsg);
+    // Log new CDN URL for successful upload
+    const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
+    log(
+      colour.grey,
+      `  New Image: ${cdnCheckUrlBase}200/${product.id}.webp | ` +
+        `${product.name.padEnd(30).slice(0, 30)}`
+    );
   } else if (responseMsg.includes('already exists')) {
     // Do not log for existing images
   } else if (responseMsg.includes('Unable to download:')) {
@@ -223,11 +229,12 @@ async function uploadImageUsingRestAPI(imgUrl: string, product: Product): Promis
 }
 
 function handleArguments() {
-  // Handle arguments, can potentially be reverse mode, dry-run-mode, or custom url
+  // Handle arguments, can be reverse mode, dry-run-mode, or custom url
   if (process.argv.length > 2) {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
 
+    // Loop through all args and find any matching keywords
     userArgs.forEach((arg) => {
       if (arg === 'dry-run-mode') dryRunMode = true;
       else if (arg.includes('.co.nz')) {
@@ -237,6 +244,7 @@ function handleArguments() {
           '?page=1&size=48&inStockProductsOnly=true'
         );
         if (parsedUrl !== undefined) urlsToScrape = [parsedUrl];
+        else throw 'URL invalid: ' + arg;
       } else if (arg === 'reverse') {
         urlsToScrape = urlsToScrape.reverse();
       }
