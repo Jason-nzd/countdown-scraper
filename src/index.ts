@@ -59,7 +59,7 @@ urlsToScrape.forEach((url) => {
     log(
       colour.yellow,
       `[${pagesScrapedCount}/${urlsToScrape.length}] ` +
-        `Scraping Page.. ${url.substring(12, url.length - 21)}` +
+        `Scraping Page.. ${url.substring(12, url.length - 17)}` +
         (dryRunMode ? ' (Dry Run Mode On)' : '')
     );
 

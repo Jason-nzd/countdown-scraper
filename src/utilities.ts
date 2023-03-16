@@ -12,7 +12,7 @@ export const colour = {
   crimson: '\x1b[38m',
   grey: '\x1b[90m',
   orange: '\x1b[38;5;214m',
-  slate: '\x1b[38;5;153m',
+  sky: '\x1b[38;5;153m',
 };
 
 // Console log with specified colour, then clear colour
@@ -40,7 +40,7 @@ function getAlternatingRowColour(colourA: string, colourB: string) {
 export function logProductRow(product: Product) {
   const categories = product.category != null ? product.category?.join(', ') : '';
   log(
-    getAlternatingRowColour(colour.slate, colour.white),
+    getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
       `${product.size?.slice(0, 16).padEnd(16)} | ` +
       `$ ${product.currentPrice.toString().padStart(4).padEnd(4)}`

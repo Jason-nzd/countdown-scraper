@@ -112,6 +112,11 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') &&
     scrapedProduct.category[0] !== 'Uncategorised'
   ) {
+    console.log(
+      `  Categories Changed: ${scrapedProduct.name.padEnd(20).substring(0, 20)}` +
+        ` - ${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
+    );
+
     // Update category, size and sourceSite
     dbProduct.category = scrapedProduct.category;
     dbProduct.sourceSite = scrapedProduct.sourceSite;
@@ -129,6 +134,11 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
     dbProduct.size !== scrapedProduct.size
   ) {
+    console.log(
+      `  Size Changed: ${scrapedProduct.name.padEnd(20).substring(0, 20)}` +
+        ` - ${dbProduct.size} > ${scrapedProduct.size}`
+    );
+
     // Set size and sourceSite
     dbProduct.sourceSite = scrapedProduct.sourceSite;
     dbProduct.size = scrapedProduct.size;
