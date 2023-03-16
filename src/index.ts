@@ -91,10 +91,8 @@ urlsToScrape.forEach((url) => {
       const productEntries = $('cdx-card a.product-entry');
       log(
         colour.yellow,
-        productEntries.length +
-          ' product entries found with categories: [' +
-          deriveCategoriesFromUrl(url).join(', ') +
-          ']'
+        `${productEntries.length} product entries found \t\t\t Categories: [` +
+          `${deriveCategoriesFromUrl(url).join(', ')}]`
       );
 
       // Loop through each product entry, add desired data into a Product object
@@ -160,7 +158,7 @@ urlsToScrape.forEach((url) => {
     // If all scrapes have completed, close the playwright browser
     if (pagesScrapedCount++ === urlsToScrape.length) {
       browser.close();
-      log(colour.cyan, 'All Scraping Completed \n');
+      log(colour.sky, 'All Scraping Completed \n');
       return;
     } else {
       log(colour.grey, `Waiting ${secondsDelayBetweenPageScrapes}s until next scrape..\n`);
@@ -209,7 +207,7 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
     const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
     log(
       colour.grey,
-      `  New Image: ${cdnCheckUrlBase}200/${product.id}.webp | ` +
+      `  New Image  : ${cdnCheckUrlBase}200/${product.id}.webp | ` +
         `${product.name.padEnd(30).slice(0, 30)}`
     );
   } else if (responseMsg.includes('already exists')) {
