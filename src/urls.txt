@@ -1,12 +1,11 @@
 https://www.countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs
-https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-dinners
 https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs
 https://www.countdown.co.nz/shop/browse/frozen/pizza-pastry-bread
 https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries
 https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns
+https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables
 https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots
 https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry
-https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables
 https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes
 https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti
 https://www.countdown.co.nz/shop/browse/frozen/frozen-meat
@@ -24,10 +23,32 @@ https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/cream
 https://www.countdown.co.nz/shop/browse/fridge-deli/butter-spreads
 https://www.countdown.co.nz/shop/browse/fridge-deli/cheese
 https://www.countdown.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases
+https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/multipacks-pouches-single-serve
+https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/large-tub-yoghurt
+https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/greek-greek-style
+https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/natural-health
+https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/dairy-free-yoghurt
+https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/desserts
+https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat
+https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon
+https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats
+https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats
+https://www.countdown.co.nz/shop/browse/fridge-deli/juice-drinks
+https://www.countdown.co.nz/shop/browse/fridge-deli/vegan-vegetarian?search=&page=1&size=24&sort=Brow
+https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals
+https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto
+https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche
+https://www.countdown.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles
 
-https://www.countdown.co.nz/shop/browse/meat-poultry
+https://www.countdown.co.nz/shop/browse/meat-poultry/beef
+https://www.countdown.co.nz/shop/browse/meat-poultry/lamb
+https://www.countdown.co.nz/shop/browse/meat-poultry/chicken-poultry
+https://www.countdown.co.nz/shop/browse/meat-poultry/pork
+https://www.countdown.co.nz/shop/browse/meat-poultry/mince-patties
+https://www.countdown.co.nz/shop/browse/meat-poultry/sausages
 
-https://www.countdown.co.nz/shop/browse/fruit-veg
+https://www.countdown.co.nz/shop/browse/fruit-veg/fresh-fruit
+https://www.countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg
 https://www.countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
 
 https://www.countdown.co.nz/shop/browse/pantry
@@ -38,4 +59,4 @@ https://www.countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookie
 https://www.countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
 
 https://www.countdown.co.nz/shop/browse/fish-seafood/salmon
-
+https://www.countdown.co.nz/shop/browse/fish-seafood/prawns-seafood
