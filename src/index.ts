@@ -24,6 +24,9 @@ const uploadImagesToAzureFunc = true;
 let browser: playwright.Browser;
 let page: playwright.Page;
 
+// Record start time, for logging purposes
+const startTime = Date.now();
+
 // Try to read file urls.txt for a list of URLs
 let rawLinesFromFile: string[] = readLinesFromTextFile('src/urls.txt');
 
@@ -56,9 +59,10 @@ urlsToScrape.forEach((url) => {
   // Use promises to ensure a delay between each scrape
   promise = promise.then(async () => {
     // Log status
+    let elapsedTime = (Date.now() - startTime) / 1000;
     log(
       colour.yellow,
-      `[${pagesScrapedCount}/${urlsToScrape.length}] ` +
+      `${elapsedTime}s [${pagesScrapedCount}/${urlsToScrape.length}] ` +
         `Scraping Page.. ${url.substring(12, url.length - 17)}` +
         (dryRunMode ? ' (Dry Run Mode On)' : '')
     );
@@ -207,7 +211,7 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
     const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
     log(
       colour.grey,
-      `  New Image  : ${cdnCheckUrlBase}200/${product.id}.webp | ` +
+      `  New Image  : ${cdnCheckUrlBase}200/${product.id}.webp\t| ` +
         `${product.name.padEnd(30).slice(0, 30)}`
     );
   } else if (responseMsg.includes('already exists')) {
@@ -297,11 +301,10 @@ function playwrightElementToProduct(element: cheerio.Element, url: string): Prod
     .find('div.product-meta product-price h3 em')
     .text()
     .trim();
-  const centString: string = $(element)
-    .find('div.product-meta product-price h3 span')
-    .text()
-    .trim()
-    .replace(/\D/g, '');
+  let centString: string = $(element).find('div.product-meta product-price h3 span').text().trim();
+  // if(centString.includes("kg")) product.size="per kg";
+  centString = centString.replace(/\D/g, '');
+
   product.currentPrice = Number(dollarString + '.' + centString);
 
   // Create a DatedPrice object, which may be added into the product if needed
@@ -362,17 +365,22 @@ export function deriveCategoriesFromUrl(url: string): string[] {
 
 // Runs basic validation on scraped product
 function validateProduct(product: Product): boolean {
-  if (product.name.length === 0 || product.name.length > 100) return false;
-  if (product.id.length === 0 || product.name.length > 100) return false;
-  if (
-    product.currentPrice === 0 ||
-    product.currentPrice === null ||
-    product.currentPrice === undefined ||
-    product.currentPrice > 999
-  ) {
+  try {
+    if (product.name.length < 4 || product.name.length > 100) return false;
+    if (product.id.length < 2 || product.name.length > 20) return false;
+    if (
+      product.currentPrice <= 0 ||
+      product.currentPrice === null ||
+      product.currentPrice === undefined ||
+      Number.isNaN(product.currentPrice) ||
+      product.currentPrice > 999
+    ) {
+      return false;
+    }
+    return true;
+  } catch (error) {
     return false;
   }
-  return true;
 }
 
 // Excludes ads, tracking, and bandwidth intensive resources from being downloaded by Playwright
