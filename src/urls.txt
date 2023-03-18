@@ -20,6 +20,7 @@ https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/flavoured-milk
 https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/dairy-free-milk-cream
 https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/sour-cream
 https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/cream
+https://www.countdown.co.nz/shop/browse/fridge-deli/long-life-milk
 https://www.countdown.co.nz/shop/browse/fridge-deli/butter-spreads
 https://www.countdown.co.nz/shop/browse/fridge-deli/cheese
 https://www.countdown.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases
@@ -60,3 +61,7 @@ https://www.countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
 
 https://www.countdown.co.nz/shop/browse/fish-seafood/salmon
 https://www.countdown.co.nz/shop/browse/fish-seafood/prawns-seafood
+
+https://www.countdown.co.nz/shop/browse/pet/cats/dry-cat-food
+https://www.countdown.co.nz/shop/browse/pet/cats/wet-cat-food
+https://www.countdown.co.nz/shop/browse/pet/cats/cat-milk-treats
