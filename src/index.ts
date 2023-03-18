@@ -367,7 +367,7 @@ export function deriveCategoriesFromUrl(url: string): string[] {
 function validateProduct(product: Product): boolean {
   try {
     if (product.name.length < 4 || product.name.length > 100) return false;
-    if (product.id.length < 2 || product.name.length > 20) return false;
+    if (product.id.length < 2 || product.id.length > 20) return false;
     if (
       product.currentPrice <= 0 ||
       product.currentPrice === null ||
