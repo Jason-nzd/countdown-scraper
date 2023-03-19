@@ -38,7 +38,7 @@ function getAlternatingRowColour(colourA: string, colourB: string) {
 
 // Log a single product in one row, using alternating colours for readability
 export function logProductRow(product: Product) {
-  const categories = product.category != null ? product.category?.join(', ') : '';
+  const categories = product.category != undefined ? product.category?.join(', ') : '';
   log(
     getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +

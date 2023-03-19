@@ -17,7 +17,7 @@ dotenv.config();
 // Countdown Scraper
 // Scrapes pricing and other info from Countdown NZ's website.
 
-const secondsDelayBetweenPageScrapes = 22;
+const secondsDelayBetweenPageScrapes = 11;
 const uploadImagesToAzureFunc = true;
 
 // Playwright variables
@@ -58,12 +58,13 @@ let promise = Promise.resolve();
 urlsToScrape.forEach((url) => {
   // Use promises to ensure a delay between each scrape
   promise = promise.then(async () => {
-    // Log status
-    let elapsedTime = (Date.now() - startTime) / 1000;
+    // Log current scrape sequence, the total number of pages to scrape, and a shortened url
     log(
       colour.yellow,
-      `${elapsedTime}s [${pagesScrapedCount}/${urlsToScrape.length}] ` +
-        `Scraping Page.. ${url.substring(12, url.length - 17)}` +
+      `[${pagesScrapedCount}/${urlsToScrape.length}] ` +
+        `Scraping Page.. ${url
+          .replace('https://www.', '')
+          .replace('?page=1&size=48&inStockProductsOnly=true', '')}` +
         (dryRunMode ? ' (Dry Run Mode On)' : '')
     );
 
@@ -93,10 +94,21 @@ urlsToScrape.forEach((url) => {
       const html = await page.evaluate(() => document.body.innerHTML);
       const $ = cheerio.load(html);
       const productEntries = $('cdx-card a.product-entry');
+
+      // Log the number of products found, time elapsed in seconds or min:s, and found categories
+      let elapsedTimeSeconds: number = (Date.now() - startTime) / 1000;
+      let elapsedTimeString: string = Math.floor(elapsedTimeSeconds).toString();
+      if (elapsedTimeSeconds >= 60)
+        elapsedTimeString =
+          Math.floor(elapsedTimeSeconds / 60) +
+          ':' +
+          Math.floor(elapsedTimeSeconds % 60)
+            .toString()
+            .padStart(2, '0');
       log(
         colour.yellow,
-        `${productEntries.length} product entries found \t\t\t Categories: [` +
-          `${deriveCategoriesFromUrl(url).join(', ')}]`
+        `${productEntries.length} product entries found \t Time Elapsed:${elapsedTimeString}s \t` +
+          `Categories: [${deriveCategoriesFromUrl(url).join(', ')}]`
       );
 
       // Loop through each product entry, add desired data into a Product object
@@ -138,7 +150,7 @@ urlsToScrape.forEach((url) => {
 
           // Upload image to Azure Function
           if (uploadImagesToAzureFunc) await uploadImageRestAPI(imageUrl!, product);
-        } else {
+        } else if (dryRunMode && product !== undefined) {
           // When doing a dry run, log product name - size - price in table format
           logProductRow(product!);
         }
@@ -316,7 +328,7 @@ function playwrightElementToProduct(element: cheerio.Element, url: string): Prod
 
   if (validateProduct(product)) return product;
   else {
-    logError('Product Scrape Invalid: ' + product.name);
+    logError(`Unable to Scrape: ${product.id} | ${product.name} | $${product.currentPrice}\n`);
     return undefined;
   }
 }
