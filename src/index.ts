@@ -1,17 +1,10 @@
 import playwright from 'playwright';
 import * as cheerio from 'cheerio';
-import _ from 'lodash';
+import _, { split } from 'lodash';
 import * as dotenv from 'dotenv';
 import { upsertProductToCosmosDB } from './cosmosdb.js';
-import { DatedPrice, Product, UpsertResponse } from './typings';
-import {
-  log,
-  colour,
-  logProductRow,
-  logError,
-  parseAndOptimiseURL,
-  readLinesFromTextFile,
-} from './utilities.js';
+import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from './typings';
+import { log, colour, logProductRow, logError, readLinesFromTextFile } from './utilities.js';
 dotenv.config();
 
 // Countdown Scraper
@@ -31,14 +24,10 @@ const startTime = Date.now();
 let rawLinesFromFile: string[] = readLinesFromTextFile('src/urls.txt');
 
 // Parse and optimise urls
-let urlsToScrape: string[] = [];
+let categorisedUrls: CategorisedUrl[] = [];
 rawLinesFromFile.map((line) => {
-  let parsedLine = parseAndOptimiseURL(
-    line,
-    'countdown.co.nz',
-    '?page=1&size=48&inStockProductsOnly=true'
-  );
-  if (parsedLine != undefined) urlsToScrape.push(parsedLine);
+  let categorisedUrl = parseAndCategoriseURL(line);
+  if (categorisedUrl !== undefined) categorisedUrls.push(categorisedUrl);
 });
 
 // Can change dryRunMode to true to only log results to console
@@ -55,17 +44,20 @@ let pagesScrapedCount = 1;
 let promise = Promise.resolve();
 
 // Loop through each URL to scrape
-urlsToScrape.forEach((url) => {
+categorisedUrls.forEach((categorisedUrl) => {
+  const url = categorisedUrl.url;
+
   // Use promises to ensure a delay between each scrape
   promise = promise.then(async () => {
     // Log current scrape sequence, the total number of pages to scrape, and a shortened url
     log(
       colour.yellow,
-      `[${pagesScrapedCount}/${urlsToScrape.length}] ` +
-        `Scraping Page.. ${url
+      `[${pagesScrapedCount}/${categorisedUrls.length}] ` +
+        `Scraping Page ${url
           .replace('https://www.', '')
           .replace('?page=1&size=48&inStockProductsOnly=true', '')}` +
-        (dryRunMode ? ' (Dry Run Mode On)' : '')
+        (dryRunMode ? ' (Dry Run Mode On) ' : '') +
+        ` (${secondsDelayBetweenPageScrapes}s delay between scrapes)`
     );
 
     let pageLoadValid = false;
@@ -107,13 +99,17 @@ urlsToScrape.forEach((url) => {
             .padStart(2, '0');
       log(
         colour.yellow,
-        `${productEntries.length} product entries found \t Time Elapsed:${elapsedTimeString}s \t` +
-          `Categories: [${deriveCategoriesFromUrl(url).join(', ')}]`
+        `${productEntries.length} product entries found \t Time Elapsed: ${elapsedTimeString} \t` +
+          `Categories: [${categorisedUrl.categories.join(', ')}]`
       );
 
       // Loop through each product entry, add desired data into a Product object
       let promises = productEntries.map(async (index, productEntryElement) => {
-        const product = playwrightElementToProduct(productEntryElement, url);
+        const product = playwrightElementToProduct(
+          productEntryElement,
+          url,
+          categorisedUrl.categories
+        );
 
         if (!dryRunMode && product !== undefined) {
           // Insert or update item into azure cosmosdb
@@ -172,12 +168,10 @@ urlsToScrape.forEach((url) => {
     }
 
     // If all scrapes have completed, close the playwright browser
-    if (pagesScrapedCount++ === urlsToScrape.length) {
+    if (pagesScrapedCount++ === categorisedUrls.length) {
       browser.close();
       log(colour.sky, 'All Scraping Completed \n');
       return;
-    } else {
-      log(colour.grey, `Waiting ${secondsDelayBetweenPageScrapes}s until next scrape..\n`);
     }
 
     // Add a delay between each scrape loop
@@ -223,8 +217,8 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
     const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
     log(
       colour.grey,
-      `  New Image  : ${cdnCheckUrlBase}200/${product.id}.webp\t| ` +
-        `${product.name.padEnd(30).slice(0, 30)}`
+      `  New Image  : ${cdnCheckUrlBase}${(product.id + '.webp').padEnd(8)}| ` +
+        `${product.name.padEnd(25).slice(0, 25)}`
     );
   } else if (responseMsg.includes('already exists')) {
     // Do not log for existing images
@@ -250,15 +244,11 @@ function handleArguments() {
     userArgs.forEach((arg) => {
       if (arg === 'dry-run-mode') dryRunMode = true;
       else if (arg.includes('.co.nz')) {
-        const parsedUrl = parseAndOptimiseURL(
-          arg,
-          'countdown.co.nz',
-          '?page=1&size=48&inStockProductsOnly=true'
-        );
-        if (parsedUrl !== undefined) urlsToScrape = [parsedUrl];
+        const parsedUrl = parseAndCategoriseURL(arg);
+        if (parsedUrl !== undefined) categorisedUrls = [parsedUrl];
         else throw 'URL invalid: ' + arg;
       } else if (arg === 'reverse') {
-        urlsToScrape = urlsToScrape.reverse();
+        categorisedUrls = categorisedUrls.reverse();
       }
     });
   }
@@ -278,7 +268,11 @@ async function establishPlaywrightPage() {
 
 // Function takes a single playwright element for 'a.product-entry',
 //   then builds and returns a Product object with desired data
-function playwrightElementToProduct(element: cheerio.Element, url: string): Product | undefined {
+function playwrightElementToProduct(
+  element: cheerio.Element,
+  url: string,
+  categories: string[]
+): Product | undefined {
   const $ = cheerio.load(element);
 
   let product: Product = {
@@ -294,8 +288,8 @@ function playwrightElementToProduct(element: cheerio.Element, url: string): Prod
     // Store where the source of information came from
     sourceSite: 'countdown.co.nz',
 
-    // Categories are derived from url
-    category: deriveCategoriesFromUrl(url),
+    // Categories
+    category: categories,
 
     // Store today's date
     lastChecked: new Date(),
@@ -328,51 +322,9 @@ function playwrightElementToProduct(element: cheerio.Element, url: string): Prod
 
   if (validateProduct(product)) return product;
   else {
-    logError(`Unable to Scrape: ${product.id} | ${product.name} | $${product.currentPrice}\n`);
+    logError(`Unable to Scrape: ${product.id} | ${product.name} | $${product.currentPrice}`);
     return undefined;
   }
-}
-
-// Derives category names from url, if any categories are available
-// www.domain.com/shop/browse/frozen/ice-cream-sorbet/tubs
-// returns '[ice-cream-sorbet]'
-export function deriveCategoriesFromUrl(url: string): string[] {
-  // If url doesn't contain /browse/, return no category
-  if (url.indexOf('/browse/') > 0) {
-    const categoriesStartIndex = url.indexOf('/browse/');
-    const categoriesEndIndex = url.indexOf('?') > 0 ? url.indexOf('?') : url.length;
-    const categoriesString = url.substring(categoriesStartIndex, categoriesEndIndex);
-    //console.log(categoriesString);
-
-    // Rename categories to normalised category names
-    categoriesString.replace('/ice-cream-sorbet/tubs', '/ice-cream');
-
-    // Exclude categories that are too broad or aren't useful
-    const excludedCategories = [
-      'browse',
-      'biscuits-crackers',
-      'snacks-sweets',
-      'frozen-meals-snacks',
-      'pantry',
-      'frozen',
-      'tubs',
-      'fridge-deli',
-      'other-frozen-vegetables',
-    ];
-
-    // Extract individual categories into array
-    let splitCategories = categoriesString.split('/').filter((category) => {
-      if (excludedCategories.includes(category)) return false;
-      if (category === '') return false;
-      if (category.length < 3) return false;
-      else return true;
-    });
-
-    // Return categories if any,
-    if (splitCategories.length > 0) return splitCategories;
-  }
-  // If no useful categories were found, return Uncategorised
-  return ['Uncategorised'];
 }
 
 // Runs basic validation on scraped product
@@ -393,6 +345,65 @@ function validateProduct(product: Product): boolean {
   } catch (error) {
     return false;
   }
+}
+
+// parseAndCategoriseURL()
+// =====================
+// Parses a URL string and category from a line of text, also optimises query parameters
+// Returns undefined if not a valid URL
+// Example In/Out:
+// countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream
+// {
+//    url: "https://countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&size=48&inStockProductsOnly=true"
+//    category: "ice-cream"
+// }
+export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined {
+  let categorisedUrl: CategorisedUrl = { url: '', categories: [] };
+
+  // If line doesn't contain desired url section, return undefined
+  if (!line.includes('countdown.co.nz')) {
+    return undefined;
+  } else {
+    // Split line by empty space, look for url and optional category
+    line.split(' ').forEach((section) => {
+      if (section.includes('countdown.co.nz')) {
+        categorisedUrl.url = section;
+
+        // Ensure URL has http:// or https://
+        if (!categorisedUrl.url.startsWith('http'))
+          categorisedUrl.url = 'https://' + categorisedUrl.url;
+
+        // If url contains ? it has query options already set
+        if (categorisedUrl.url.includes('?')) {
+          // Strip any existing query options off of URL
+          categorisedUrl.url = line.substring(0, line.indexOf('?'));
+        }
+        // Replace query parameters with optimised ones,
+        //  such as limiting to certain sellers,
+        //  or showing a higher number of products
+        categorisedUrl.url += '?page=1&size=48&inStockProductsOnly=true';
+
+        // Parse in 1 or more categories
+      } else if (section.startsWith('categories=')) {
+        let splitCategories = [section.replace('categories=', '')];
+        if (section.includes(', '))
+          splitCategories = section.replace('categories=', '').split(', ');
+        categorisedUrl.categories = splitCategories;
+      }
+    });
+  }
+
+  // If no category was specified, derive one from the last url /section/
+  if (categorisedUrl.categories.length === 0) {
+    // Extract /slashSections/ from url, while excluding content after '?'
+    const baseUrl = categorisedUrl!.url.split('?')[0];
+    let slashSections = baseUrl.split('/');
+
+    // Set category to last url /section/
+    categorisedUrl.categories = [slashSections[slashSections.length - 1]];
+  }
+
+  return categorisedUrl;
 }
 
 // Excludes ads, tracking, and bandwidth intensive resources from being downloaded by Playwright

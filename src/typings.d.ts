@@ -20,6 +20,11 @@ export interface ProductResponse {
   product: Product;
 }
 
+export interface CategorisedUrl {
+  url: string;
+  categories: string[];
+}
+
 export const enum UpsertResponse {
   NewProduct,
   PriceChanged,
