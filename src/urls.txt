@@ -33,17 +33,17 @@ https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/desserts ca
 https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat categories=ham
 https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon categories=bacon
 https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats categories=salami
-https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats categories=cooked-meat
+https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats categories=deli-meats
 https://www.countdown.co.nz/shop/browse/fridge-deli/juice-drinks
 https://www.countdown.co.nz/shop/browse/fridge-deli/vegan-vegetarian
 https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals
 https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto
-https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche
+https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche categories=pies
 https://www.countdown.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles
 
-https://www.countdown.co.nz/shop/browse/meat-poultry/beef
-https://www.countdown.co.nz/shop/browse/meat-poultry/lamb
-https://www.countdown.co.nz/shop/browse/meat-poultry/chicken-poultry
+https://www.countdown.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
+https://www.countdown.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
+https://www.countdown.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
 https://www.countdown.co.nz/shop/browse/meat-poultry/pork
 https://www.countdown.co.nz/shop/browse/meat-poultry/mince-patties
 https://www.countdown.co.nz/shop/browse/meat-poultry/sausages
@@ -58,9 +58,9 @@ https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-bloc
 https://www.countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies  categories=biscuits
 https://www.countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
 
-https://www.countdown.co.nz/shop/browse/fish-seafood/salmon
-https://www.countdown.co.nz/shop/browse/fish-seafood/prawns-seafood
+https://www.countdown.co.nz/shop/browse/fish-seafood/salmon categories=seafood,salmon
+https://www.countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 
 https://www.countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food,dry-cat-food
 https://www.countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food,wet-cat-food
-https://www.countdown.co.nz/shop/browse/pet/cats/cat-milk-treats  categories=cat-food,cat-treats
+https://www.countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food,cat-treats
