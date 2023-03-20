@@ -63,3 +63,20 @@ export function readLinesFromTextFile(filename: string): string[] {
     throw 'Error reading ' + filename;
   }
 }
+
+export function getTimeElapsedSince(startTime: number): string {
+  // Get time difference in between startTime and now in seconds
+  let elapsedTimeSeconds: number = (Date.now() - startTime) / 1000;
+  let elapsedTimeString: string = Math.floor(elapsedTimeSeconds).toString();
+
+  // If over 60 secs, print as 00:23 minute:seconds format
+  if (elapsedTimeSeconds >= 60)
+    elapsedTimeString =
+      Math.floor(elapsedTimeSeconds / 60) +
+      ':' +
+      Math.floor(elapsedTimeSeconds % 60)
+        .toString()
+        .padStart(2, '0');
+
+  return elapsedTimeString;
+}

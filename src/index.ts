@@ -1,10 +1,17 @@
 import playwright from 'playwright';
 import * as cheerio from 'cheerio';
-import _, { split } from 'lodash';
+import _ from 'lodash';
 import * as dotenv from 'dotenv';
 import { upsertProductToCosmosDB } from './cosmosdb.js';
 import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from './typings';
-import { log, colour, logProductRow, logError, readLinesFromTextFile } from './utilities.js';
+import {
+  log,
+  colour,
+  logProductRow,
+  logError,
+  readLinesFromTextFile,
+  getTimeElapsedSince,
+} from './utilities.js';
 dotenv.config();
 
 // Countdown Scraper
@@ -51,9 +58,9 @@ categorisedUrls.forEach((categorisedUrl) => {
   promise = promise.then(async () => {
     // Log current scrape sequence, the total number of pages to scrape, and a shortened url
     log(
-      colour.yellow,
+      colour.white,
       `[${pagesScrapedCount}/${categorisedUrls.length}] ` +
-        `Scraping Page ${url
+        `Scraping ${url
           .replace('https://www.', '')
           .replace('?page=1&size=48&inStockProductsOnly=true', '')}` +
         (dryRunMode ? ' (Dry Run Mode On) ' : '') +
@@ -88,19 +95,11 @@ categorisedUrls.forEach((categorisedUrl) => {
       const productEntries = $('cdx-card a.product-entry');
 
       // Log the number of products found, time elapsed in seconds or min:s, and found categories
-      let elapsedTimeSeconds: number = (Date.now() - startTime) / 1000;
-      let elapsedTimeString: string = Math.floor(elapsedTimeSeconds).toString();
-      if (elapsedTimeSeconds >= 60)
-        elapsedTimeString =
-          Math.floor(elapsedTimeSeconds / 60) +
-          ':' +
-          Math.floor(elapsedTimeSeconds % 60)
-            .toString()
-            .padStart(2, '0');
       log(
         colour.yellow,
-        `${productEntries.length} product entries found \t Time Elapsed: ${elapsedTimeString} \t` +
-          `Categories: [${categorisedUrl.categories.join(', ')}]`
+        `${productEntries.length} product entries found \t Time Elapsed: ${getTimeElapsedSince(
+          startTime
+        )} \t` + `Categories: [${categorisedUrl.categories.join(', ')}]`
       );
 
       // Loop through each product entry, add desired data into a Product object
@@ -163,14 +162,17 @@ categorisedUrls.forEach((categorisedUrl) => {
           `${priceChangedCount} updated prices, ` +
           `${infoUpdatedCount} updated info, ` +
           `${alreadyUpToDateCount} already up-to-date, ` +
-          `${failedCount} failed updates`
+          `${failedCount} failed updates\n`
       );
     }
 
     // If all scrapes have completed, close the playwright browser
     if (pagesScrapedCount++ === categorisedUrls.length) {
       browser.close();
-      log(colour.sky, 'All Scraping Completed \n');
+      log(
+        colour.sky,
+        `All Pages Completed = Total Time Elapsed ${getTimeElapsedSince(startTime)} \n`
+      );
       return;
     }
 
@@ -217,7 +219,7 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
     const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
     log(
       colour.grey,
-      `  New Image  : ${cdnCheckUrlBase}${(product.id + '.webp').padEnd(8)}| ` +
+      `  New Image  : ${cdnCheckUrlBase}${(product.id + '.webp').padEnd(8)} | ` +
         `${product.name.padEnd(25).slice(0, 25)}`
     );
   } else if (responseMsg.includes('already exists')) {
