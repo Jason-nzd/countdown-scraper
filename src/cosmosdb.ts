@@ -107,27 +107,28 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     };
   }
 
-  // // If category has changed and is not Uncategorised, update Product
-  // else if (
-  //   dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') &&
-  //   scrapedProduct.category[0] !== 'Uncategorised'
-  // ) {
-  //   console.log(
-  //     `  Categories Changed: ${scrapedProduct.name.padEnd(20).substring(0, 20)}` +
-  //       ` - ${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
-  //   );
+  // If category has changed and is not Uncategorised, update Product
+  else if (
+    dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') &&
+    scrapedProduct.category[0] !== 'Uncategorised'
+  ) {
+    console.log(
+      `  Categories Changed: ${scrapedProduct.name.padEnd(30).substring(0, 30)}` +
+        ` - ${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
+    );
 
-  //   // Update category, size and sourceSite
-  //   dbProduct.category = scrapedProduct.category;
-  //   dbProduct.sourceSite = scrapedProduct.sourceSite;
-  //   dbProduct.size = scrapedProduct.size;
-  //   dbProduct.lastChecked = scrapedProduct.lastChecked;
+    // Update category, size and sourceSite
+    dbProduct.category = scrapedProduct.category;
+    dbProduct.sourceSite = scrapedProduct.sourceSite;
+    dbProduct.size = scrapedProduct.size;
+    dbProduct.lastChecked = scrapedProduct.lastChecked;
 
-  //   // Return completed Product ready for uploading
-  //   return {
-  //     upsertType: UpsertResponse.InfoChanged,
-  //     product: dbProduct,
-  //   };
+    // Return completed Product ready for uploading
+    return {
+      upsertType: UpsertResponse.InfoChanged,
+      product: dbProduct,
+    };
+  }
 
   // If DB product has no category, update it
   else if (
