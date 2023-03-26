@@ -50,6 +50,14 @@ await establishPlaywrightPage();
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
 
+// Log loop start
+log(
+  colour.white,
+  `${categorisedUrls.length} pages to be scraped \t` +
+    `${secondsDelayBetweenPageScrapes}s delay between scrapes\t` +
+    (dryRunMode ? ' (Dry Run Mode On) ' : '')
+);
+
 // Loop through each URL to scrape
 categorisedUrls.forEach((categorisedUrl) => {
   const url = categorisedUrl.url;
@@ -62,9 +70,7 @@ categorisedUrls.forEach((categorisedUrl) => {
       `[${pagesScrapedCount}/${categorisedUrls.length}] ` +
         `Scraping ${url
           .replace('https://www.', '')
-          .replace('?page=1&size=48&inStockProductsOnly=true', '')}` +
-        (dryRunMode ? ' (Dry Run Mode On) ' : '') +
-        ` (${secondsDelayBetweenPageScrapes}s delay between scrapes)`
+          .replace('?page=1&size=48&inStockProductsOnly=true', '')}`
     );
 
     let pageLoadValid = false;
