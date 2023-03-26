@@ -1,7 +1,7 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
-import { logError, log, colour } from './utilities.js';
+import { logError, log, colour, validCategories } from './utilities.js';
 import { DatedPrice, Product, UpsertResponse, ProductResponse } from './typings';
 dotenv.config();
 
@@ -107,10 +107,11 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     };
   }
 
-  // If category has changed and is not Uncategorised, update Product
+  // If any scraped categories are not included within the list of valid ones, update
   else if (
-    dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') &&
-    scrapedProduct.category[0] !== 'Uncategorised'
+    !scrapedProduct.category.every((category) => {
+      validCategories.includes(category);
+    })
   ) {
     console.log(
       `  Categories Changed: ${scrapedProduct.name.padEnd(30).substring(0, 30)}` +
