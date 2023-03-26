@@ -46,6 +46,9 @@ handleArguments();
 // Establish playwright browser
 await establishPlaywrightPage();
 
+// Select store location
+await selectStoreByLocationName();
+
 // Counter and promise to help with delayed looping of each page load
 let pagesScrapedCount = 1;
 let promise = Promise.resolve();
@@ -78,13 +81,13 @@ categorisedUrls.forEach((categorisedUrl) => {
       // Open page with url options now set
       await page.goto(url);
 
-      // Wait for <cdx-card> html element to dynamically load in,
+      // Wait for product-price h3 em html element to dynamically load in,
       //  this is required to see product data
-      await page.waitForSelector('cdx-card');
+      await page.waitForSelector('product-price h3 em');
 
       pageLoadValid = true;
     } catch (error) {
-      logError('Page Timeout after 30 seconds - Skipping this page');
+      logError('Page Timeout after 30 seconds - Skipping this page\n');
     }
 
     // Count number of items processed for logging purposes
@@ -92,11 +95,10 @@ categorisedUrls.forEach((categorisedUrl) => {
     let priceChangedCount = 0;
     let infoUpdatedCount = 0;
     let newProductsCount = 0;
-    let failedCount = 0;
 
     // If page load is valid, load html into Cheerio for easy DOM selection
     if (pageLoadValid) {
-      const html = await page.evaluate(() => document.body.innerHTML);
+      const html = await page.innerHTML('product-grid');
       const $ = cheerio.load(html);
       const productEntries = $('cdx-card a.product-entry');
 
@@ -134,9 +136,7 @@ categorisedUrls.forEach((categorisedUrl) => {
             case UpsertResponse.PriceChanged:
               priceChangedCount++;
               break;
-            case UpsertResponse.Failed:
             default:
-              failedCount++;
               break;
           }
 
@@ -167,8 +167,7 @@ categorisedUrls.forEach((categorisedUrl) => {
         `CosmosDB: ${newProductsCount} new products, ` +
           `${priceChangedCount} updated prices, ` +
           `${infoUpdatedCount} updated info, ` +
-          `${alreadyUpToDateCount} already up-to-date, ` +
-          `${failedCount} failed updates\n`
+          `${alreadyUpToDateCount} already up-to-date\n`
       );
     }
 
@@ -266,12 +265,39 @@ async function establishPlaywrightPage() {
   // Create a playwright headless browser using webkit
   log(colour.yellow, 'Launching Headless Browser..');
   browser = await playwright.webkit.launch({
-    headless: true,
+    headless: false,
   });
   page = await browser.newPage();
 
   // Define unnecessary types and ad/tracking urls to reject
   await routePlaywrightExclusions();
+}
+
+// selectStoreByLocationName()
+// Selects a store location by typing in the specified location address
+async function selectStoreByLocationName(locationName: string = '') {
+  // If no location was passed in, check .env for STORE_NAME
+  if (locationName === '') {
+    if (process.env.STORE_NAME) locationName = process.env.STORE_NAME;
+    // If STORE_NAME is also not present, skip store location selection
+    else return;
+  }
+
+  log(colour.yellow, 'Selected Store Location: ' + locationName + '\n');
+
+  await page.goto('https://www.countdown.co.nz/bookatimeslot');
+  await page.waitForSelector('fieldset div div p button');
+  await page.locator('fieldset div div p button').click({ button: 'left' });
+  await page.waitForSelector('form-suburb-autocomplete form-input input');
+  await page.locator('form-suburb-autocomplete form-input input').type(locationName);
+  await page.waitForTimeout(1000);
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(1000);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(2000);
+  await page.getByText('Save and Continue Shopping').click();
+  await page.waitForTimeout(1000);
+  await page.waitForSelector('cdx-card');
 }
 
 // Function takes a single playwright element for 'a.product-entry',
@@ -328,9 +354,21 @@ function playwrightElementToProduct(
   };
   product.priceHistory = [todaysDatedPrice];
 
+  // If product values pass validation, return product
   if (validateProduct(product)) return product;
-  else {
-    logError(`Unable to Scrape: ${product.id} | ${product.name} | $${product.currentPrice}`);
+
+  // Log if out of stock or other errors
+  const outOfStock = $(element).find('product-add-to-trolley button').text().trim();
+  if (outOfStock.includes('Out of stock')) {
+    logError(
+      `  Out of stock: ${product.id.padStart(6)} | ${product.name} | ` + `$${product.currentPrice}`
+    );
+    return undefined;
+  } else {
+    logError(
+      `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
+        `$${product.currentPrice}`
+    );
     return undefined;
   }
 }
@@ -416,7 +454,7 @@ export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined 
 
 // Excludes ads, tracking, and bandwidth intensive resources from being downloaded by Playwright
 async function routePlaywrightExclusions() {
-  let typeExclusions = ['image', 'stylesheet', 'media', 'font', 'other'];
+  let typeExclusions = ['image', 'media', 'font'];
   let urlExclusions = [
     'googleoptimize.com',
     'gtm.js',
@@ -444,7 +482,7 @@ async function routePlaywrightExclusions() {
     });
 
     if (excludeThisRequest) {
-      //logError(`${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+      // logError(`${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
       await route.abort();
     } else {
       //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
