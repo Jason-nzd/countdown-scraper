@@ -113,8 +113,10 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
   else if (
     !scrapedProduct.category.every((category) => {
       validCategories.includes(category);
-    }) &&
-    scrapedProduct.category.join(' ') !== dbProduct.category.join(' ')
+    }) ||
+    dbProduct.category[0] === 'Uncategorised' ||
+    dbProduct.category === null
+    // && scrapedProduct.category.join(' ') !== dbProduct.category.join(' ')
   ) {
     console.log(
       `  Categories Changed: ${scrapedProduct.name.padEnd(40).substring(0, 40)}` +
@@ -134,31 +136,8 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     };
   }
 
-  // If DB product has no category, update it
+  // If only size or sourceSite have changed, update Product
   else if (
-    dbProduct.category[0] === 'Uncategorised' ||
-    dbProduct.category === null ||
-    (dbProduct.category[0] === '' && scrapedProduct.category[0] !== 'Uncategorised')
-  ) {
-    console.log(
-      `  Categories Changed: ${scrapedProduct.name.padEnd(20).substring(0, 20)}` +
-        ` - ${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
-    );
-
-    // Update category, size and sourceSite
-    dbProduct.category = scrapedProduct.category;
-    dbProduct.sourceSite = scrapedProduct.sourceSite;
-    dbProduct.size = scrapedProduct.size;
-    dbProduct.lastChecked = scrapedProduct.lastChecked;
-
-    // Return completed Product ready for uploading
-    return {
-      upsertType: UpsertResponse.InfoChanged,
-      product: dbProduct,
-    };
-
-    // If only size or sourceSite have changed, update Product
-  } else if (
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
     dbProduct.size !== scrapedProduct.size
   ) {
