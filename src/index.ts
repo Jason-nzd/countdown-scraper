@@ -105,9 +105,9 @@ categorisedUrls.forEach((categorisedUrl) => {
       // Log the number of products found, time elapsed in seconds or min:s, and found categories
       log(
         colour.yellow,
-        `${productEntries.length} product entries found \t Time Elapsed: ${getTimeElapsedSince(
-          startTime
-        )} \t` + `Categories: [${categorisedUrl.categories.join(', ')}]`
+        `${productEntries.length} product entries found \t` +
+          `Time Elapsed: ${getTimeElapsedSince(startTime)} \t` +
+          `Categories: [${categorisedUrl.categories.join(' - ')}]`
       );
 
       // Loop through each product entry, add desired data into a Product object
@@ -224,7 +224,7 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
     const cdnCheckUrlBase = process.env.CDN_CHECK_URL_BASE;
     log(
       colour.grey,
-      `  New Image  : ${cdnCheckUrlBase}${(product.id + '.webp').padEnd(8)} | ` +
+      `  New Image  : ${cdnCheckUrlBase}${(product.id + '.webp').padEnd(11)} | ` +
         `${product.name.padEnd(25).slice(0, 25)}`
     );
   } else if (responseMsg.includes('already exists')) {
@@ -265,7 +265,7 @@ async function establishPlaywrightPage() {
   // Create a playwright headless browser using webkit
   log(colour.yellow, 'Launching Headless Browser..');
   browser = await playwright.webkit.launch({
-    headless: false,
+    headless: true,
   });
   page = await browser.newPage();
 
