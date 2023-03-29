@@ -332,7 +332,7 @@ function playwrightElementToProduct(
     id: $(element).find('h3').first().attr('id')?.replace(/\D/g, '') as string,
 
     // Original title is all lower-case and needs to be made into start-case
-    name: _.startCase($(element).find('h3').first().text().trim()),
+    name: _.startCase($(element).find('h3').first().text().trim()).replace('Fresh Fruit', ''),
 
     // Product size may be blank
     size: $(element).find('div.product-meta p span.size').text().trim(),
