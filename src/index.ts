@@ -55,7 +55,7 @@ let promise = Promise.resolve();
 
 // Log loop start
 log(
-  colour.white,
+  colour.yellow,
   `${categorisedUrls.length} pages to be scraped \t` +
     `${secondsDelayBetweenPageScrapes}s delay between scrapes\t` +
     (dryRunMode ? ' (Dry Run Mode On) ' : '')
@@ -242,28 +242,33 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
 }
 
 function handleArguments() {
-  // Handle arguments, can be reverse mode, dry-run-mode, or custom url
+  // Handle arguments, can be reverse mode, dry-run-mode, custom url, or categories
   if (process.argv.length > 2) {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
 
     // Loop through all args and find any matching keywords
+    let potentialUrl = '';
     userArgs.forEach((arg) => {
       if (arg === 'dry-run-mode') dryRunMode = true;
-      else if (arg.includes('.co.nz')) {
-        const parsedUrl = parseAndCategoriseURL(arg);
-        if (parsedUrl !== undefined) categorisedUrls = [parsedUrl];
-        else throw 'URL invalid: ' + arg;
-      } else if (arg === 'reverse') {
-        categorisedUrls = categorisedUrls.reverse();
-      }
+      else if (arg.includes('.co.nz')) potentialUrl += arg;
+      else if (arg.includes('categories=')) potentialUrl += ' ' + arg;
+      else if (arg === 'reverse') categorisedUrls = categorisedUrls.reverse();
     });
+
+    // Try to parse any url + categories
+    const parsedUrl = parseAndCategoriseURL(potentialUrl);
+    if (parsedUrl !== undefined) categorisedUrls = [parsedUrl];
   }
 }
 
 async function establishPlaywrightPage() {
   // Create a playwright headless browser using webkit
-  log(colour.yellow, 'Launching Headless Browser..');
+  log(
+    colour.yellow,
+    'Launching Headless Browser.. ' +
+      (process.argv.length > 2 ? '(' + (process.argv.length - 2) + ' arguments found)' : '')
+  );
   browser = await playwright.webkit.launch({
     headless: true,
   });
@@ -283,8 +288,7 @@ async function selectStoreByLocationName(locationName: string = '') {
     else return;
   }
 
-  log(colour.yellow, 'Selected Store Location: ' + locationName + '\n');
-
+  log(colour.yellow, 'Selecting Store Location..');
   await page.goto('https://www.countdown.co.nz/bookatimeslot');
   await page.waitForSelector('fieldset div div p button');
   await page.locator('fieldset div div p button').click({ button: 'left' });
@@ -296,8 +300,8 @@ async function selectStoreByLocationName(locationName: string = '') {
   await page.keyboard.press('Enter');
   await page.waitForTimeout(2000);
   await page.getByText('Save and Continue Shopping').click();
-  await page.waitForTimeout(1000);
-  await page.waitForSelector('cdx-card');
+  log(colour.yellow, 'Selected Location: ' + locationName + '\n');
+  await page.waitForTimeout(2000);
 }
 
 // Function takes a single playwright element for 'a.product-entry',
@@ -432,8 +436,7 @@ export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined 
         // Parse in 1 or more categories
       } else if (section.startsWith('categories=')) {
         let splitCategories = [section.replace('categories=', '')];
-        if (section.includes(', '))
-          splitCategories = section.replace('categories=', '').split(', ');
+        if (section.includes(',')) splitCategories = section.replace('categories=', '').split(',');
         categorisedUrl.categories = splitCategories;
       }
     });
