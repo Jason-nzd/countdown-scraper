@@ -69,11 +69,8 @@ categorisedUrls.forEach((categorisedUrl) => {
   promise = promise.then(async () => {
     // Log current scrape sequence, the total number of pages to scrape, and a shortened url
     log(
-      colour.white,
-      `[${pagesScrapedCount}/${categorisedUrls.length}] ` +
-        `Scraping ${url
-          .replace('https://www.', '')
-          .replace('?page=1&size=48&inStockProductsOnly=true', '')}`
+      colour.yellow,
+      `[${pagesScrapedCount}/${categorisedUrls.length}] Scraping ${url.replace('https://www.', '')}`
     );
 
     let pageLoadValid = false;
@@ -140,17 +137,15 @@ categorisedUrls.forEach((categorisedUrl) => {
               break;
           }
 
-          // Todo fix url scraping
-          // const originalImageUrl = $(productEntryElement)
-          //   .find('div.productImage-container figure img')
-          //   .attr('src');
-
-          const imageUrlBase = 'https://assets.woolworths.com.au/images/2010/';
-          const imageUrlExtensionAndQueryParams = '.jpg?impolicy=wowcdxwbjbx&w=900&h=900';
-          const imageUrl = imageUrlBase + product.id + imageUrlExtensionAndQueryParams;
-
           // Upload image to Azure Function
-          if (uploadImagesToAzureFunc) await uploadImageRestAPI(imageUrl!, product);
+          if (uploadImagesToAzureFunc) {
+            // Get image url using provided base url, product ID, and hi-res query parameters
+            const imageUrlBase = 'https://assets.woolworths.com.au/images/2010/';
+            const imageUrlExtensionAndQueryParams = '.jpg?impolicy=wowcdxwbjbx&w=900&h=900';
+            const imageUrl = imageUrlBase + product.id + imageUrlExtensionAndQueryParams;
+
+            await uploadImageRestAPI(imageUrl!, product);
+          }
         } else if (dryRunMode && product !== undefined) {
           // When doing a dry run, log product name - size - price in table format
           logProductRow(product!);
@@ -188,32 +183,30 @@ categorisedUrls.forEach((categorisedUrl) => {
   });
 });
 
-// Image URL - get product image url from page, then upload using an Azure Function
+// uploadImageRestAPI()
+// --------------------
+// Send image url to an Azure Function API
+
 async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boolean> {
   // Check if passed in url is valid, return if not
   if (imgUrl === undefined || !imgUrl.includes('http')) {
-    log(colour.grey, `   Image ${product.id} has invalid url: ${imgUrl}`);
+    log(colour.grey, `  Image ${product.id} has invalid url: ${imgUrl}`);
     return false;
   }
 
   // Get AZURE_FUNC_URL from env
   // Example format:
   // https://<func-app>.azurewebsites.net/api/ImageToS3?code=<auth-code>
-  const funcUrl = process.env.AZURE_FUNC_URL;
+  const funcBaseUrl = process.env.AZURE_FUNC_URL;
 
-  // Check funcUrl is valid
-  if (!funcUrl?.includes('http')) {
+  // Check funcBaseUrl is valid
+  if (!funcBaseUrl?.includes('http')) {
     throw Error(
       '\nAZURE_FUNC_URL in .env is invalid. Should be in .env :\n\n' +
         'AZURE_FUNC_URL=https://<func-app>.azurewebsites.net/api/ImageToS3?code=<auth-code>\n\n'
     );
   }
-  const restUrl =
-    funcUrl +
-    '&destination=s3://supermarketimages/product-images/' +
-    product.id +
-    '&source=' +
-    imgUrl;
+  const restUrl = `${funcBaseUrl}&destination=s3://supermarketimages/product-images/${product.id}&source=${imgUrl}`;
 
   // Perform http get
   var res = await fetch(new URL(restUrl), { method: 'GET' });
@@ -241,8 +234,11 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
   return true;
 }
 
+// handleArguments()
+// -----------------
+// Handle command line arguments. Can be reverse mode, dry-run-mode, custom url, or categories
+
 function handleArguments() {
-  // Handle arguments, can be reverse mode, dry-run-mode, custom url, or categories
   if (process.argv.length > 2) {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
@@ -262,8 +258,11 @@ function handleArguments() {
   }
 }
 
+// establishPlaywrightPage()
+// -------------------------
+// Create a playwright headless browser using webkit
+
 async function establishPlaywrightPage() {
-  // Create a playwright headless browser using webkit
   log(
     colour.yellow,
     'Launching Headless Browser.. ' +
@@ -279,7 +278,9 @@ async function establishPlaywrightPage() {
 }
 
 // selectStoreByLocationName()
+// ---------------------------
 // Selects a store location by typing in the specified location address
+
 async function selectStoreByLocationName(locationName: string = '') {
   // If no location was passed in, check .env for STORE_NAME
   if (locationName === '') {
@@ -287,25 +288,38 @@ async function selectStoreByLocationName(locationName: string = '') {
     // If STORE_NAME is also not present, skip store location selection
     else return;
   }
-
   log(colour.yellow, 'Selecting Store Location..');
+
+  // Open store selection page
   await page.goto('https://www.countdown.co.nz/bookatimeslot');
   await page.waitForSelector('fieldset div div p button');
-  await page.locator('fieldset div div p button').click({ button: 'left' });
+
+  // Click change address modal
+  await page.locator('fieldset div div p button').click();
   await page.waitForSelector('form-suburb-autocomplete form-input input');
+
+  // Type in address, wait 1s for auto-complete to populate entries
   await page.locator('form-suburb-autocomplete form-input input').type(locationName);
   await page.waitForTimeout(1000);
+
+  // Select first matched entry, wait for validation
   await page.keyboard.press('ArrowDown');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(500);
   await page.keyboard.press('Enter');
   await page.waitForTimeout(2000);
+
+  // Click save location button
   await page.getByText('Save and Continue Shopping').click();
   log(colour.yellow, 'Selected Location: ' + locationName + '\n');
+
+  // Ensure location is saved before moving on
   await page.waitForTimeout(2000);
 }
 
-// Function takes a single playwright element for 'a.product-entry',
-//   then builds and returns a Product object with desired data
+// playwrightElementToProduct()
+// ----------------------------
+// Takes a playwright html element for 'a.product-entry', builds and returns a Product
+
 function playwrightElementToProduct(
   element: cheerio.Element,
   url: string,
@@ -377,7 +391,10 @@ function playwrightElementToProduct(
   }
 }
 
-// Runs basic validation on scraped product
+// validateProduct()
+// -----------------
+// Checks scraped product values are within reasonable ranges
+
 function validateProduct(product: Product): boolean {
   try {
     if (product.name.length < 4 || product.name.length > 100) return false;
@@ -398,15 +415,17 @@ function validateProduct(product: Product): boolean {
 }
 
 // parseAndCategoriseURL()
-// =====================
+// -----------------------
 // Parses a URL string and category from a line of text, also optimises query parameters
 // Returns undefined if not a valid URL
-// Example In/Out:
-// countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream
-// {
-//    url: "https://countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&size=48&inStockProductsOnly=true"
-//    category: "ice-cream"
-// }
+// Example Input:
+//    countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream
+// Example Return:
+//    {
+//        url: "https://countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&size=48&inStockProductsOnly=true"
+//        category: "ice-cream"
+//    }
+
 export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined {
   let categorisedUrl: CategorisedUrl = { url: '', categories: [] };
 
@@ -455,7 +474,10 @@ export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined 
   return categorisedUrl;
 }
 
+// routePlaywrightExclusions()
+// ---------------------------
 // Excludes ads, tracking, and bandwidth intensive resources from being downloaded by Playwright
+
 async function routePlaywrightExclusions() {
   let typeExclusions = ['image', 'media', 'font'];
   let urlExclusions = [

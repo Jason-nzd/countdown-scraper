@@ -1,3 +1,7 @@
+# Add urls with or without https://www
+# Categories will be derived from last /url-bracket/, or categories can be overridden with: categories=ice-cream
+# Multiple categories can be specified with commas and no spaces: categories=meat,chicken
+
 https://www.countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream
 https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls
 https://www.countdown.co.nz/shop/browse/frozen/pizza-pastry-bread categories=frozen-pizza

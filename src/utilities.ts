@@ -15,28 +15,27 @@ export const colour = {
   sky: '\x1b[38;5;153m',
 };
 
-// Console log with specified colour, then clear colour
+// log()
+// -----
+// Console log with specified colour
+
 export function log(colour: string, text: string) {
   const clear = '\x1b[0m';
   console.log(`${colour}%s${clear}`, text);
 }
 
+// logError()
+// ----------
 // Shorthand function for logging with red colour
+
 export function logError(text: string) {
   log(colour.red, text);
 }
 
-// Takes 2 colours and flip-flops between them on each function call
-//  is used for printing tables with better readability
-let alternatingRowColour = false;
-function getAlternatingRowColour(colourA: string, colourB: string) {
-  if (alternatingRowColour) alternatingRowColour = false;
-  else if (!alternatingRowColour) alternatingRowColour = true;
+// logProductRow()
+// ---------------
+// Log a single product in one row, using alternating colours for readability.
 
-  return alternatingRowColour ? colourA : colourB;
-}
-
-// Log a single product in one row, using alternating colours for readability
 export function logProductRow(product: Product) {
   const categories = product.category != undefined ? product.category?.join(', ') : '';
   log(
@@ -47,10 +46,21 @@ export function logProductRow(product: Product) {
   );
 }
 
+// getAlternatingRowColour()
+// -------------------------
+// Takes 2 colours and flip-flops between them on each function call.
+// Is used for printing tables with better readability.
+
+let alternatingRowColour = false;
+function getAlternatingRowColour(colourA: string, colourB: string) {
+  alternatingRowColour = alternatingRowColour ? false : true;
+  return alternatingRowColour ? colourA : colourB;
+}
+
 // readLinesFromTextFile()
-// =======================
-// Read from local text file containing one url per line
-// Return as string array
+// -----------------------
+// Read from local text file containing one url per line, return as string array.
+
 export function readLinesFromTextFile(filename: string): string[] {
   try {
     const file = readFileSync(filename, 'utf-8');
@@ -64,8 +74,11 @@ export function readLinesFromTextFile(filename: string): string[] {
   }
 }
 
+// getTimeElapsedSince()
+// ---------------------
+// Get time difference in between startTime and now. Returns in 58s or 12:32 format.
+
 export function getTimeElapsedSince(startTime: number): string {
-  // Get time difference in between startTime and now in seconds
   let elapsedTimeSeconds: number = (Date.now() - startTime) / 1000;
   let elapsedTimeString: string = Math.floor(elapsedTimeSeconds).toString();
 
@@ -81,6 +94,7 @@ export function getTimeElapsedSince(startTime: number): string {
   return elapsedTimeString;
 }
 
+// List of valid category names that scraped products should be a part of
 export const validCategories: string[] = [
   'frozen',
   'ice-cream',

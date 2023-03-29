@@ -38,6 +38,7 @@ try {
 // -------------------------
 // Inserts or updates a product object to CosmosDB,
 //  returns an UpsertResponse based on if and how the Product was updated
+
 export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<UpsertResponse> {
   try {
     // Check CosmosDB for any existing item using id and name as the partition key
@@ -85,6 +86,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 // ---------------------
 // This takes a freshly scraped product and compares it with a found database product.
 //  It returns an updated product with data from both product versions
+
 function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): ProductResponse {
   // Date objects pulled from CosmosDB need to re-parsed as strings in format yyyy-mm-dd
   let dbDay = dbProduct.lastUpdated.toString();
@@ -188,6 +190,7 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
 // cleanProductFields()
 // --------------------
 // Removes undesired fields that CosmosDB creates
+
 export function cleanProductFields(document: Product): Product {
   let {
     id,
@@ -218,6 +221,7 @@ export function cleanProductFields(document: Product): Product {
 // ----------------
 // Log a per product price change message,
 //  coloured green for price reduction, red for price increase
+
 export function logPriceChange(product: Product, newPrice: Number) {
   const priceIncreased = newPrice > product.currentPrice;
   log(
@@ -235,6 +239,7 @@ export function logPriceChange(product: Product, newPrice: Number) {
 // customQuery()
 // -------------
 // Function for running custom DB queries - used primarily for debugging
+
 export async function customQuery(): Promise<void> {
   const options: FeedOptions = {
     maxItemCount: 10,
