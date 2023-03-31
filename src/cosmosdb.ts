@@ -112,11 +112,10 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
   // If any db categories are not included within the list of valid ones, update to scraped ones
   else if (
     !dbProduct.category.every((category) => {
-      validCategories.includes(category);
+      const isValid = validCategories.includes(category);
+      return isValid;
     }) ||
-    dbProduct.category[0] === 'Uncategorised' ||
     dbProduct.category === null
-    // && scrapedProduct.category.join(' ') !== dbProduct.category.join(' ')
   ) {
     console.log(
       `  Categories Changed: ${scrapedProduct.name.padEnd(40).substring(0, 40)}` +
