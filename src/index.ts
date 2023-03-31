@@ -70,7 +70,9 @@ categorisedUrls.forEach((categorisedUrl) => {
     // Log current scrape sequence, the total number of pages to scrape, and a shortened url
     log(
       colour.yellow,
-      `[${pagesScrapedCount}/${categorisedUrls.length}] Scraping ${url.replace('https://www.', '')}`
+      `[${pagesScrapedCount}/${categorisedUrls.length}] Scraping ${url
+        .replace('https://www.', '')
+        .replace('&inStockProductsOnly=true', '')}`
     );
 
     let pageLoadValid = false;
@@ -109,11 +111,7 @@ categorisedUrls.forEach((categorisedUrl) => {
 
       // Loop through each product entry, add desired data into a Product object
       let promises = productEntries.map(async (index, productEntryElement) => {
-        const product = playwrightElementToProduct(
-          productEntryElement,
-          url,
-          categorisedUrl.categories
-        );
+        const product = playwrightElementToProduct(productEntryElement, categorisedUrl.categories);
 
         if (!dryRunMode && product !== undefined) {
           // Insert or update item into azure cosmosdb
@@ -322,7 +320,6 @@ async function selectStoreByLocationName(locationName: string = '') {
 
 function playwrightElementToProduct(
   element: cheerio.Element,
-  url: string,
   categories: string[]
 ): Product | undefined {
   const $ = cheerio.load(element);
@@ -332,7 +329,15 @@ function playwrightElementToProduct(
     id: $(element).find('h3').first().attr('id')?.replace(/\D/g, '') as string,
 
     // Original title is all lower-case and needs to be made into start-case
-    name: _.startCase($(element).find('h3').first().text().replace('Fresh Fruit', '').trim()),
+    name: _.startCase(
+      $(element)
+        .find('h3')
+        .first()
+        .text()
+        .replace('fresh fruit', '')
+        .replace('fresh vegetable', '')
+        .trim()
+    ),
 
     // Product size may be blank
     size: $(element).find('div.product-meta p span.size').text().trim(),

@@ -135,20 +135,17 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     };
   }
 
-  // If only size or sourceSite have changed, update Product
+  // If only name, size or sourceSite have changed, update Product
   else if (
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
-    dbProduct.size !== scrapedProduct.size
+    dbProduct.size !== scrapedProduct.size ||
+    dbProduct.name !== scrapedProduct.name
   ) {
-    console.log(
-      `  Size Changed: ${scrapedProduct.name.padEnd(20).substring(0, 20)}` +
-        ` - ${dbProduct.size} > ${scrapedProduct.size}`
-    );
-
     // Set size and sourceSite
     dbProduct.sourceSite = scrapedProduct.sourceSite;
     dbProduct.size = scrapedProduct.size;
     dbProduct.lastChecked = scrapedProduct.lastChecked;
+    dbProduct.name = scrapedProduct.name;
 
     // Return completed Product ready for uploading
     return {
