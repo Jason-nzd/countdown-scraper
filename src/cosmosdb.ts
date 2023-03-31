@@ -109,9 +109,9 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     };
   }
 
-  // If any scraped categories are not included within the list of valid ones, update
+  // If any db categories are not included within the list of valid ones, update to scraped ones
   else if (
-    !scrapedProduct.category.every((category) => {
+    !dbProduct.category.every((category) => {
       validCategories.includes(category);
     }) ||
     dbProduct.category[0] === 'Uncategorised' ||
