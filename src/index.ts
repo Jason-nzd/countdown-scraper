@@ -300,7 +300,7 @@ async function selectStoreByLocationName(locationName: string = '') {
 
   // Type in address, wait 1s for auto-complete to populate entries
   await page.locator('form-suburb-autocomplete form-input input').type(locationName);
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(1500);
 
   // Select first matched entry, wait for validation
   await page.keyboard.press('ArrowDown');
