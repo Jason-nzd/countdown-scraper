@@ -122,8 +122,9 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
         ` - ${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
     );
 
-    // Update everything but priceHistory
+    // Update everything but priceHistory and lastUpdated
     scrapedProduct.priceHistory = dbProduct.priceHistory;
+    scrapedProduct.lastUpdated = dbProduct.lastUpdated;
 
     // Return completed Product ready for uploading
     return {
@@ -138,8 +139,9 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.size !== scrapedProduct.size ||
     dbProduct.unitPrice !== scrapedProduct.unitPrice
   ) {
-    // Update everything but priceHistory
+    // Update everything but priceHistory and lastUpdated
     scrapedProduct.priceHistory = dbProduct.priceHistory;
+    scrapedProduct.lastUpdated = dbProduct.lastUpdated;
 
     // Return completed Product ready for uploading
     return {
@@ -154,36 +156,6 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
       product: dbProduct,
     };
   }
-}
-
-// cleanProductFields()
-// --------------------
-// Removes undesired fields that CosmosDB creates
-
-export function cleanProductFields(document: Product): Product {
-  let {
-    id,
-    name,
-    currentPrice,
-    size,
-    sourceSite,
-    priceHistory,
-    category,
-    lastUpdated,
-    lastChecked,
-  } = document;
-  const cleanedProduct: Product = {
-    id,
-    name,
-    currentPrice,
-    size,
-    sourceSite,
-    priceHistory,
-    category,
-    lastUpdated,
-    lastChecked,
-  };
-  return cleanedProduct;
 }
 
 // logPriceChange()
