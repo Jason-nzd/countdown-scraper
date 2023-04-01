@@ -2,7 +2,7 @@ import playwright from 'playwright';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import * as dotenv from 'dotenv';
-import { upsertProductToCosmosDB } from './cosmosdb.js';
+import { customQuery, upsertProductToCosmosDB } from './cosmosdb.js';
 import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from './typings';
 import {
   log,
@@ -302,9 +302,9 @@ async function selectStoreByLocationName(locationName: string = '') {
 
   // Select first matched entry, wait for validation
   await page.keyboard.press('ArrowDown');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(300);
   await page.keyboard.press('Enter');
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
 
   // Click save location button
   await page.getByText('Save and Continue Shopping').click();
