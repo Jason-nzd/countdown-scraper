@@ -11,6 +11,7 @@ import {
   logError,
   readLinesFromTextFile,
   getTimeElapsedSince,
+  addUnitPriceToProduct,
 } from './utilities.js';
 dotenv.config();
 
@@ -56,7 +57,7 @@ let promise = Promise.resolve();
 // Log loop start
 log(
   colour.yellow,
-  `${categorisedUrls.length} pages to be scraped \t` +
+  `${categorisedUrls.length} pages to be scraped \t\t` +
     `${secondsDelayBetweenPageScrapes}s delay between scrapes\t` +
     (dryRunMode ? ' (Dry Run Mode On) ' : '')
 );
@@ -380,6 +381,9 @@ function playwrightElementToProduct(
     price: product.currentPrice,
   };
   product.priceHistory = [todaysDatedPrice];
+
+  // Try add unit price and unit name to product
+  product = addUnitPriceToProduct(product);
 
   // If product values pass validation, return product
   if (validateProduct(product)) return product;

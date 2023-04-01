@@ -8,6 +8,8 @@ export interface Product {
   priceHistory: DatedPrice[];
   sourceSite: string;
   category: string[];
+  unitPrice?: number;
+  unitName?: string;
 }
 
 export interface DatedPrice {

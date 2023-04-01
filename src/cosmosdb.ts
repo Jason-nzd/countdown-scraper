@@ -122,35 +122,29 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
         ` - ${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
     );
 
-    // Update category, size and sourceSite
-    dbProduct.category = scrapedProduct.category;
-    dbProduct.sourceSite = scrapedProduct.sourceSite;
-    dbProduct.size = scrapedProduct.size;
-    dbProduct.lastChecked = scrapedProduct.lastChecked;
+    // Update everything but priceHistory
+    scrapedProduct.priceHistory = dbProduct.priceHistory;
 
     // Return completed Product ready for uploading
     return {
       upsertType: UpsertResponse.InfoChanged,
-      product: dbProduct,
+      product: scrapedProduct,
     };
   }
 
-  // If only name, size or sourceSite have changed, update Product
+  // If only unitPrice, size or sourceSite have changed, update Product
   else if (
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
     dbProduct.size !== scrapedProduct.size ||
-    dbProduct.name !== scrapedProduct.name
+    dbProduct.unitPrice !== scrapedProduct.unitPrice
   ) {
-    // Set size and sourceSite
-    dbProduct.sourceSite = scrapedProduct.sourceSite;
-    dbProduct.size = scrapedProduct.size;
-    dbProduct.lastChecked = scrapedProduct.lastChecked;
-    dbProduct.name = scrapedProduct.name;
+    // Update everything but priceHistory
+    scrapedProduct.priceHistory = dbProduct.priceHistory;
 
     // Return completed Product ready for uploading
     return {
       upsertType: UpsertResponse.InfoChanged,
-      product: dbProduct,
+      product: scrapedProduct,
     };
   } else {
     // Nothing has changed, only update lastChecked
