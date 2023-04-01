@@ -197,7 +197,7 @@ export function cleanProductFields(document: Product): Product {
 // Log a per product price change message,
 //  coloured green for price reduction, red for price increase
 
-export function logPriceChange(product: Product, newPrice: Number) {
+export function logPriceChange(product: Product, newPrice: number) {
   const priceIncreased = newPrice > product.currentPrice;
   log(
     priceIncreased ? colour.red : colour.green,
@@ -219,9 +219,10 @@ export async function customQuery(): Promise<void> {
   const options: FeedOptions = {
     maxItemCount: 10,
   };
-  const secondsDelayBetweenBatches = 5;
+  const secondsDelayBetweenBatches = 3;
   const querySpec: SqlQuerySpec = {
-    query: "SELECT * FROM products p where endswith(p.lastUpdated, '2023', false)",
+    query:
+      "SELECT * FROM products p where contains(p.name, 'Fresh Vegetable', false) and p.sourceSite='countdown.co.nz'",
   };
 
   log(colour.yellow, querySpec.query);
@@ -248,51 +249,17 @@ export async function customQuery(): Promise<void> {
         const products = batch.resources as Product[];
         const items = batch.resources;
 
-        log(colour.green, 'Batch: ' + batchCount + ' - Items: ' + products.length);
-
         items.forEach(async (item) => {
-          console.log(batchCount + ' - ' + item.name + ' - ' + item.lastUpdated);
+          console.log(item.name);
 
-          // Fix date format
-          let oldDateString: string = item.lastUpdated;
-          let utcDate: Date = new Date(oldDateString);
-          item.lastUpdated = utcDate;
+          // item.name = item.name.replace('Fresh Vegetable', '').trim();
+          // let p: Product = item as Product;
 
-          item.priceHistory.forEach((element: DatedPrice) => {
-            let utcDate: Date = new Date(element.date);
-            element.date = utcDate;
-          });
+          const res = await container.item(item.id, item.name).delete();
+          console.log('delete ' + res.statusCode);
 
-          let p: Product = item as Product;
-
-          // Fix blank categories
-          // if (typeof p.category === typeof ['string']) {
-          //   if (p.category.length === 0) p.category = ['Uncategorised'];
-          //   p.category = p.category.filter((value) => {
-          //     if (value === '' || value === null) return false;
-          //     else return true;
-          //   });
-          // } else {
-          //   p.category = ['Uncategorised'];
-          // }
-
-          // Fix sourceSite
-          // if (p.sourceSite.includes('countdown.co.nz') && p.sourceSite.length > 17)
-          //   p.sourceSite = 'countdown.co.nz';
-
-          let cleanedProduct = cleanProductFields(p);
-
-          console.log(cleanedProduct.lastUpdated);
-
-          // const res = await container
-          //   .item(cleanedProduct.id, cleanedProduct.name)
-          //   .replace(cleanedProduct);
-          const res = await container.items.upsert(cleanedProduct);
-
-          console.log(res.statusCode);
-          console.log(container.id);
-
-          //console.log(response.statusCode);
+          // const uploadRes = await container.items.upsert(p);
+          // console.log('upload ' + uploadRes.statusCode);
         });
 
         if (batchCount++ === maxBatchCount) continueFetching = false;
