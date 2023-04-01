@@ -41,7 +41,7 @@ rawLinesFromFile.map((line) => {
 let dryRunMode = false;
 
 // Handle command-line arguments
-handleArguments();
+await handleArguments();
 
 // Establish playwright browser
 await establishPlaywrightPage();
@@ -236,20 +236,23 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
 // -----------------
 // Handle command line arguments. Can be reverse mode, dry-run-mode, custom url, or categories
 
-function handleArguments() {
+async function handleArguments() {
   if (process.argv.length > 2) {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
 
     // Loop through all args and find any matching keywords
     let potentialUrl = '';
-    userArgs.forEach((arg) => {
+    await userArgs.forEach(async (arg) => {
       if (arg === 'dry-run-mode') dryRunMode = true;
       else if (arg.includes('.co.nz')) potentialUrl += arg;
       else if (arg.includes('categories=')) potentialUrl += ' ' + arg;
       else if (arg === 'reverse') categorisedUrls = categorisedUrls.reverse();
+      else if (arg === 'custom') {
+        await customQuery();
+        process.exit();
+      }
     });
-
     // Try to parse any url + categories
     const parsedUrl = parseAndCategoriseURL(potentialUrl);
     if (parsedUrl !== undefined) categorisedUrls = [parsedUrl];
@@ -336,6 +339,7 @@ function playwrightElementToProduct(
         .text()
         .replace('fresh fruit', '')
         .replace('fresh vegetable', '')
+        .replace('  ', ' ')
         .trim()
     ),
 

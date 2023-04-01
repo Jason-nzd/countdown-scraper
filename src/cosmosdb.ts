@@ -221,8 +221,7 @@ export async function customQuery(): Promise<void> {
   };
   const secondsDelayBetweenBatches = 3;
   const querySpec: SqlQuerySpec = {
-    query:
-      "SELECT * FROM products p where contains(p.name, 'Fresh Vegetable', false) and p.sourceSite='countdown.co.nz'",
+    query: "SELECT * FROM products p where contains(p.name, '  ', false)",
   };
 
   log(colour.yellow, querySpec.query);
@@ -252,7 +251,7 @@ export async function customQuery(): Promise<void> {
         items.forEach(async (item) => {
           console.log(item.name);
 
-          // item.name = item.name.replace('Fresh Vegetable', '').trim();
+          // item.name = item.name.replace('  ', ' ').trim();
           // let p: Product = item as Product;
 
           const res = await container.item(item.id, item.name).delete();
