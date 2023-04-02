@@ -133,56 +133,6 @@ export function addUnitPriceToProduct(product: Product): Product {
     }
   }
 
-  // Try split size into sections and match the first section for unit names,
-  // example: '400g 10pack' results in 'matchedUnit = g', 'quantity = 400'
-  //let size = product.size?.split(/(\s+)/)[0] || product.size || '';
-
-  // if (product.size && product.size.split(/(\s+)/).length > 1) {
-  //   size = product.size.split(/(\s+)/)[0];
-  //   console.log(product.size.split(/(\s+)/));
-  // } else if (product.size) {
-  //   size = product.size;
-  // }
-
-  // let matchedUnit = size
-  //   .toLowerCase()
-  //   .match(/\g$|kg$|l$|ml$|\g/g)
-  //   ?.join('');
-
-  // const matchDigitsFromSize = size.match(/\d|\./g)?.join('');
-  // if (matchedUnit && matchDigitsFromSize) {
-  //   quantity = parseFloat(matchDigitsFromSize);
-  //   // console.log('  (' + size + ') - quantity (' + quantity + ') unit = ' + matchedUnit);
-  // }
-
-  // // If no matches in split size, try the full size string
-  // if (!matchedUnit) {
-  //   matchedUnit = product.size
-  //     ?.toLowerCase()
-  //     .match(/\g$|kg$|l$|ml$|\g/g)
-  //     ?.join('');
-
-  //   const matchDigitsFromSize = product.size?.match(/\d|\./g)?.join('');
-  //   if (matchedUnit && matchDigitsFromSize) {
-  //     quantity = parseFloat(matchDigitsFromSize);
-  //     console.log('       size - quantity = ' + quantity + ' unit = ' + matchedUnit);
-  //   }
-  // }
-
-  // // If no matches in size, try match name
-  // if (!matchedUnit) {
-  //   matchedUnit = product.name
-  //     ?.toLowerCase()
-  //     .match(/\g$|kg$|l$|ml$/g)
-  //     ?.join('');
-
-  //   const matchDigitsFromName = product.name?.match(/\d|\./g)?.join('');
-  //   if (matchedUnit && matchDigitsFromName) {
-  //     quantity = parseFloat(matchDigitsFromName);
-  //     //console.log('  name - quantity (' + quantity + ') unit = ' + matchedUnit);
-  //   }
-  // }
-
   if (matchedUnit && quantity) {
     // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
     let matchMultipliedSizeString = product.size?.match(/\d*\sx\s\d*mL$/g)?.join('');
