@@ -149,18 +149,13 @@ export function addUnitPriceToProduct(product: Product): Product {
       matchedUnit = 'kg';
     }
 
-    // If units are in grams, convert to either /100g for under 500g, or /kg for over
+    // If units are in grams, convert to /kg
     if (quantity && matchedUnit === 'g') {
-      if (quantity < 500) {
-        quantity = quantity / 100;
-        matchedUnit = '100g';
-      } else {
-        quantity = quantity / 1000;
-        matchedUnit = 'kg';
-      }
+      quantity = quantity / 1000;
+      matchedUnit = 'kg';
     }
 
-    // If units are in mL, divide by 1000 and use L instead
+    // If units are in mL, convert to /L
     if (quantity && matchedUnit === 'ml') {
       quantity = quantity / 1000;
       matchedUnit = 'L';
