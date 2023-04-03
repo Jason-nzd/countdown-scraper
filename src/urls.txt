@@ -2,69 +2,69 @@
 # Categories will be derived from last /url-bracket/, or categories can be overridden with: categories=ice-cream
 # Multiple categories can be specified with commas and no spaces: categories=meat,chicken
 
-https://www.countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream
-https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls
-https://www.countdown.co.nz/shop/browse/frozen/pizza-pastry-bread categories=frozen-pizza
-https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=spring-rolls-other-savouries
-https://www.countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=spring-rolls-other-savouries
-https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables
-https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
-https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
-https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
-https://www.countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=hash-browns
-https://www.countdown.co.nz/shop/browse/frozen/frozen-meat
-https://www.countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives
-https://www.countdown.co.nz/shop/browse/frozen/frozen-seafood
-https://www.countdown.co.nz/shop/browse/frozen/frozen-fruit-drink
+countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream
+countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls
+countdown.co.nz/shop/browse/frozen/pizza-pastry-bread categories=frozen-pizza
+countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=spring-rolls-other-savouries
+countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=spring-rolls-other-savouries
+countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables
+countdown.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
+countdown.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
+countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
+countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=hash-browns
+countdown.co.nz/shop/browse/frozen/frozen-meat
+countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives
+countdown.co.nz/shop/browse/frozen/frozen-seafood
+countdown.co.nz/shop/browse/frozen/frozen-fruit-drink
 
-https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/full-cream-milk categories=milk,standard-milk
-https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/trim-light-milk categories=milk,trim-milk
-https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/enriched-milk categories=milk,enriched-milk
-https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/flavoured-milk categories=milk,flavoured-milk
-https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/dairy-free-milk-cream categories=milk,alternative-milk
-https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/sour-cream categories=sour-cream
-https://www.countdown.co.nz/shop/browse/fridge-deli/milk-cream/cream categories=cream
-https://www.countdown.co.nz/shop/browse/fridge-deli/long-life-milk categories=long-life-milk
-https://www.countdown.co.nz/shop/browse/fridge-deli/butter-spreads categories=butter-spreads
-https://www.countdown.co.nz/shop/browse/fridge-deli/cheese categories=cheese
-https://www.countdown.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases categories=pizza
-https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/multipacks-pouches-single-serve categories=yoghurt
-https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/large-tub-yoghurt categories=yoghurt
-https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/greek-greek-style categories=yoghurt
-https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/natural-health categories=yoghurt
-https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/dairy-free-yoghurt categories=yoghurt
-https://www.countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/desserts categories=yoghurt
-https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat categories=ham
-https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon categories=bacon
-https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats categories=salami
-https://www.countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats categories=deli-meats
-https://www.countdown.co.nz/shop/browse/fridge-deli/juice-drinks
-https://www.countdown.co.nz/shop/browse/fridge-deli/vegan-vegetarian
-https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals
-https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto
-https://www.countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche categories=pies-sausage-rolls
-https://www.countdown.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/full-cream-milk categories=milk,standard-milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/trim-light-milk categories=milk,trim-milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/enriched-milk categories=milk,enriched-milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/flavoured-milk categories=milk,flavoured-milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/dairy-free-milk-cream categories=milk,alternative-milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/sour-cream categories=sour-cream
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/cream categories=cream
+countdown.co.nz/shop/browse/fridge-deli/long-life-milk categories=long-life-milk
+countdown.co.nz/shop/browse/fridge-deli/butter-spreads categories=butter-spreads
+countdown.co.nz/shop/browse/fridge-deli/cheese categories=cheese
+countdown.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases categories=pizza
+countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/multipacks-pouches-single-serve categories=yoghurt
+countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/large-tub-yoghurt categories=yoghurt
+countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/greek-greek-style categories=yoghurt
+countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/natural-health categories=yoghurt
+countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/dairy-free-yoghurt categories=yoghurt
+countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/desserts categories=yoghurt
+countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat categories=ham
+countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon categories=bacon
+countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats categories=salami
+countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats categories=deli-meats
+countdown.co.nz/shop/browse/fridge-deli/juice-drinks
+countdown.co.nz/shop/browse/fridge-deli/vegan-vegetarian
+countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals
+countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto
+countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche categories=pies-sausage-rolls
+countdown.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles
 
-https://www.countdown.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
-https://www.countdown.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
-https://www.countdown.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
-https://www.countdown.co.nz/shop/browse/meat-poultry/pork
-https://www.countdown.co.nz/shop/browse/meat-poultry/mince-patties
-https://www.countdown.co.nz/shop/browse/meat-poultry/sausages
+countdown.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
+countdown.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
+countdown.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
+countdown.co.nz/shop/browse/meat-poultry/pork
+countdown.co.nz/shop/browse/meat-poultry/mince-patties
+countdown.co.nz/shop/browse/meat-poultry/sausages
 
-https://www.countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
-https://www.countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=fresh-fruit
-https://www.countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
+countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
+countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=fresh-fruit
+countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
 
-https://www.countdown.co.nz/shop/browse/pantry/eggs
-https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips,corn-chips
-https://www.countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate
-https://www.countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies  categories=biscuits
-https://www.countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
+countdown.co.nz/shop/browse/pantry/eggs
+countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips,corn-chips
+countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate
+countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
+countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
 
-https://www.countdown.co.nz/shop/browse/fish-seafood/salmon categories=seafood,salmon
-https://www.countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
+countdown.co.nz/shop/browse/fish-seafood/salmon categories=seafood,salmon
+countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 
-https://www.countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food,dry-cat-food
-https://www.countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food,wet-cat-food
-https://www.countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food,cat-treats
+countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food,dry-cat-food
+countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food,wet-cat-food
+countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food,cat-treats
