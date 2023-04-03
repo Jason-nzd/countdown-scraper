@@ -52,10 +52,6 @@ countdown.co.nz/shop/browse/meat-poultry/pork
 countdown.co.nz/shop/browse/meat-poultry/mince-patties
 countdown.co.nz/shop/browse/meat-poultry/sausages
 
-countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
-countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=fresh-fruit
-countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
-
 countdown.co.nz/shop/browse/pantry/eggs
 countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips,corn-chips
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate
@@ -68,3 +64,7 @@ countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food,dry-cat-food
 countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food,wet-cat-food
 countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food,cat-treats
+
+countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
+countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=fresh-fruit
+countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
