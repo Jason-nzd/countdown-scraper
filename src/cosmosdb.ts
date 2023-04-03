@@ -133,11 +133,13 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     };
   }
 
-  // If only unitPrice, size or sourceSite have changed, update Product
+  // Update other info
   else if (
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
     dbProduct.size !== scrapedProduct.size ||
-    dbProduct.unitPrice !== scrapedProduct.unitPrice
+    dbProduct.unitPrice !== scrapedProduct.unitPrice ||
+    dbProduct.unitName !== scrapedProduct.unitName ||
+    dbProduct.originalUnitQuantity !== scrapedProduct.originalUnitQuantity
   ) {
     // Update everything but priceHistory and lastUpdated
     scrapedProduct.priceHistory = dbProduct.priceHistory;

@@ -10,6 +10,7 @@ export interface Product {
   category: string[];
   unitPrice?: number;
   unitName?: string;
+  originalUnitQuantity?: number;
 }
 
 export interface DatedPrice {

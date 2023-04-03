@@ -135,13 +135,26 @@ export function addUnitPriceToProduct(product: Product): Product {
 
   if (matchedUnit && quantity) {
     // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
-    let matchMultipliedSizeString = product.size?.match(/\d*\sx\s\d*mL$/g)?.join('');
+    let matchMultipliedSizeString = product.size?.match(/\d+\sx\s\d+$/g)?.join('');
     if (matchMultipliedSizeString) {
       const splitMultipliedSize = matchMultipliedSizeString.split('x');
       const multiplier = parseInt(splitMultipliedSize[0].trim());
       const subUnitSize = parseInt(splitMultipliedSize[1].trim());
       quantity = multiplier * subUnitSize;
     }
+
+    // Handle edge case for format '85g pouches 12pack'
+    let numPack = product.size?.match(/\d+pack/g)?.toString();
+    let packSize = product.size?.match(/\d+g/g)?.toString();
+    if (numPack && packSize) {
+      let numPackInt = Number.parseInt(numPack.replace('pack', ''));
+      let packSizeInt = Number.parseInt(packSize.replace('g', ''));
+      quantity = numPackInt * packSizeInt;
+      matchedUnit = 'g';
+    }
+
+    // Store original unit quantity before it is normalized to 1kg / 1L
+    product.originalUnitQuantity = quantity;
 
     // If size is simply 'kg', process it as 1kg
     if (product.size === 'kg' || product.size === 'per kg') {
