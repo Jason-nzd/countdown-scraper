@@ -378,7 +378,7 @@ function playwrightElementToProduct(
     .text()
     .trim();
   let centString: string = $(element).find('div.product-meta product-price h3 span').text().trim();
-  // if(centString.includes("kg")) product.size="per kg";
+  if (centString.includes('kg')) product.size = 'per kg';
   centString = centString.replace(/\D/g, '');
 
   product.currentPrice = Number(dollarString + '.' + centString);
@@ -398,10 +398,7 @@ function playwrightElementToProduct(
 
   // Log if out of stock or other errors
   const outOfStock = $(element).find('product-add-to-trolley button').text().trim();
-  if (outOfStock.includes('Out of stock')) {
-    logError(
-      `  Out of stock: ${product.id.padStart(6)} | ${product.name} | ` + `$${product.currentPrice}`
-    );
+  if (outOfStock.includes('Out of stock') || outOfStock.includes('Unavailable')) {
     return undefined;
   } else {
     logError(

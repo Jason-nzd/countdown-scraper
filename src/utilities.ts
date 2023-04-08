@@ -1,3 +1,4 @@
+import { overriddenProducts } from './data-overrides.js';
 import { Product } from './typings';
 import { readFileSync } from 'fs';
 
@@ -102,62 +103,69 @@ export function getTimeElapsedSince(startTime: number): string {
 // Returns an updated product
 
 export function addUnitPriceToProduct(product: Product): Product {
-  // Quantity will later be derived from product name or size, such as 450ml = 450
-  let quantity: number | undefined = undefined;
-
-  // MatchedUnit will be derived from product name or size, 450ml = ml
-  let matchedUnit: string = '';
-
-  // Build an array of size, name, and split size sections
-  let sectionsToMatch = product.size?.split(/(\s+)/);
-  sectionsToMatch!.push(product.size as string);
-  sectionsToMatch!.push(product.name);
-
-  // Regex each section of the array to try match known units
-  let i = 0;
-  while (i < sectionsToMatch!.length) {
-    const section = sectionsToMatch![i++];
-    const tryMatchUnit = section
-      .toLowerCase()
-      .match(/\g$|kg$|l$|ml$/g)
-      ?.join('');
-
-    const tryMatchDigits = section.match(/\d|\./g)?.join('');
-
-    // If a match is found, break out of the while loop
-    if (tryMatchUnit && tryMatchDigits) {
-      matchedUnit = tryMatchUnit;
-      quantity = parseFloat(tryMatchDigits);
-      // console.log('  (' + section + ') = quantity(' + quantity + ') ' + matchedUnit);
-      break;
+  // First check if any manually overridden product sizing is available
+  overriddenProducts.forEach((overriddenProduct) => {
+    if (overriddenProduct.id === product.id) {
+      product.size = overriddenProduct.size;
+      // console.log(product.name + ' - overridden size to ' + overriddenProduct.size);
     }
-  }
+  });
 
-  if (matchedUnit && quantity) {
-    // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
-    let matchMultipliedSizeString = product.size?.match(/\d+\sx\s\d+$/g)?.join('');
-    if (matchMultipliedSizeString) {
-      const splitMultipliedSize = matchMultipliedSizeString.split('x');
-      const multiplier = parseInt(splitMultipliedSize[0].trim());
-      const subUnitSize = parseInt(splitMultipliedSize[1].trim());
-      quantity = multiplier * subUnitSize;
+  // Build an array of size and name
+  let nameAndSize: string[] = product.name.split(' ');
+  if (product.size) nameAndSize = nameAndSize.concat(product.size.split(' '));
+
+  // Regex name and size to try match known units
+  let foundUnits: string[] = [];
+  nameAndSize!.forEach((section) => {
+    const tryMatchUnit = section.toLowerCase().match(/(\d+|\.)(g|kg|l|ml)\b/g);
+    // If a new match is found, add to foundUnits array
+    if (tryMatchUnit && !foundUnits.includes(tryMatchUnit[0])) {
+      foundUnits.push(tryMatchUnit[0]);
     }
+  });
 
-    // Handle edge case for format '85g pouches 12pack'
-    let numPack = product.size?.match(/\d+pack/g)?.toString();
-    let packSize = product.size?.match(/\d+g/g)?.toString();
-    if (numPack && packSize) {
-      let numPackInt = Number.parseInt(numPack.replace('pack', ''));
-      let packSizeInt = Number.parseInt(packSize.replace('g', ''));
-      quantity = numPackInt * packSizeInt;
-      matchedUnit = 'g';
+  if (foundUnits.length > 0) {
+    // Quantity is derived from product name or size, 450ml = 450
+    let quantity: number = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
+
+    // MatchedUnit,  450ml = ml
+    let matchedUnit: string = foundUnits[0].match(/\D/g)?.join('') as string;
+
+    // If 2 units were matched, such as '4 x 12g packs 48g', use the greater 48g
+    if (foundUnits.length === 2) {
+      quantity = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
+      const secondQuantity = parseFloat(foundUnits[1].match(/\d|\./g)?.join('') as string);
+      if (secondQuantity > quantity) {
+        quantity = secondQuantity;
+        matchedUnit = foundUnits[1].match(/\D/g)?.join('') as string;
+      }
+    } else {
+      // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
+      let matchMultipliedSizeString = product.size?.match(/\d+\sx\s\d+$/g)?.join('');
+      if (matchMultipliedSizeString) {
+        const splitMultipliedSize = matchMultipliedSizeString.split('x');
+        const multiplier = parseInt(splitMultipliedSize[0].trim());
+        const subUnitSize = parseInt(splitMultipliedSize[1].trim());
+        quantity = multiplier * subUnitSize;
+      }
+
+      // Handle edge case for format '85g pouches 12pack'
+      let numPack = product.size?.match(/\d+pack/g)?.toString();
+      let packSize = product.size?.match(/\d+g/g)?.toString();
+      if (numPack && packSize) {
+        let numPackInt = Number.parseInt(numPack.replace('pack', ''));
+        let packSizeInt = Number.parseInt(packSize.replace('g', ''));
+        quantity = numPackInt * packSizeInt;
+        matchedUnit = 'g';
+      }
     }
 
     // Store original unit quantity before it is normalized to 1kg / 1L
     product.originalUnitQuantity = quantity;
 
     // If size is simply 'kg', process it as 1kg
-    if (product.size === 'kg' || product.size === 'per kg') {
+    if (product.size === 'kg' || product.size?.toLowerCase().includes('per kg')) {
       quantity = 1;
       matchedUnit = 'kg';
     }
@@ -178,7 +186,7 @@ export function addUnitPriceToProduct(product: Product): Product {
     if (quantity && matchedUnit === 'l') matchedUnit = 'L';
 
     // Parse to int and check is within reasonable range
-    if (quantity && quantity > 0 && quantity < 999) {
+    if (quantity && quantity > 0 && quantity < 9999) {
       // Set per unit price, rounded to 2 decimal points
       product.unitPrice = Math.round((product.currentPrice / quantity) * 100) / 100;
 
