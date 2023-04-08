@@ -118,7 +118,12 @@ export function addUnitPriceToProduct(product: Product): Product {
   // Regex name and size to try match known units
   let foundUnits: string[] = [];
   nameAndSize!.forEach((section) => {
-    const tryMatchUnit = section.toLowerCase().match(/(\d+|\.)(g|kg|l|ml)\b/g);
+    // First try match units with decimals, such as 1.5kg
+    let tryMatchUnit = section.toLowerCase().match(/(\d+\.\d+)(g|kg|l|ml)\b/g);
+
+    // Else try match units without decimals
+    if (!tryMatchUnit) tryMatchUnit = section.toLowerCase().match(/\d+(g|kg|l|ml)\b/g);
+
     // If a new match is found, add to foundUnits array
     if (tryMatchUnit && !foundUnits.includes(tryMatchUnit[0])) {
       foundUnits.push(tryMatchUnit[0]);
@@ -133,7 +138,7 @@ export function addUnitPriceToProduct(product: Product): Product {
     quantity = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
 
     // MatchedUnit,  450ml = ml
-    matchedUnit = foundUnits[0].match(/\D/g)?.join('') as string;
+    matchedUnit = foundUnits[0].match(/(g|kg|l|ml)/g)?.join('') as string;
 
     // If 2 units were matched, such as '4 x 12g packs 48g', use the greater 48g
     if (foundUnits.length === 2) {
