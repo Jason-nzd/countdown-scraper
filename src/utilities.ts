@@ -125,12 +125,15 @@ export function addUnitPriceToProduct(product: Product): Product {
     }
   });
 
+  let quantity: number | undefined = undefined;
+  let matchedUnit: string | undefined = undefined;
+
   if (foundUnits.length > 0) {
     // Quantity is derived from product name or size, 450ml = 450
-    let quantity: number = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
+    quantity = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
 
     // MatchedUnit,  450ml = ml
-    let matchedUnit: string = foundUnits[0].match(/\D/g)?.join('') as string;
+    matchedUnit = foundUnits[0].match(/\D/g)?.join('') as string;
 
     // If 2 units were matched, such as '4 x 12g packs 48g', use the greater 48g
     if (foundUnits.length === 2) {
@@ -160,15 +163,16 @@ export function addUnitPriceToProduct(product: Product): Product {
         matchedUnit = 'g';
       }
     }
+  }
+  // If size is simply 'kg', process it as 1kg
+  else if (product.size === 'kg' || product.size?.toLowerCase().includes('per kg')) {
+    quantity = 1;
+    matchedUnit = 'kg';
+  }
 
+  if (matchedUnit && quantity) {
     // Store original unit quantity before it is normalized to 1kg / 1L
     product.originalUnitQuantity = quantity;
-
-    // If size is simply 'kg', process it as 1kg
-    if (product.size === 'kg' || product.size?.toLowerCase().includes('per kg')) {
-      quantity = 1;
-      matchedUnit = 'kg';
-    }
 
     // If units are in grams, convert to /kg
     if (quantity && matchedUnit === 'g') {
