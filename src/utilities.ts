@@ -107,11 +107,10 @@ export function addUnitPriceToProduct(product: Product): Product {
   overriddenProducts.forEach((overriddenProduct) => {
     if (overriddenProduct.id === product.id) {
       product.size = overriddenProduct.size;
-      // console.log(product.name + ' - overridden size to ' + overriddenProduct.size);
     }
   });
 
-  // Build an array of size and name
+  // Build an array of size and name split strings
   let nameAndSize: string[] = product.name.split(' ');
   if (product.size) nameAndSize = nameAndSize.concat(product.size.split(' '));
 
@@ -119,10 +118,10 @@ export function addUnitPriceToProduct(product: Product): Product {
   let foundUnits: string[] = [];
   nameAndSize!.forEach((section) => {
     // First try match units with decimals, such as 1.5kg
-    let tryMatchUnit = section.toLowerCase().match(/(\d+\.\d+)(g|kg|l|ml)\b/g);
+    let tryMatchUnit = section.toLowerCase().match(/\d+(\.\d+)?(g|kg|l|ml)\b/g);
 
     // Else try match units without decimals
-    if (!tryMatchUnit) tryMatchUnit = section.toLowerCase().match(/\d+(g|kg|l|ml)\b/g);
+    //if (!tryMatchUnit) tryMatchUnit = section.toLowerCase().match(/\d+(g|kg|l|ml)\b/g);
 
     // If a new match is found, add to foundUnits array
     if (tryMatchUnit && !foundUnits.includes(tryMatchUnit[0])) {
@@ -133,7 +132,11 @@ export function addUnitPriceToProduct(product: Product): Product {
   let quantity: number | undefined = undefined;
   let matchedUnit: string | undefined = undefined;
 
-  if (foundUnits.length > 0) {
+  // If size is simply 'kg' or includes 'per kg', process it as 1kg
+  if (product.size === 'kg' || product.size?.toLowerCase().includes('per kg')) {
+    quantity = 1;
+    matchedUnit = 'kg';
+  } else if (foundUnits.length > 0) {
     // Quantity is derived from product name or size, 450ml = 450
     quantity = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
 
@@ -168,11 +171,6 @@ export function addUnitPriceToProduct(product: Product): Product {
         matchedUnit = 'g';
       }
     }
-  }
-  // If size is simply 'kg', process it as 1kg
-  else if (product.size === 'kg' || product.size?.toLowerCase().includes('per kg')) {
-    quantity = 1;
-    matchedUnit = 'kg';
   }
 
   if (matchedUnit && quantity) {
