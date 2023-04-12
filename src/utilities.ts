@@ -117,11 +117,9 @@ export function addUnitPriceToProduct(product: Product): Product {
   // Regex name and size to try match known units
   let foundUnits: string[] = [];
   nameAndSize!.forEach((section) => {
-    // First try match units with decimals, such as 1.5kg
+    // Try match digits \d , optional decimal \.\d+ ,optional whitespace,
+    //  and common unit names such as g kg l ml
     let tryMatchUnit = section.toLowerCase().match(/\d+(\.\d+)?\s?(g|kg|l|ml)\b/g);
-
-    // Else try match units without decimals
-    //if (!tryMatchUnit) tryMatchUnit = section.toLowerCase().match(/\d+(g|kg|l|ml)\b/g);
 
     // If a new match is found, add to foundUnits array
     if (tryMatchUnit && !foundUnits.includes(tryMatchUnit[0])) {
