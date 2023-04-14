@@ -1,8 +1,9 @@
 # Add urls with or without https://www
-# Categories will be derived from last /url-bracket/, or categories can be overridden with: categories=ice-cream
+# Categories can be derived from last /url-bracket/, or categories can be overridden with: categories=ice-cream
 # Multiple categories can be specified with commas and no spaces: categories=meat,chicken
 
 countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream
+countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream
 countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls
 countdown.co.nz/shop/browse/frozen/pizza-pastry-bread categories=frozen-pizza
 countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=spring-rolls-other-savouries
@@ -12,10 +13,11 @@ countdown.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots ca
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=hash-browns
-countdown.co.nz/shop/browse/frozen/frozen-meat
-countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives
+countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
+countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=mince-patties
+countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=spring-rolls-other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-seafood
-countdown.co.nz/shop/browse/frozen/frozen-fruit-drink
+countdown.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
 
 countdown.co.nz/shop/browse/fridge-deli/milk-cream/full-cream-milk categories=milk,standard-milk
 countdown.co.nz/shop/browse/fridge-deli/milk-cream/trim-light-milk categories=milk,trim-milk
@@ -49,12 +51,15 @@ countdown.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
 countdown.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
 countdown.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
 countdown.co.nz/shop/browse/meat-poultry/pork
-countdown.co.nz/shop/browse/meat-poultry/mince-patties
+countdown.co.nz/shop/browse/meat-poultry/mince-patties categories=mince-patties
 countdown.co.nz/shop/browse/meat-poultry/sausages
 
 countdown.co.nz/shop/browse/pantry/eggs
-countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips,corn-chips
+countdown.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips
+countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips
+countdown.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate
+countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate
 countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
 countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
 
@@ -68,3 +73,10 @@ countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food,cat-tre
 countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
 countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=fresh-fruit
 countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
+
+countdown.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread
+countdown.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread
+countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread
+countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/white-bread-sliced categories=bread
+countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/wholemeal-brown-bread-sliced categories=bread
+countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/grain-seeded-bread-sliced categories=bread
