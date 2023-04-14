@@ -81,9 +81,15 @@ categorisedUrls.forEach((categorisedUrl) => {
       // Open page with url options now set
       await page.goto(url);
 
-      // Wait for product-price h3 em html element to dynamically load in,
+      // Wait and page down to further trigger any lazy loads
+      await page.waitForTimeout(500);
+      await page.keyboard.press('PageDown');
+      await page.waitForTimeout(500);
+      await page.keyboard.press('PageDown');
+
+      // Wait for product-price h3 html element to dynamically load in,
       //  this is required to see product data
-      await page.waitForSelector('product-price h3 em');
+      await page.waitForSelector('product-price h3');
 
       pageLoadValid = true;
     } catch (error) {
@@ -224,7 +230,7 @@ async function uploadImageRestAPI(imgUrl: string, product: Product): Promise<boo
       log(
         colour.grey,
         `  New Image  : ${cdnUrlBase}${(product.id + '.webp').padEnd(11)} | ` +
-          `${product.name.padEnd(25).slice(0, 25)}`
+          `${product.name.padEnd(40).slice(0, 40)}`
       );
     }
   } else if (responseMsg.includes('already exists')) {
@@ -508,6 +514,7 @@ async function routePlaywrightExclusions() {
     'cloudflareinsights.com',
     'dwanalytics',
     'edge.adobedc.net',
+    '​/Content/Banners/',
   ];
 
   // Route with exclusions processed
@@ -525,7 +532,7 @@ async function routePlaywrightExclusions() {
     });
 
     if (excludeThisRequest) {
-      // logError(`${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
+      //logError(`${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
       await route.abort();
     } else {
       //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
