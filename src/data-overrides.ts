@@ -6,4 +6,10 @@ export const overriddenProducts = [
   { id: '189268', size: '1.13kg' },
   { id: '189150', size: '1.2kg' },
   { id: '190454', size: '2.1kg' },
+  { id: '189078', size: '1.3kg' },
+  { id: '189136', size: '1.2kg' },
+  { id: '755237', size: '931g' },
+  { id: '755304', size: '1.1kg' },
+  { id: '755246', size: '1020g' },
+  { id: '755245', size: '1.2kg' },
 ];
