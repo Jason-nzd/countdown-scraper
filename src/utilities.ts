@@ -217,7 +217,7 @@ export const validCategories: string[] = [
   'frozen-meat',
   'frozen-meat-alternatives',
   'frozen-seafood',
-  'frozen-fruit-drink',
+  'frozen-fruit',
   'milk',
   'standard-milk',
   'trim-milk',
@@ -259,4 +259,6 @@ export const validCategories: string[] = [
   'dry-cat-food',
   'wet-cat-food',
   'cat-treats',
+  'bread',
+  'muesli-bars',
 ];
