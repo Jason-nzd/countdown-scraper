@@ -74,9 +74,9 @@ countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
 countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=fresh-fruit
 countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
 
-countdown.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread
-countdown.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread
-countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread
+countdown.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread-rolls
+countdown.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread-rolls
+countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread-rolls
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/white-bread-sliced categories=bread
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/wholemeal-brown-bread-sliced categories=bread
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/grain-seeded-bread-sliced categories=bread
