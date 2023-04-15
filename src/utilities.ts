@@ -206,7 +206,6 @@ export function addUnitPriceToProduct(product: Product): Product {
 
 // List of valid category names that scraped products should be a part of
 export const validCategories: string[] = [
-  'frozen',
   'ice-cream',
   'pies-sausage-rolls',
   'frozen-pizza',
@@ -260,5 +259,12 @@ export const validCategories: string[] = [
   'wet-cat-food',
   'cat-treats',
   'bread',
+  'bread-rolls',
   'muesli-bars',
+  'tea',
+  'green-tea',
+  'black-tea',
+  'herbal-tea',
+  'coffee',
+  'fruit-juice',
 ];

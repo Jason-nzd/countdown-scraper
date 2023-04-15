@@ -80,3 +80,11 @@ countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread-rol
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/white-bread-sliced categories=bread
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/wholemeal-brown-bread-sliced categories=bread
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/grain-seeded-bread-sliced categories=bread
+
+countdown.co.nz/shop/browse/drinks/coffee
+countdown.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=tea,black-tea
+countdown.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=tea,green-tea
+countdown.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=tea,herbal-tea
+countdown.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
+countdown.co.nz/shop/browse/drinks/juice-cordial/fruit-juice-drinks categories=fruit-juice
+countdown.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories=fruit-juice
