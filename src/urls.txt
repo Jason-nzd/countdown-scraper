@@ -88,3 +88,5 @@ countdown.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=
 countdown.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
 countdown.co.nz/shop/browse/drinks/juice-cordial/fruit-juice-drinks categories=fruit-juice
 countdown.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories=fruit-juice
+countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks
+countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks
