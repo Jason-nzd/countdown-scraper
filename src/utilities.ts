@@ -112,7 +112,8 @@ export function addUnitPriceToProduct(product: Product): Product {
 
   // Build an array of size and name split strings
   let nameAndSize: string[] = [product.name];
-  if (product.size) nameAndSize = nameAndSize.concat(product.size.split(' '));
+  const size = product.size?.toLowerCase();
+  if (size) nameAndSize = nameAndSize.concat(size.split(' '));
 
   // Regex name and size to try match known units
   let foundUnits: string[] = [];
@@ -131,7 +132,7 @@ export function addUnitPriceToProduct(product: Product): Product {
   let matchedUnit: string | undefined = undefined;
 
   // If size is simply 'kg' or includes 'per kg', process it as 1kg
-  if (product.size === 'kg' || product.size?.toLowerCase().includes('per kg')) {
+  if (size === 'kg' || size?.includes('per kg')) {
     quantity = 1;
     matchedUnit = 'kg';
   } else if (foundUnits.length > 0) {
@@ -151,7 +152,7 @@ export function addUnitPriceToProduct(product: Product): Product {
       }
     } else {
       // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
-      let matchMultipliedSizeString = product.size?.match(/\d+\sx\s\d+$/g)?.join('');
+      let matchMultipliedSizeString = size?.match(/\d+\s?x\s?\d+$/g)?.join('');
       if (matchMultipliedSizeString) {
         const splitMultipliedSize = matchMultipliedSizeString.split('x');
         const multiplier = parseInt(splitMultipliedSize[0].trim());
@@ -160,13 +161,13 @@ export function addUnitPriceToProduct(product: Product): Product {
       }
 
       // Handle edge case for format '85g pouches 12pack'
-      let numPack = product.size?.match(/\d+pack/g)?.toString();
-      let packSize = product.size?.match(/\d+g/g)?.toString();
+      let numPack = size?.match(/\d+\s?pack/g)?.toString();
+      let packSize = size?.match(/\d+(g|kg|ml|l)/g)?.toString();
       if (numPack && packSize) {
         let numPackInt = Number.parseInt(numPack.replace('pack', ''));
-        let packSizeInt = Number.parseInt(packSize.replace('g', ''));
+        let packSizeInt = Number.parseInt(packSize.match(/\d/g)!.join(''));
         quantity = numPackInt * packSizeInt;
-        matchedUnit = 'g';
+        matchedUnit = packSize.match(/\D/g)!.join('').trim();
       }
     }
   }
