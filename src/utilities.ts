@@ -267,5 +267,8 @@ export const validCategories: string[] = [
   'black-tea',
   'herbal-tea',
   'coffee',
+  'drinking-chocolate',
   'fruit-juice',
+  'soft-drinks',
+  'energy-drinks',
 ];
