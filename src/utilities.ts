@@ -43,7 +43,8 @@ export function logProductRow(product: Product) {
   log(
     getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
-      `${product.size?.slice(0, 16).padEnd(16)} | ` +
+      `${product.size?.slice(0, 17).padEnd(17)} | ` +
+      // `${product.originalUnitQuantity?.toString().padEnd(5)}${product.unitName} | ` +
       `$ ${product.currentPrice.toString().padStart(4).padEnd(5)} | ` +
       unitPriceString
   );
@@ -152,7 +153,7 @@ export function addUnitPriceToProduct(product: Product): Product {
       }
     } else {
       // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
-      let matchMultipliedSizeString = size?.match(/\d+\s?x\s?\d+$/g)?.join('');
+      let matchMultipliedSizeString = size?.match(/\d+\s?x\s?\d+/g)?.join('');
       if (matchMultipliedSizeString) {
         const splitMultipliedSize = matchMultipliedSizeString.split('x');
         const multiplier = parseInt(splitMultipliedSize[0].trim());
