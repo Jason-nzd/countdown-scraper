@@ -72,7 +72,7 @@ categorisedUrls.forEach((categorisedUrl) => {
     log(
       colour.yellow,
       `[${pagesScrapedCount}/${categorisedUrls.length}] Scraping ${url
-        .replace('https://www.', '')
+        .replace('https://', '')
         .replace('&inStockProductsOnly=true', '')}`
     );
 
@@ -304,11 +304,16 @@ async function selectStoreByLocationName(locationName: string = '') {
     // If STORE_NAME is also not present, skip store location selection
     else return;
   }
+
   log(colour.yellow, 'Selecting Store Location..');
 
   // Open store selection page
   await page.goto('https://www.countdown.co.nz/bookatimeslot');
+  await page.waitForSelector('button#changeOrderOnboardingAcknowledge');
+  await page.locator('button#changeOrderOnboardingAcknowledge').click();
   await page.waitForSelector('fieldset div div p button');
+
+  const oldLocation = await page.locator('fieldset div div p strong').innerText();
 
   // Click change address modal
   await page.locator('fieldset div div p button').click();
@@ -326,7 +331,7 @@ async function selectStoreByLocationName(locationName: string = '') {
 
   // Click save location button
   await page.getByText('Save and Continue Shopping').click();
-  log(colour.yellow, 'Selected Location: ' + locationName + '\n');
+  log(colour.yellow, 'Changed Location from ' + oldLocation + ' to ' + locationName + '\n');
 
   // Ensure location is saved before moving on
   await page.waitForTimeout(2000);
