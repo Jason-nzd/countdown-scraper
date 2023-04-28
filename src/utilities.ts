@@ -119,7 +119,7 @@ export function addUnitPriceToProduct(product: Product): Product {
   // Regex name and size to try match known units
   let foundUnits: string[] = [];
   nameAndSize!.forEach((section) => {
-    // Try match digits \d , optional decimal \.\d+ ,optional whitespace,
+    // Try match digits \d , optional decimal \.\d+ , optional whitespace,
     //  and common unit names such as g kg l ml
     let tryMatchUnit = section.toLowerCase().match(/\d+(\.\d+)?\s?(g|kg|l|ml)\b/g);
 
@@ -163,7 +163,7 @@ export function addUnitPriceToProduct(product: Product): Product {
 
       // Handle edge case for format '85g pouches 12pack'
       let numPack = size?.match(/\d+\s?pack/g)?.toString();
-      let packSize = size?.match(/\d+(g|kg|ml|l)/g)?.toString();
+      let packSize = size?.match(/\d+(ml|l)/g)?.toString();
       if (numPack && packSize) {
         let numPackInt = Number.parseInt(numPack.replace('pack', ''));
         let packSizeInt = Number.parseInt(packSize.match(/\d/g)!.join(''));
