@@ -394,9 +394,14 @@ function playwrightElementToProduct(
 
   product.currentPrice = Number(dollarString + '.' + centString);
 
+  // Create a date object for now, but with minutes and seconds set to 0
+  const today = new Date();
+  today.setMinutes(0);
+  today.setSeconds(0);
+
   // Create a DatedPrice object, which may be added into the product if needed
   const todaysDatedPrice: DatedPrice = {
-    date: new Date(),
+    date: today,
     price: product.currentPrice,
   };
   product.priceHistory = [todaysDatedPrice];
