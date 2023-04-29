@@ -2,7 +2,7 @@
 import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
 import * as dotenv from 'dotenv';
 import { logError, log, colour, validCategories } from './utilities.js';
-import { DatedPrice, Product, UpsertResponse, ProductResponse } from './typings';
+import { Product, UpsertResponse, ProductResponse } from './typings';
 dotenv.config();
 
 const cosmosDatabaseName = 'supermarket-prices';
