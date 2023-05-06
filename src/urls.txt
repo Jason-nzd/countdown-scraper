@@ -62,6 +62,14 @@ countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categorie
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate
 countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
 countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
+countdown.co.nz/shop/browse/pantry/tinned-foods/baked-beans-spaghetti
+countdown.co.nz/shop/browse/pantry/tinned-foods/fish
+countdown.co.nz/shop/browse/pantry/cereals-spreads/cereal
+countdown.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads,peanut-butter
+countdown.co.nz/shop/browse/pantry/cereals-spreads/honey categories=spreads,honey
+countdown.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads,jam
+countdown.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads,other-spreads
+countdown.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
 
 countdown.co.nz/shop/browse/fish-seafood/salmon categories=seafood,salmon
 countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
