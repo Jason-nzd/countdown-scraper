@@ -77,6 +77,10 @@ countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food,dry-cat-food
 countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food,wet-cat-food
 countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food,cat-treats
+countdown.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-food,dog-treats
+countdown.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
+countdown.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
+countdown.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food
 
 countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
 countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=fresh-fruit
