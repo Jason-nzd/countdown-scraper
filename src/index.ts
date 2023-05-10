@@ -309,8 +309,8 @@ async function selectStoreByLocationName(locationName: string = '') {
 
   // Open store selection page
   await page.goto('https://www.countdown.co.nz/bookatimeslot');
-  await page.waitForSelector('button#changeOrderOnboardingAcknowledge');
-  await page.locator('button#changeOrderOnboardingAcknowledge').click();
+  // await page.waitForSelector('button#changeOrderOnboardingAcknowledge');
+  // await page.locator('button#changeOrderOnboardingAcknowledge').click();
   await page.waitForSelector('fieldset div div p button');
 
   const oldLocation = await page.locator('fieldset div div p strong').innerText();
