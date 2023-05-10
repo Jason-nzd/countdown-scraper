@@ -210,7 +210,7 @@ export function addUnitPriceToProduct(product: Product): Product {
 export const validCategories: string[] = [
   // fresh
   'eggs',
-  'fruit',
+  'fresh-fruit',
   'fresh-vegetables',
   'salads-coleslaw',
   'bread',
@@ -262,6 +262,10 @@ export const validCategories: string[] = [
   'canned-fish',
   'cereal',
   'spreads',
+  'jam',
+  'peanut-butter',
+  'other-spreads',
+  'honey',
 
   // snacks
   'chocolate',
@@ -271,6 +275,7 @@ export const validCategories: string[] = [
   'muesli-bars',
 
   // drinks
+  'tea',
   'black-tea',
   'green-tea',
   'herbal-tea',
@@ -282,6 +287,8 @@ export const validCategories: string[] = [
 
   // pets
   'cat-food',
+  'dry-cat-food',
+  'wet-cat-food',
   'cat-treats',
   'dog-food',
   'dog-treats',
