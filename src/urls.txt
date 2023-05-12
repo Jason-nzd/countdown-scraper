@@ -82,10 +82,6 @@ countdown.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
 countdown.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
 countdown.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food
 
-countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
-countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
-countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
-
 countdown.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread-rolls
 countdown.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread-rolls
 countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread-rolls
@@ -102,3 +98,7 @@ countdown.co.nz/shop/browse/drinks/juice-cordial/fruit-juice-drinks categories=j
 countdown.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories=juice
 countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks
 countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks
+
+countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
+countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
+countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
