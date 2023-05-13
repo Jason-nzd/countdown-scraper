@@ -62,7 +62,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
       console.log(
         `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
-          ` | $${scrapedProduct.currentPrice}`
+          ` | $ ${scrapedProduct.currentPrice}`
       );
 
       return UpsertResponse.NewProduct;
