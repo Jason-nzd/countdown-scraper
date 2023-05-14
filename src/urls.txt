@@ -15,7 +15,7 @@ countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categ
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=hash-browns
 countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
 countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=mince-patties
-countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=spring-rolls
+countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-seafood
 countdown.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
 
@@ -76,8 +76,8 @@ countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 
 countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food,dry-cat-food
 countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food,wet-cat-food
-countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food,cat-treats
-countdown.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-food,dog-treats
+countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-treats
+countdown.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-treats
 countdown.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
 countdown.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
 countdown.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food

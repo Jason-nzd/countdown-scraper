@@ -255,6 +255,7 @@ export const validCategories: string[] = [
   'pies-sausage-rolls',
   'pizza',
   'spring-rolls',
+  'other-savouries',
 
   // pantry
   'rice',
