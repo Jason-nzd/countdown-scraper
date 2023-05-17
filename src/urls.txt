@@ -6,13 +6,13 @@ countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream
 countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream
 countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls
 countdown.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pizza categories=pizza
-countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=spring-rolls
-countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=spring-rolls
+countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=other-savouries
+countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
-countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=hash-browns
+countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
 countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=mince-patties
 countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-savouries
@@ -56,13 +56,13 @@ countdown.co.nz/shop/browse/meat-poultry/sausages
 
 countdown.co.nz/shop/browse/pantry/eggs
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips
-countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=corn-chips
+countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips,corn-chips
 countdown.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate
-countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate
+countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate,chocolate-packs
 countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
 countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
-countdown.co.nz/shop/browse/pantry/tinned-foods/baked-beans-spaghetti
+countdown.co.nz/shop/browse/pantry/tinned-foods/baked-beans-spaghetti categories=beans-spaghetti
 countdown.co.nz/shop/browse/pantry/tinned-foods/fish categories=canned-fish
 countdown.co.nz/shop/browse/pantry/cereals-spreads/cereal
 countdown.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads,peanut-butter
