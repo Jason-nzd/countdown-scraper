@@ -227,7 +227,7 @@ export const validCategories: string[] = [
   'sour-cream',
   'cream',
   'yoghurt',
-  'butter-spreads',
+  'butter',
   'cheese',
   'cheese-slices',
   'salami',
