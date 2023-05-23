@@ -259,17 +259,18 @@ export const validCategories: string[] = [
 
   // pantry
   'rice',
-  'baked-beans-spaghetti',
+  'beans-spaghetti',
   'canned-fish',
   'cereal',
   'spreads',
   'jam',
-  'peanut-butter',
+  'nut-butter',
   'other-spreads',
   'honey',
 
   // snacks
   'chocolate',
+  'chocolate-packs',
   'chips',
   'corn-chips',
   'biscuits',
