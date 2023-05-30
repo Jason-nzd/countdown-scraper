@@ -215,6 +215,7 @@ export const validCategories: string[] = [
   'salads-coleslaw',
   'bread',
   'bread-rolls',
+  'specialty-bread',
 
   // chilled
   'milk',
