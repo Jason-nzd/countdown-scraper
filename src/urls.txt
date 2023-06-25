@@ -6,6 +6,7 @@ countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream
 countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream
 countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls
 countdown.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pizza categories=pizza
+countdown.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pastry categories=frozen-pastry
 countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables

@@ -255,6 +255,7 @@ export const validCategories: string[] = [
   'frozen-seafood',
   'pies-sausage-rolls',
   'pizza',
+  'frozen-pastry',
   'spring-rolls',
   'other-savouries',
 
