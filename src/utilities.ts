@@ -210,7 +210,7 @@ export function addUnitPriceToProduct(product: Product): Product {
 export const validCategories: string[] = [
   // fresh
   'eggs',
-  'fresh-fruit',
+  'fruit',
   'fresh-vegetables',
   'salads-coleslaw',
   'bread',
@@ -219,11 +219,6 @@ export const validCategories: string[] = [
 
   // chilled
   'milk',
-  'standard-milk',
-  'trim-milk',
-  'enriched-milk',
-  'flavoured-milk',
-  'alternative-milk',
   'long-life-milk',
   'sour-cream',
   'cream',
@@ -248,6 +243,8 @@ export const validCategories: string[] = [
 
   // frozen
   'ice-cream',
+  'ice-blocks',
+  'pastries-cheesecake',
   'frozen-chips',
   'hash-browns',
   'frozen-vegetables',
@@ -255,31 +252,31 @@ export const validCategories: string[] = [
   'frozen-seafood',
   'pies-sausage-rolls',
   'pizza',
-  'pastries-cheesecake',
-  'spring-rolls',
   'other-savouries',
 
   // pantry
   'rice',
   'beans-spaghetti',
   'canned-fish',
+  'canned-meat',
   'cereal',
   'spreads',
-  'jam',
-  'nut-butter',
-  'other-spreads',
-  'honey',
+  'baking',
+  'sauces',
+  'oils-vinegars',
+  'world-foods',
 
   // snacks
   'chocolate',
-  'chocolate-packs',
   'chips',
-  'corn-chips',
+  'crackers',
   'biscuits',
   'muesli-bars',
+  'nuts-bulk-mix',
+  'sweets-lollies',
+  'other-snacks',
 
   // drinks
-  'tea',
   'black-tea',
   'green-tea',
   'herbal-tea',
@@ -291,8 +288,6 @@ export const validCategories: string[] = [
 
   // pets
   'cat-food',
-  'dry-cat-food',
-  'wet-cat-food',
   'cat-treats',
   'dog-food',
   'dog-treats',

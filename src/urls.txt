@@ -20,11 +20,11 @@ countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-sav
 countdown.co.nz/shop/browse/frozen/frozen-seafood
 countdown.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
 
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/full-cream-milk categories=milk,standard-milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/trim-light-milk categories=milk,trim-milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/enriched-milk categories=milk,enriched-milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/flavoured-milk categories=milk,flavoured-milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/dairy-free-milk-cream categories=milk,alternative-milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/full-cream-milk categories=milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/trim-light-milk categories=milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/enriched-milk categories=milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/flavoured-milk categories=milk
+countdown.co.nz/shop/browse/fridge-deli/milk-cream/dairy-free-milk-cream categories=milk
 countdown.co.nz/shop/browse/fridge-deli/milk-cream/sour-cream categories=sour-cream
 countdown.co.nz/shop/browse/fridge-deli/milk-cream/cream categories=cream
 countdown.co.nz/shop/browse/fridge-deli/long-life-milk categories=long-life-milk
@@ -57,28 +57,36 @@ countdown.co.nz/shop/browse/meat-poultry/sausages
 
 countdown.co.nz/shop/browse/pantry/eggs
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips
-countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips,corn-chips
 countdown.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate
-countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate-packs
+countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate
+countdown.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies
+countdown.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
+
 countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
+countdown.co.nz/shop/browse/pantry/biscuits-crackers/crackers categories=crackers
+countdown.co.nz/shop/browse/pantry/biscuits-crackers/rice-cakes-crispbread categories=crackers
+
+countdown.co.nz/shop/browse/pantry/bulk-foods/nuts-seeds categories=nuts-bulk-mix
+countdown.co.nz/shop/browse/pantry/bulk-foods/dried-fruit-mixes categories=nuts-bulk-mix
+
 countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
 countdown.co.nz/shop/browse/pantry/tinned-foods/baked-beans-spaghetti categories=beans-spaghetti
 countdown.co.nz/shop/browse/pantry/tinned-foods/fish categories=canned-fish
 countdown.co.nz/shop/browse/pantry/cereals-spreads/cereal
-countdown.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads,nut-butter
-countdown.co.nz/shop/browse/pantry/cereals-spreads/honey categories=spreads,honey
-countdown.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads,jam
-countdown.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads,other-spreads
+countdown.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads
+countdown.co.nz/shop/browse/pantry/cereals-spreads/honey categories=spreads
+countdown.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads
+countdown.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads
 countdown.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
 
 countdown.co.nz/shop/browse/fish-seafood/salmon categories=seafood,salmon
 countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 
-countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food,dry-cat-food
-countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food,wet-cat-food
-countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-treats
-countdown.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-treats
+countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food
+countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food
+countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food
+countdown.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-food
 countdown.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
 countdown.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
 countdown.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food
@@ -91,9 +99,9 @@ countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/wholemeal-brown-bread-s
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/grain-seeded-bread-sliced categories=bread
 
 countdown.co.nz/shop/browse/drinks/coffee
-countdown.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=tea,black-tea
-countdown.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=tea,green-tea
-countdown.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=tea,herbal-tea
+countdown.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea
+countdown.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=green-tea
+countdown.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=herbal-tea
 countdown.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
 countdown.co.nz/shop/browse/drinks/juice-cordial/fruit-juice-drinks categories=juice
 countdown.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories=juice
