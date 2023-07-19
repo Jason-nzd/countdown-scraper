@@ -71,6 +71,10 @@ countdown.co.nz/shop/browse/pantry/bulk-foods/nuts-seeds categories=nuts-bulk-mi
 countdown.co.nz/shop/browse/pantry/bulk-foods/dried-fruit-mixes categories=nuts-bulk-mix
 
 countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
+countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/noodles
+countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/dried-pasta categories=pasta
+countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/pasta-meals-sides categories=pasta
+
 countdown.co.nz/shop/browse/pantry/tinned-foods/baked-beans-spaghetti categories=beans-spaghetti
 countdown.co.nz/shop/browse/pantry/tinned-foods/fish categories=canned-fish
 countdown.co.nz/shop/browse/pantry/cereals-spreads/cereal
