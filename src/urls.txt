@@ -42,11 +42,11 @@ countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon categories=baco
 countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats categories=salami
 countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats categories=deli-meats
 countdown.co.nz/shop/browse/fridge-deli/juice-drinks categories=juice
-countdown.co.nz/shop/browse/fridge-deli/vegan-vegetarian
-countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals
-countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto
+countdown.co.nz/shop/browse/fridge-deli/vegan-vegetarian categories=other-deli-foods
+countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals categories=other-deli-foods
+countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto categories=other-deli-foods
 countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche categories=pies-sausage-rolls
-countdown.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles
+countdown.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles categories=other-deli-foods
 
 countdown.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
 countdown.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
@@ -84,7 +84,7 @@ countdown.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads
 countdown.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads
 countdown.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
 
-countdown.co.nz/shop/browse/fish-seafood/salmon categories=seafood,salmon
+countdown.co.nz/shop/browse/fish-seafood/salmon categories=salmon
 countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 
 countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food
