@@ -85,7 +85,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 // buildUpdatedProduct()
 // ---------------------
 // This takes a freshly scraped product and compares it with a found database product.
-//  It returns an updated product with data from both product versions
+// It returns an updated product with data from both product versions
 
 function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): ProductResponse {
   // Date objects pulled from CosmosDB need to re-parsed as strings in format yyyy-mm-dd
@@ -93,8 +93,11 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
   dbDay = dbDay.slice(0, 10);
   let scrapedDay = scrapedProduct.lastUpdated.toISOString().slice(0, 10);
 
-  // If price has changed, and not on the same day
-  if (dbProduct.currentPrice != scrapedProduct.currentPrice && dbDay != scrapedDay) {
+  // Measure the price difference between the new scraped product and the old db product
+  const priceDifference = Math.abs(dbProduct.currentPrice - scrapedProduct.currentPrice);
+
+  // If price has changed by more than $0.05, and not on the same day
+  if (priceDifference > 0.05 && dbDay != scrapedDay) {
     // Push scraped priceHistory into existing priceHistory array
     dbProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
 
