@@ -208,7 +208,7 @@ export function addUnitPriceToProduct(product: Product): Product {
 
 // List of valid category names that scraped products should be a part of
 export const validCategories: string[] = [
-  // fresh
+  // freshCategory
   'eggs',
   'fruit',
   'fresh-vegetables',
@@ -216,8 +216,7 @@ export const validCategories: string[] = [
   'bread',
   'bread-rolls',
   'specialty-bread',
-
-  // chilled
+  // chilledCategory
   'milk',
   'long-life-milk',
   'sour-cream',
@@ -227,9 +226,8 @@ export const validCategories: string[] = [
   'cheese',
   'cheese-slices',
   'salami',
-  'vegan-vegetarian',
-
-  // meat
+  'other-deli-foods',
+  // meatCategory
   'seafood',
   'salmon',
   'ham',
@@ -240,22 +238,21 @@ export const validCategories: string[] = [
   'mince-patties',
   'sausages',
   'deli-meats',
-
-  // frozen
+  // frozenCategory
   'ice-cream',
   'ice-blocks',
   'pastries-cheesecake',
   'frozen-chips',
-  'hash-browns',
   'frozen-vegetables',
   'frozen-fruit',
   'frozen-seafood',
   'pies-sausage-rolls',
   'pizza',
   'other-savouries',
-
-  // pantry
+  // pantryCategory
   'rice',
+  'noodles',
+  'pasta',
   'beans-spaghetti',
   'canned-fish',
   'canned-meat',
@@ -265,8 +262,7 @@ export const validCategories: string[] = [
   'sauces',
   'oils-vinegars',
   'world-foods',
-
-  // snacks
+  // snacksCategory
   'chocolate',
   'chips',
   'crackers',
@@ -275,8 +271,7 @@ export const validCategories: string[] = [
   'nuts-bulk-mix',
   'sweets-lollies',
   'other-snacks',
-
-  // drinks
+  // drinksCategory
   'black-tea',
   'green-tea',
   'herbal-tea',
@@ -285,15 +280,9 @@ export const validCategories: string[] = [
   'soft-drinks',
   'energy-drinks',
   'juice',
-
-  // pets
+  // petsCategory
   'cat-food',
   'cat-treats',
   'dog-food',
   'dog-treats',
-
-  // other
-  'heat-and-eat-meals',
-  'soup-risotto',
-  'dips-hummus-nibbles',
 ];
