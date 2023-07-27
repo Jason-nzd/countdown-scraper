@@ -161,9 +161,18 @@ export function addUnitPriceToProduct(product: Product): Product {
         quantity = multiplier * subUnitSize;
       }
 
+      // Handle edge case where size is in format '72g each 5pack'
+      // matchMultipliedSizeString = size?.match(/\d+(g|ml)\seach\s\d+pack/g)?.join('');
+      // if (matchMultipliedSizeString) {
+      //   const splitMultipliedSize = matchMultipliedSizeString.split('x');
+      //   const multiplier = parseInt(splitMultipliedSize[1].trim());
+      //   const subUnitSize = parseInt(splitMultipliedSize[0].trim());
+      //   quantity = multiplier * subUnitSize;
+      // }
+
       // Handle edge case for format '85g pouches 12pack'
       let numPack = size?.match(/\d+\s?pack/g)?.toString();
-      let packSize = size?.match(/\d+(ml|l)/g)?.toString();
+      let packSize = size?.match(/\d+(g|kg|ml|l)/g)?.toString();
       if (numPack && packSize) {
         let numPackInt = Number.parseInt(numPack.replace('pack', ''));
         let packSizeInt = Number.parseInt(packSize.match(/\d/g)!.join(''));
