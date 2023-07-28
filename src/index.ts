@@ -264,6 +264,7 @@ async function handleArguments() {
       else if (arg.includes('categories=')) potentialUrl += ' ' + arg;
       else if (arg === 'reverse') categorisedUrls = categorisedUrls.reverse();
       else if (arg === 'custom') {
+        categorisedUrls = [];
         await customQuery();
         process.exit();
       }
