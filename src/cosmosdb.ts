@@ -188,19 +188,19 @@ export function logPriceChange(product: Product, newPrice: number) {
 
 export async function customQuery(): Promise<void> {
   const options: FeedOptions = {
-    maxItemCount: 10,
+    maxItemCount: 30,
   };
-  const secondsDelayBetweenBatches = 3;
+  const secondsDelayBetweenBatches = 5;
   const querySpec: SqlQuerySpec = {
-    query: "SELECT * FROM products p where contains(p.name, '  ', false)",
+    query: 'SELECT * FROM products p',
   };
 
-  log(colour.yellow, querySpec.query);
+  log(colour.yellow, 'Custom Query \n' + querySpec.query);
 
   const response = await container.items.query(querySpec, options);
 
   let batchCount = 0;
-  const maxBatchCount = 100;
+  const maxBatchCount = 900;
   let continueFetching = true;
 
   await (async () => {
@@ -215,18 +215,65 @@ export async function customQuery(): Promise<void> {
   function delayedBatchFetch() {
     return new Promise<void>((resolve) =>
       setTimeout(async () => {
+        console.log(
+          'Batch ' +
+            batchCount +
+            ' - Items [' +
+            batchCount * options.maxItemCount! +
+            ' - ' +
+            (batchCount + 1) * options.maxItemCount!
+        ) + ']';
+
         const batch = await response.fetchNext();
         const products = batch.resources as Product[];
         const items = batch.resources;
 
-        items.forEach(async (item) => {
-          console.log(item.name);
+        products.forEach(async (p) => {
+          let oldDatedPrice = 0;
+          let requiresUpdate = false;
+
+          p.priceHistory.forEach((datedPrice) => {
+            let newDatedPrice = datedPrice.price;
+            if (Math.abs(oldDatedPrice - newDatedPrice) < 0.04) {
+              console.log(p.name);
+              console.log(
+                ' - Tiny price difference detected on ' +
+                  datedPrice.date.toDateString() +
+                  ' - ' +
+                  oldDatedPrice +
+                  ' - ' +
+                  newDatedPrice
+              );
+              datedPrice.price = 0;
+              requiresUpdate = true;
+            }
+            oldDatedPrice = newDatedPrice;
+          });
+
+          if (requiresUpdate) {
+            let updatedPriceHistory = p.priceHistory.filter((datedPrice) => {
+              if (datedPrice.price > 0) return true;
+              else return false;
+            });
+
+            console.log(
+              ' - Old price history length: ' +
+                p.priceHistory.length +
+                ' - new length: ' +
+                updatedPriceHistory.length
+            );
+
+            p.priceHistory = updatedPriceHistory;
+
+            const uploadRes = await container.items.upsert(p);
+            console.log(' - Uploaded updated product with status code: ' + uploadRes.statusCode);
+          }
 
           // item.name = item.name.replace('  ', ' ').trim();
           // let p: Product = item as Product;
 
-          const res = await container.item(item.id, item.name).delete();
-          console.log('delete ' + res.statusCode);
+          // const res = await container.item(item.id, item.name).delete();
+          // console.log('delete ' + res.statusCode);
 
           // const uploadRes = await container.items.upsert(p);
           // console.log('upload ' + uploadRes.statusCode);
