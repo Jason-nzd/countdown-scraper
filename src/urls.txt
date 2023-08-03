@@ -112,6 +112,6 @@ countdown.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories
 countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks
 countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks
 
-countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fresh-fruit
+countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fruit
 countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
 countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
