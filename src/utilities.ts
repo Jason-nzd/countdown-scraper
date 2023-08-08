@@ -153,7 +153,7 @@ export function addUnitPriceToProduct(product: Product): Product {
       }
     } else {
       // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
-      let matchMultipliedSizeString = size?.match(/\d+\s?x\s?\d+/g)?.join('');
+      const matchMultipliedSizeString = size?.match(/\d+\s?x\s?\d+/g)?.join('');
       if (matchMultipliedSizeString) {
         const splitMultipliedSize = matchMultipliedSizeString.split('x');
         const multiplier = parseInt(splitMultipliedSize[0].trim());
@@ -161,14 +161,12 @@ export function addUnitPriceToProduct(product: Product): Product {
         quantity = multiplier * subUnitSize;
       }
 
-      // Handle edge case where size is in format '72g each 5pack'
-      // matchMultipliedSizeString = size?.match(/\d+(g|ml)\seach\s\d+pack/g)?.join('');
-      // if (matchMultipliedSizeString) {
-      //   const splitMultipliedSize = matchMultipliedSizeString.split('x');
-      //   const multiplier = parseInt(splitMultipliedSize[1].trim());
-      //   const subUnitSize = parseInt(splitMultipliedSize[0].trim());
-      //   quantity = multiplier * subUnitSize;
-      // }
+      // Handle edge case for format '500g 5pack' (no multiplier)
+      const matchNoMultiplierString = size?.match(/\d+(g|ml)\s\d+pack/g)?.join('');
+      if (matchNoMultiplierString) {
+        const quantityWithUnit = matchNoMultiplierString.split(' ')[0];
+        quantity = parseInt(quantityWithUnit.match(/\d+/g)?.join('') as string);
+      }
 
       // Handle edge case for format '85g pouches 12pack'
       let numPack = size?.match(/\d+\s?pack/g)?.toString();
