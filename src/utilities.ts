@@ -169,14 +169,14 @@ export function addUnitPriceToProduct(product: Product): Product {
       }
 
       // Handle edge case for format '85g pouches 12pack'
-      let numPack = size?.match(/\d+\s?pack/g)?.toString();
-      let packSize = size?.match(/\d+(g|kg|ml|l)/g)?.toString();
-      if (numPack && packSize) {
-        let numPackInt = Number.parseInt(numPack.replace('pack', ''));
-        let packSizeInt = Number.parseInt(packSize.match(/\d/g)!.join(''));
-        quantity = numPackInt * packSizeInt;
-        matchedUnit = packSize.match(/\D/g)!.join('').trim();
-      }
+      // let numPack = size?.match(/\d+\s?pack/g)?.toString();
+      // let packSize = size?.match(/\d+(g|kg|ml|l)/g)?.toString();
+      // if (numPack && packSize) {
+      //   let numPackInt = Number.parseInt(numPack.replace('pack', ''));
+      //   let packSizeInt = Number.parseInt(packSize.match(/\d/g)!.join(''));
+      //   quantity = numPackInt * packSizeInt;
+      //   matchedUnit = packSize.match(/\D/g)!.join('').trim();
+      // }
     }
   }
 
