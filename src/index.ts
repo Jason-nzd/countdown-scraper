@@ -68,7 +68,8 @@ categorisedUrls.forEach((categorisedUrl) => {
 
   // Use promises to ensure a delay between each scrape
   promise = promise.then(async () => {
-    // Log current scrape sequence, the total number of pages to scrape, and a shortened url
+    // Log current scrape sequence, the total number of pages to scrape,
+    // and show a shortened url
     log(
       colour.yellow,
       `[${pagesScrapedCount}/${categorisedUrls.length}] Scraping ${url
@@ -108,7 +109,8 @@ categorisedUrls.forEach((categorisedUrl) => {
       const $ = cheerio.load(html);
       const productEntries = $('cdx-card a.product-entry');
 
-      // Log the number of products found, time elapsed in seconds or min:s, and found categories
+      // Log the number of products found, time elapsed in seconds or min:s,
+      // and found categories
       log(
         colour.yellow,
         `${productEntries.length} product entries found \t` +
@@ -310,8 +312,6 @@ async function selectStoreByLocationName(locationName: string = '') {
 
   // Open store selection page
   await page.goto('https://www.countdown.co.nz/bookatimeslot');
-  // await page.waitForSelector('button#changeOrderOnboardingAcknowledge');
-  // await page.locator('button#changeOrderOnboardingAcknowledge').click();
   await page.waitForSelector('fieldset div div p button');
 
   const oldLocation = await page.locator('fieldset div div p strong').innerText();
@@ -532,7 +532,7 @@ async function routePlaywrightExclusions() {
   await page.route('**/*', async (route) => {
     const req = route.request();
     let excludeThisRequest = false;
-    let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
+    //let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
 
     urlExclusions.forEach((excludedURL) => {
       if (req.url().includes(excludedURL)) excludeThisRequest = true;
