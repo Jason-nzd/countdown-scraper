@@ -223,6 +223,8 @@ export const validCategories: string[] = [
   'bread',
   'bread-rolls',
   'specialty-bread',
+  'bakery-cakes',
+  'bakery-desserts',
   // chilledCategory
   'milk',
   'long-life-milk',
@@ -245,6 +247,7 @@ export const validCategories: string[] = [
   'mince-patties',
   'sausages',
   'deli-meats',
+  'meat-alternatives',
   // frozenCategory
   'ice-cream',
   'ice-blocks',

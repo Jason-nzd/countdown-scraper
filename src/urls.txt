@@ -26,7 +26,7 @@ countdown.co.nz/shop/browse/fridge-deli/milk-cream/enriched-milk categories=milk
 countdown.co.nz/shop/browse/fridge-deli/milk-cream/flavoured-milk categories=milk
 countdown.co.nz/shop/browse/fridge-deli/milk-cream/dairy-free-milk-cream categories=milk
 countdown.co.nz/shop/browse/fridge-deli/milk-cream/sour-cream categories=sour-cream
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/cream categories=cream
+countdown.co.nz/shop/browse/fridge-deli/cream-custard categories=cream
 countdown.co.nz/shop/browse/fridge-deli/long-life-milk categories=long-life-milk
 countdown.co.nz/shop/browse/fridge-deli/butter-spreads categories=butter
 countdown.co.nz/shop/browse/fridge-deli/cheese categories=cheese
@@ -54,6 +54,7 @@ countdown.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
 countdown.co.nz/shop/browse/meat-poultry/pork
 countdown.co.nz/shop/browse/meat-poultry/mince-patties categories=mince-patties
 countdown.co.nz/shop/browse/meat-poultry/sausages
+countdown.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=meat-alternatives
 
 countdown.co.nz/shop/browse/pantry/eggs
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips
@@ -101,6 +102,14 @@ countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread-rol
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/white-bread-sliced categories=bread
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/wholemeal-brown-bread-sliced categories=bread
 countdown.co.nz/shop/browse/bakery/sliced-packaged-bread/grain-seeded-bread-sliced categories=bread
+countdown.co.nz/shop/browse/bakery/wraps-pita-pizza-bases categories=specialty-bread
+countdown.co.nz/shop/browse/bakery/pastries-croissants-biscuits  categories=bakery-desserts
+countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/banana-bread-sponge-cakes categories=bakery-cakes
+countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/muffins-cupcakes  categories=bakery-desserts
+countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/slices-tarts? categories=bakery-desserts
+countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/donuts-cream-buns categories=bakery-desserts
+countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/puddings-other-desserts categories=bakery-desserts
+countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/birthday-celebration-cakes categories=bakery-cakes
 
 countdown.co.nz/shop/browse/drinks/coffee
 countdown.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea
