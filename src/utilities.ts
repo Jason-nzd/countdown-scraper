@@ -150,6 +150,7 @@ export function addUnitPriceToProduct(product: Product): Product {
       if (secondQuantity > quantity) {
         quantity = secondQuantity;
         matchedUnit = foundUnits[1].match(/\D/g)?.join('') as string;
+        console.log('double units ' + quantity);
       }
     } else {
       // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
@@ -159,13 +160,14 @@ export function addUnitPriceToProduct(product: Product): Product {
         const multiplier = parseInt(splitMultipliedSize[0].trim());
         const subUnitSize = parseInt(splitMultipliedSize[1].trim());
         quantity = multiplier * subUnitSize;
+        console.log('multiplied ' + quantity);
       }
 
       // Handle edge case for format '500g 5pack' (no multiplier)
       const matchNoMultiplierString = size?.match(/\d+(g|ml)\s\d+pack/g)?.join('');
       if (matchNoMultiplierString) {
-        const quantityWithUnit = matchNoMultiplierString.split(' ')[0];
-        quantity = parseInt(quantityWithUnit.match(/\d+/g)?.join('') as string);
+        const packSizeOnly = matchNoMultiplierString.match(/\d+(g|ml)/g)?.join();
+        quantity = parseInt(packSizeOnly!.match(/\d+/g)?.join('') as string);
       }
 
       // Handle edge case for format '85g pouches 12pack'
