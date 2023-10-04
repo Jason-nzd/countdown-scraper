@@ -44,7 +44,7 @@ export function logProductRow(product: Product) {
     getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
       `${product.size?.slice(0, 17).padEnd(17)} | ` +
-      // `${product.originalUnitQuantity?.toString().padEnd(5)}${product.unitName} | ` +
+      `${product.originalUnitQuantity?.toString().padEnd(5)}${product.unitName} | ` +
       `$ ${product.currentPrice.toString().padStart(4).padEnd(5)} | ` +
       unitPriceString
   );
@@ -161,11 +161,31 @@ export function addUnitPriceToProduct(product: Product): Product {
         quantity = multiplier * subUnitSize;
       }
 
-      // Handle edge case for format '500g 5pack' (no multiplier)
+      // Handle edge case for drink cans in format '330ml cans 30pack'
+      const matchCanString = size?.match(/\d+(ml)\s?cans\s?\d+pack/g)?.join('');
+      if (matchCanString) {
+        const canSize = parseInt(matchCanString.match(/\d+(ml)/g)?.join() as string);
+        const canQuantity = parseInt(matchCanString.match(/\d+(pack)/g)?.join() as string);
+        quantity = canSize * canQuantity;
+      }
+
+      // Handle edge cases for format '500g 5pack', which are inconsistent
       const matchNoMultiplierString = size?.match(/\d+(g|ml)\s\d+pack/g)?.join('');
       if (matchNoMultiplierString) {
-        const packSizeOnly = matchNoMultiplierString.match(/\d+(g|ml)/g)?.join();
-        quantity = parseInt(packSizeOnly!.match(/\d+/g)?.join('') as string);
+        const packSizeOnly = parseInt(
+          matchNoMultiplierString.match(/\d+(g|ml)/g)?.join() as string
+        );
+        const multiplier = parseInt(matchNoMultiplierString.match(/\d+(pack)/g)?.join() as string);
+
+        // The weight for small pack quantity is usually not multiplied
+        //  - '100g 6pack' would usually have an actual weight of 100g
+        if (multiplier <= 6) {
+          quantity = packSizeOnly;
+        } else {
+          // The weight for large pack quantity is usually multiplied
+          //  - '100g 20pack' would usually have an actual weight of 2000g
+          quantity = packSizeOnly * multiplier;
+        }
       }
 
       // Handle edge case for format '85g pouches 12pack'
