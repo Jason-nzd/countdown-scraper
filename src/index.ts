@@ -494,6 +494,11 @@ export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined 
         categorisedUrl.categories = splitCategories;
       }
     });
+
+    // If url line specifies '120-per-page', replace the query parameter for 48 products per page to 120
+    if (line.includes('120-per-page')) {
+      categorisedUrl.url = categorisedUrl.url.replace('size=48', 'size=120');
+    }
   }
 
   // If no category was specified, derive one from the last url /section/
