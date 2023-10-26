@@ -286,6 +286,7 @@ export const validCategories: string[] = [
   'beans-spaghetti',
   'canned-fish',
   'canned-meat',
+  'soup',
   'cereal',
   'spreads',
   'baking',
