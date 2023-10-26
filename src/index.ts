@@ -485,7 +485,7 @@ export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined 
         // Replace query parameters with optimised ones,
         //  such as limiting to certain sellers,
         //  or showing a higher number of products
-        categorisedUrl.url += '?page=1&size=48&inStockProductsOnly=true';
+        categorisedUrl.url += '?sort=CUPAsc&inStockProductsOnly=true&page=1&size=48';
 
         // Parse in 1 or more categories
       } else if (section.startsWith('categories=')) {
