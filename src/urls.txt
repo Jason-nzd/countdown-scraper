@@ -90,7 +90,7 @@ countdown.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads
 countdown.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads
 countdown.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
 
-countdown.co.nz/shop/browse/pantry/sauces-pastes categories=sauce
+countdown.co.nz/shop/browse/pantry/sauces-pastes categories=sauces
 
 countdown.co.nz/shop/browse/fish-seafood/salmon categories=salmon
 countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
