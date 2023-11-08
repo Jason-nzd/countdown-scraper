@@ -83,9 +83,9 @@ categorisedUrls.forEach((categorisedUrl) => {
       await page.goto(url);
 
       // Wait and page down to further trigger any lazy loads
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
       await page.keyboard.press('PageDown');
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
       await page.keyboard.press('PageDown');
 
       // Wait for product-price h3 html element to dynamically load in,
@@ -94,7 +94,7 @@ categorisedUrls.forEach((categorisedUrl) => {
 
       pageLoadValid = true;
     } catch (error) {
-      logError('Page Timeout after 30 seconds - Skipping this page\n');
+      logError('Page Timeout after 30 seconds - Skipping this page - ' + error + '\n');
     }
 
     // Count number of items processed for logging purposes
@@ -311,7 +311,7 @@ async function selectStoreByLocationName(locationName: string = '') {
   log(colour.yellow, 'Selecting Store Location..');
 
   // Open store selection page
-  await page.goto('https://www.countdown.co.nz/bookatimeslot');
+  await page.goto('https://www.countdown.co.nz/bookatimeslot', { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('fieldset div div p button');
 
   const oldLocation = await page.locator('fieldset div div p strong').innerText();
@@ -485,7 +485,8 @@ export function parseAndCategoriseURL(line: string): CategorisedUrl | undefined 
         // Replace query parameters with optimised ones,
         //  such as limiting to certain sellers,
         //  or showing a higher number of products
-        categorisedUrl.url += '?sort=CUPAsc&inStockProductsOnly=true&page=1&size=48';
+        //categorisedUrl.url += '?sort=CUPAsc&inStockProductsOnly=true&page=1&size=48';
+        categorisedUrl.url += '?inStockProductsOnly=true&page=1&size=48';
 
         // Parse in 1 or more categories
       } else if (section.startsWith('categories=')) {
