@@ -57,16 +57,43 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
       return response.upsertType;
     }
 
-    // If product doesn't yet exist in CosmosDB, upsert as-is
+    // If product with ID and exact name doesn't yet exist in CosmosDB
     else if (cosmosResponse.statusCode === 404) {
-      await container.items.create(scrapedProduct);
+      // First check if there is an existing product with the same ID but different name(partition key)
+      const querySpec = {
+        query: `SELECT * FROM products p WHERE p.id = @id`,
+        parameters: [
+          {
+            name: '@id',
+            value: scrapedProduct.id,
+          },
+        ],
+      };
+      const { resources } = await container.items.query(querySpec).fetchAll();
 
-      console.log(
-        `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
-          ` | $ ${scrapedProduct.currentPrice}`
-      );
+      // If an existing ID was found, update the DB with the new name
+      if (resources.length > 0) {
+        // Cast existing product to correct type
+        const dbProduct = resources[0] as Product;
 
-      return UpsertResponse.NewProduct;
+        // Update product with new name
+        const response = buildUpdatedProduct(scrapedProduct, dbProduct);
+        response.product.name = scrapedProduct.name;
+
+        // Send updated product to CosmosDB
+        await container.items.upsert(response.product);
+        return response.upsertType;
+      } else {
+        // If no existing ID was found, create a new product
+        await container.items.create(scrapedProduct);
+
+        console.log(
+          `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
+            ` | $ ${scrapedProduct.currentPrice}`
+        );
+
+        return UpsertResponse.NewProduct;
+      }
     }
     // Manage any failed cosmos updates
     else if (cosmosResponse.statusCode === 409) {
