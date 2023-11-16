@@ -1,4 +1,3 @@
-import { overriddenProducts } from './data-overrides.js';
 import { Product } from './typings';
 import { readFileSync } from 'fs';
 
@@ -104,13 +103,6 @@ export function getTimeElapsedSince(startTime: number): string {
 // Returns an updated product
 
 export function addUnitPriceToProduct(product: Product): Product {
-  // First check if any manually overridden product sizing is available
-  overriddenProducts.forEach((overriddenProduct) => {
-    if (overriddenProduct.id === product.id) {
-      product.size = overriddenProduct.size;
-    }
-  });
-
   // Build an array of size and name split strings
   let nameAndSize: string[] = [product.name];
   const size = product.size?.toLowerCase();

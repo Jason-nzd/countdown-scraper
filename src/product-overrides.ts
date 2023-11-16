@@ -1,7 +1,7 @@
-// This file is for manually overriding product size data.
-// Is used for products that do not have listed sizes to be scraped
+// This file is for manually overriding product size and category data.
+// Is used for products that do not have listed sizes to be scraped, or have incorrect categories.
 
-export const overriddenProducts = [
+export const productOverrides = [
   { id: '206889', size: '180g' },
   { id: '196996', size: '300g' },
   { id: '137967', size: '420g' },
@@ -29,4 +29,6 @@ export const overriddenProducts = [
   { id: '306624', size: '185g' },
   { id: '156824', size: '180g' },
   { id: '9023', size: '375g' },
+  { id: '266962', category: 'sweets-lollies' },
+  { id: '171524', size: '230ml', category: 'baking' },
 ];
