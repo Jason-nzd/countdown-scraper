@@ -412,17 +412,17 @@ function playwrightElementToProduct(
   productOverrides.forEach((override) => {
     // First check if product ID has any overrides
     if (override.id === product.id) {
-      console.log('Override values found for ' + product.name);
-
       // Check for size override
       if (override.size !== undefined) {
-        console.log('Overriding size from ' + product.size + ' to ' + override.size);
+        // console.log(`${product.name} - overriding size from ${product.size} to ${override.size}`);
         product.size = override.size;
       }
 
       // Check for category override
       if (override.category !== undefined) {
-        console.log('Overriding category from ' + product.category + ' to ' + override.category);
+        // console.log(
+        //   `${product.name} - overriding category from ${product.category} to ${override.category}`
+        // );
         product.category = [override.category];
       }
     }
