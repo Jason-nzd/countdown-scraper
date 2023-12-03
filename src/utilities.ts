@@ -287,6 +287,7 @@ export const validCategories: string[] = [
   'world-foods',
   // snacksCategory
   'chocolate',
+  'boxed-chocolate',
   'chips',
   'crackers',
   'biscuits',

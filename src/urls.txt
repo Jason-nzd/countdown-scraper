@@ -6,7 +6,7 @@ countdown.co.nz/shop/browse/pantry/eggs
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips 120-per-page
 countdown.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate 120-per-page
-countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate
+countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=boxed-chocolate
 countdown.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies
 countdown.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
 
