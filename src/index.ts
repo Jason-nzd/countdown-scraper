@@ -343,7 +343,7 @@ async function selectStoreByLocationName(locationName: string = '') {
 // ----------------------------
 // Takes a playwright html element for 'a.product-entry', builds and returns a Product
 
-function playwrightElementToProduct(
+export function playwrightElementToProduct(
   element: cheerio.Element,
   categories: string[]
 ): Product | undefined {
@@ -359,8 +359,15 @@ function playwrightElementToProduct(
         .find('h3')
         .first()
         .text()
+
+        // Clean unnecessary words from titles
         .replace('fresh fruit', '')
         .replace('fresh vegetable', '')
+
+        // Clean variable weights from meat products, such 'Pork Loin Chops 0.4-0.9kg 3-4pcs'
+        .replace(/(\d\.\d-\d\.\d)kg (\d-\d)pcs/, '')
+
+        // Clean excess whitespace
         .replace('  ', ' ')
         .trim()
     ),
