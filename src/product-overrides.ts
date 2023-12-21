@@ -31,4 +31,9 @@ export const productOverrides = [
   { id: '9023', size: '375g' },
   { id: '266962', category: 'sweets-lollies' },
   { id: '171524', size: '230ml', category: 'baking' },
+  { id: '170021', category: 'ice-blocks' },
+  { id: '71164', category: 'sausages' },
+  { id: '71174', category: 'sausages' },
+  { id: '71168', category: 'sausages' },
+  { id: '71165', category: 'sausages' },
 ];
