@@ -93,23 +93,13 @@ countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-sav
 countdown.co.nz/shop/browse/frozen/frozen-seafood
 countdown.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
 
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/full-cream-milk categories=milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/trim-light-milk categories=milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/enriched-milk categories=milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/flavoured-milk categories=milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/dairy-free-milk-cream categories=milk
-countdown.co.nz/shop/browse/fridge-deli/milk-cream/sour-cream categories=sour-cream
+countdown.co.nz/shop/browse/fridge-deli/milk 120-per-page
 countdown.co.nz/shop/browse/fridge-deli/cream-custard categories=cream
-countdown.co.nz/shop/browse/fridge-deli/long-life-milk categories=long-life-milk
+countdown.co.nz/shop/browse/fridge-deli/milk/long-life-milk categories=long-life-milk
 countdown.co.nz/shop/browse/fridge-deli/butter-spreads categories=butter
-countdown.co.nz/shop/browse/fridge-deli/cheese categories=cheese
+countdown.co.nz/shop/browse/fridge-deli/cheese categories=cheese 120-per-page
 countdown.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases categories=pizza
-countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/multipacks-pouches-single-serve categories=yoghurt
-countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/large-tub-yoghurt categories=yoghurt
-countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/greek-greek-style categories=yoghurt
-countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/natural-health categories=yoghurt
-countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/dairy-free-yoghurt categories=yoghurt
-countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts/desserts categories=yoghurt
+countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts categories=yoghurt 120-per-page
 countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat categories=ham
 countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon categories=bacon
 countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats categories=salami
@@ -129,6 +119,6 @@ countdown.co.nz/shop/browse/meat-poultry/mince-patties categories=mince-patties
 countdown.co.nz/shop/browse/meat-poultry/sausages
 countdown.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=meat-alternatives
 
-countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fruit
+countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fruit 120-per-page
 countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
-countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables
+countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables 120-per-page
