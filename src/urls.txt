@@ -115,7 +115,7 @@ countdown.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
 countdown.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
 countdown.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
 countdown.co.nz/shop/browse/meat-poultry/pork
-countdown.co.nz/shop/browse/meat-poultry/mince-patties categories=mince-patties
+countdown.co.nz/shop/browse/meat-poultry/mince-patties categories=patties-meatballs
 countdown.co.nz/shop/browse/meat-poultry/sausages
 countdown.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=meat-alternatives
 
