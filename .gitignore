@@ -17,5 +17,5 @@ package-lock.json
 salt
 
 *.bat
-
 *.lnk
+*.ps1
