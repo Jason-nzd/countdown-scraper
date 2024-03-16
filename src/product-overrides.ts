@@ -36,4 +36,5 @@ export const productOverrides = [
   { id: '71174', category: 'sausages' },
   { id: '71168', category: 'sausages' },
   { id: '71165', category: 'sausages' },
+  { id: '331560', category: 'specialty-bread' },
 ];
