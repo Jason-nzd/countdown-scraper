@@ -70,12 +70,12 @@ countdown.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=
 countdown.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
 countdown.co.nz/shop/browse/drinks/juice-cordial/fruit-juice-drinks categories=juice
 countdown.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories=juice
-countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks
-countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks
+countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks 120-per-page
+countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks 120-per-page
 
 countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream 120-per-page
-countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream
-countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls
+countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream 120-per-page
+countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls 120-per-page
 countdown.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pizza categories=pizza
 countdown.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pastry categories=pastries-cheesecake
 countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=other-savouries
@@ -84,9 +84,10 @@ countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables cat
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
+
 countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
-countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=mince-patties
+countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=patties-meatballs
 countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-savouries
 countdown.co.nz/shop/browse/frozen/frozen-seafood
 countdown.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
