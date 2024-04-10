@@ -97,6 +97,7 @@ countdown.co.nz/shop/browse/fridge-deli/cream-custard categories=cream
 countdown.co.nz/shop/browse/fridge-deli/milk/long-life-milk categories=long-life-milk
 countdown.co.nz/shop/browse/fridge-deli/butter-spreads categories=butter
 countdown.co.nz/shop/browse/fridge-deli/cheese categories=cheese 120-per-page
+countdown.co.nz/shop/browse/fridge-deli/cheese/block-cheese categories=cheese
 countdown.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases categories=pizza
 countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts categories=yoghurt 120-per-page
 countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat categories=ham
