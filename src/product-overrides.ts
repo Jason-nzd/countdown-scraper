@@ -61,4 +61,6 @@ export const productOverrides = [
   { id: '761093', category: 'black-tea' },
   { id: '721661', category: 'green-tea' },
   { id: '690093', category: 'green-tea' },
+  { id: '780922', category: 'sauces' },
+  { id: '780921', category: 'sauces' },
 ];

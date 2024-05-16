@@ -2,13 +2,15 @@
 # Categories can be derived from last /url-bracket/, or categories can be overridden with: categories=ice-cream
 # Each page scrapes a maximum of 48 in-stock products, unless 120-per-page is added next to each url
 
-countdown.co.nz/shop/browse/pantry/eggs
+countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips 120-per-page
 countdown.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate 120-per-page
 countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=boxed-chocolate 120-per-page
 countdown.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies
 countdown.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
+
+countdown.co.nz/shop/browse/pantry/eggs
 
 countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
 countdown.co.nz/shop/browse/pantry/biscuits-crackers/crackers categories=crackers

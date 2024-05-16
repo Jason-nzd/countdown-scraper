@@ -427,9 +427,9 @@ export function playwrightElementToProduct(
 
       // Check for category override
       if (override.category !== undefined) {
-        // console.log(
-        //   `${product.name} - overriding category from ${product.category} to ${override.category}`
-        // );
+        console.log(
+          `${product.name} - overriding category from ${product.category} to ${override.category}`
+        );
         product.category = [override.category];
       }
     }

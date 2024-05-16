@@ -167,6 +167,7 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
   // Update other info
   else if (
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
+    dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') ||
     dbProduct.size !== scrapedProduct.size ||
     dbProduct.unitPrice !== scrapedProduct.unitPrice ||
     dbProduct.unitName !== scrapedProduct.unitName ||
