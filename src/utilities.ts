@@ -37,16 +37,33 @@ export function logError(text: string) {
 // Log a single product in one row, using alternating colours for readability.
 
 export function logProductRow(product: Product) {
-  const categories = product.category != undefined ? product.category?.join(', ') : '';
-  const unitPriceString = product.unitPrice ? `$${product.unitPrice}/${product.unitName}` : ``;
+  const unitPriceString = product.unitPrice ? `$${product.unitPrice} /${product.unitName}` : ``;
   log(
     getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
       `${product.size?.slice(0, 17).padEnd(17)} | ` +
-      `${product.originalUnitQuantity?.toString().padEnd(5)}${product.unitName} | ` +
       `$ ${product.currentPrice.toString().padStart(4).padEnd(5)} | ` +
       unitPriceString
   );
+}
+
+// logTableHeader()
+// ----------------
+
+export function logTableHeader() {
+  log(
+    colour.yellow,
+    `${'ID'.padStart(6)} | ${'Name'.padEnd(50)} | ` +
+      `${'Size'.padEnd(17)} | ` +
+      `${'Price'.padEnd(7)} | Unit Price`
+  );
+  
+  let headerLine = ""
+  for(let i=0; i<102; i++){
+    headerLine += "-"
+  }
+  log(colour.yellow, headerLine);
+
 }
 
 // getAlternatingRowColour()
