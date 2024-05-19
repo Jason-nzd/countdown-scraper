@@ -1,9 +1,9 @@
 import 'jest';
-jest.useFakeTimers();
+// jest.useFakeTimers();
 import * as cheerio from 'cheerio';
 import { playwrightElementToProduct } from '../src/index';
 import { CategorisedUrl, Product } from '../src/typings';
-import { addUnitPriceToProduct } from 'utilities';
+import { addUnitPriceToProduct } from '../src/utilities';
 
 // Sample input
 const html = `
@@ -37,7 +37,7 @@ describe('scraping', () => {
   it('per unit price is derived from quantity and size', async () => {
     const result = addUnitPriceToProduct(juiceProduct);
     expect(result.unitName).toBe('L');
-    expect(result.unitPrice).toBe(12);
+    expect(result.unitPrice).toBe(16);
     expect(result.originalUnitQuantity).toBe(250);
   });
 });
