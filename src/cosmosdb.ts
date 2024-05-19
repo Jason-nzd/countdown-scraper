@@ -1,38 +1,49 @@
 // Used by index.ts for creating and accessing items stored in Azure CosmosDB
 
-import { Container, CosmosClient, Database, FeedOptions, SqlQuerySpec } from '@azure/cosmos';
-import * as dotenv from 'dotenv';
-import { logError, log, colour, validCategories } from './utilities.js';
-import { Product, UpsertResponse, ProductResponse } from './typings';
+import * as dotenv from "dotenv";
 dotenv.config();
+dotenv.config({ path: `.env.local`, override: true });
 
-const cosmosDatabaseName = 'supermarket-prices';
-const cosmosContainerName = 'products';
-const partitionKey = ['/name'];
+import { CosmosClient, Container, Database, FeedOptions, SqlQuerySpec } from "@azure/cosmos";
+import { logError, log, colour, validCategories } from "./utilities";
+import { Product, UpsertResponse, ProductResponse } from "./typings";
 
-// Get CosmosDB connection string stored in .env
-const COSMOS_CONSTRING = process.env.COSMOS_CONSTRING;
-if (!COSMOS_CONSTRING) {
-  throw Error('CosmosDB connection string COSMOS_CONSTRING not found in .env');
-}
-
-// Establish CosmosDB connection
 let cosmosClient: CosmosClient;
 let database: Database;
 let container: Container;
-try {
-  cosmosClient = new CosmosClient(COSMOS_CONSTRING);
-  const databaseResponse = await cosmosClient.databases.createIfNotExists({
-    id: cosmosDatabaseName,
-  });
-  database = databaseResponse.database;
-  const containerResponse = await database.containers.createIfNotExists({
-    id: cosmosContainerName,
-    partitionKey: { paths: partitionKey },
-  });
-  container = containerResponse.container;
-} catch (error) {
-  logError('Invalid CosmosDB connection - check for valid connection string');
+
+export async function establishCosmosDB() {
+  // Get CosmosDB connection string stored in .env
+  const COSMOS_CONSTRING = process.env.COSMOS_CONSTRING;
+  if (!COSMOS_CONSTRING) {
+    throw Error(
+      "CosmosDB connection string COSMOS_CONSTRING not found in .env"
+    );
+  }
+
+  // Ensure partition key is in correct format
+  let validatedPartitionKey = process.env.COSMOS_PARTITION_KEY;
+  if (validatedPartitionKey?.charAt(0) != "/") validatedPartitionKey = "/" + validatedPartitionKey;
+
+  // Establish CosmosDB Client, Database, Container
+  try {
+    cosmosClient = new CosmosClient(COSMOS_CONSTRING);
+
+    const databaseResponse = await cosmosClient.databases.createIfNotExists({
+      id: process.env.COSMOS_DB_NAME,
+    });
+
+    database = databaseResponse.database;
+
+    const containerResponse = await database.containers.createIfNotExists({
+      id: process.env.COSMOS_CONTAINER,
+      partitionKey: { paths: [validatedPartitionKey] },
+    });
+
+    container = containerResponse.container;
+  } catch (error) {
+    throw Error(error + "\n\nInvalid CosmosDB connection - check for valid connection string");
+  }
 }
 
 // upsertProductToCosmosDB()
@@ -40,7 +51,9 @@ try {
 // Inserts or updates a product object to CosmosDB,
 //  returns an UpsertResponse based on if and how the Product was updated
 
-export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<UpsertResponse> {
+export async function upsertProductToCosmosDB(
+  scrapedProduct: Product
+): Promise<UpsertResponse> {
   try {
     // Check CosmosDB for any existing item using id and name as the partition key
     const cosmosResponse = await container
@@ -64,7 +77,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
         query: `SELECT * FROM products p WHERE p.id = @id`,
         parameters: [
           {
-            name: '@id',
+            name: "@id",
             value: scrapedProduct.id,
           },
         ],
@@ -89,7 +102,7 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 
         console.log(
           `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
-            ` | $ ${scrapedProduct.currentPrice}`
+          ` | $ ${scrapedProduct.currentPrice}`
         );
 
         return UpsertResponse.NewProduct;
@@ -115,14 +128,19 @@ export async function upsertProductToCosmosDB(scrapedProduct: Product): Promise<
 // This takes a freshly scraped product and compares it with a found database product.
 // It returns an updated product with data from both product versions
 
-function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): ProductResponse {
+function buildUpdatedProduct(
+  scrapedProduct: Product,
+  dbProduct: Product
+): ProductResponse {
   // Date objects pulled from CosmosDB need to re-parsed as strings in format yyyy-mm-dd
   let dbDay = dbProduct.lastUpdated.toString();
   dbDay = dbDay.slice(0, 10);
   let scrapedDay = scrapedProduct.lastUpdated.toISOString().slice(0, 10);
 
   // Measure the price difference between the new scraped product and the old db product
-  const priceDifference = Math.abs(dbProduct.currentPrice - scrapedProduct.currentPrice);
+  const priceDifference = Math.abs(
+    dbProduct.currentPrice - scrapedProduct.currentPrice
+  );
 
   // If price has changed by more than $0.05, and not on the same day
   if (priceDifference > 0.05 && dbDay != scrapedDay) {
@@ -149,8 +167,12 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
     dbProduct.category === null
   ) {
     console.log(
-      `  Categories Changed: ${scrapedProduct.name.padEnd(40).substring(0, 40)}` +
-        ` - ${dbProduct.category.join(' ')} > ${scrapedProduct.category.join(' ')}`
+      `  Categories Changed: ${scrapedProduct.name
+        .padEnd(40)
+        .substring(0, 40)}` +
+      ` - ${dbProduct.category.join(" ")} > ${scrapedProduct.category.join(
+        " "
+      )}`
     );
 
     // Update everything but priceHistory and lastUpdated
@@ -167,7 +189,7 @@ function buildUpdatedProduct(scrapedProduct: Product, dbProduct: Product): Produ
   // Update other info
   else if (
     dbProduct.sourceSite !== scrapedProduct.sourceSite ||
-    dbProduct.category.join(' ') !== scrapedProduct.category.join(' ') ||
+    dbProduct.category.join(" ") !== scrapedProduct.category.join(" ") ||
     dbProduct.size !== scrapedProduct.size ||
     dbProduct.unitPrice !== scrapedProduct.unitPrice ||
     dbProduct.unitName !== scrapedProduct.unitName ||
@@ -201,13 +223,13 @@ export function logPriceChange(product: Product, newPrice: number) {
   const priceIncreased = newPrice > product.currentPrice;
   log(
     priceIncreased ? colour.red : colour.green,
-    '  Price ' +
-      (priceIncreased ? 'Up   : ' : 'Down : ') +
-      product.name.slice(0, 47).padEnd(47) +
-      ' | $' +
-      product.currentPrice.toString().padStart(4) +
-      ' > $' +
-      newPrice
+    "  Price " +
+    (priceIncreased ? "Up   : " : "Down : ") +
+    product.name.slice(0, 47).padEnd(47) +
+    " | $" +
+    product.currentPrice.toString().padStart(4) +
+    " > $" +
+    newPrice
   );
 }
 
@@ -221,10 +243,10 @@ export async function customQuery(): Promise<void> {
   };
   const secondsDelayBetweenBatches = 5;
   const querySpec: SqlQuerySpec = {
-    query: 'SELECT * FROM products p',
+    query: "SELECT * FROM products p",
   };
 
-  log(colour.yellow, 'Custom Query \n' + querySpec.query);
+  log(colour.yellow, "Custom Query \n" + querySpec.query);
 
   const response = await container.items.query(querySpec, options);
 
@@ -238,20 +260,20 @@ export async function customQuery(): Promise<void> {
     }
   })();
 
-  console.log('Custom Query Complete');
+  console.log("Custom Query Complete");
   return;
 
   function delayedBatchFetch() {
     return new Promise<void>((resolve) =>
       setTimeout(async () => {
         console.log(
-          'Batch ' +
-            batchCount +
-            ' - Items [' +
-            batchCount * options.maxItemCount! +
-            ' - ' +
-            (batchCount + 1) * options.maxItemCount!
-        ) + ']';
+          "Batch " +
+          batchCount +
+          " - Items [" +
+          batchCount * options.maxItemCount! +
+          " - " +
+          (batchCount + 1) * options.maxItemCount!
+        ) + "]";
 
         const batch = await response.fetchNext();
         const products = batch.resources as Product[];
@@ -266,12 +288,12 @@ export async function customQuery(): Promise<void> {
             if (Math.abs(oldDatedPrice - newDatedPrice) < 0.04) {
               console.log(p.name);
               console.log(
-                ' - Tiny price difference detected on ' +
-                  datedPrice.date.toDateString() +
-                  ' - ' +
-                  oldDatedPrice +
-                  ' - ' +
-                  newDatedPrice
+                " - Tiny price difference detected on " +
+                datedPrice.date.toDateString() +
+                " - " +
+                oldDatedPrice +
+                " - " +
+                newDatedPrice
               );
               datedPrice.price = 0;
               requiresUpdate = true;
@@ -286,16 +308,19 @@ export async function customQuery(): Promise<void> {
             });
 
             console.log(
-              ' - Old price history length: ' +
-                p.priceHistory.length +
-                ' - new length: ' +
-                updatedPriceHistory.length
+              " - Old price history length: " +
+              p.priceHistory.length +
+              " - new length: " +
+              updatedPriceHistory.length
             );
 
             p.priceHistory = updatedPriceHistory;
 
             const uploadRes = await container.items.upsert(p);
-            console.log(' - Uploaded updated product with status code: ' + uploadRes.statusCode);
+            console.log(
+              " - Uploaded updated product with status code: " +
+              uploadRes.statusCode
+            );
           }
 
           // item.name = item.name.replace('  ', ' ').trim();
