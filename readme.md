@@ -1,30 +1,34 @@
 # Countdown Scraper
 
-This project scrapes product info from Countdown's NZ website and optionally places the data into Azure CosmosDB and Azure Storage.
+This project scrapes product info from Countdown's NZ website and optionally places the data into Azure CosmosDB.
 
 A history of price changes is stored within each product's database entry.
 
 Image files can also be scraped and placed into an Azure Storage Blob Container.
 
-## Setup
+## Basic Setup
 
-After cloning this repository, run `npm install` to install dependencies.
+With `NodeJS` installed, clone this repository, then run `npm install` to install dependencies.
+
+Playwright must also be installed when running for the first time with `npx playwright install`.
 
 The program can now be tested in dry run mode without any further setup using `npm run dry`.
 
-To optionally store data in Azure, a CosmosDB read-write connection string and Azure Storage connection string are required as environment variables in a .env file.
+## Optional Setup
 
-.env
+The `.env` file has variables that can be filled for more functionality.
 
-```shell
-COSMOS_CONSTRING=
-AZURE_STORAGE_CONSTRING=
+```cmd
+STORE_NAME=             Optional supermarket location name
+COSMOS_CONSTRING=       Read-write CosmosDB connection string
+COSMOS_DB_NAME=         CosmosDB Name
+COSMOS_CONTAINER=       CosmosDB Container Name, eg. products
+COSMOS_PARTITION_KEY=   CosmosDB Partition Key, eg. /name
+IMAGE_UPLOAD_FUNC_URL=  URL for uploading images to
 ```
 
-* CosmosDB Database, Container, and Partition Key names can be changed from their defaults in `azure-cosmosdb.ts`.
-* Azure Storage Container name can be changed in `azure-storage.ts`.
-* A list of URLs to scrape can be put in file `urls.txt`, with one url per line in plain text format.
-* If `urls.txt` is not present, 2 sample URLs will be used instead.
+- The CosmosDB read-write connection string can be obtained from the `Azure Portal > CosmosDB > Settings > Keys`.
+- A list of URLs to scrape can be put in file `urls.txt`, with one url per line.
 
 ## Usage
 
@@ -36,34 +40,33 @@ AZURE_STORAGE_CONSTRING=
 
 ## Output
 
-This is a log output sample when running in dry run mode:
+Sample log output when running in dry run mode:
 
 ```cmd
-ID     | Name                                               | Size             | Price  | Categories
---------------------------------------------------------------------------------------------------------------
-762844 | Ocean Blue Smoked Salmon Slices                    | 100g             | $    9 | fish-seafood, salmon
-697201 | Clearly Premium Smoked Salmon Superior Sliced      | 200g             | $ 13.5 | fish-seafood, salmon
-830035 | Ocean Blue Smoked Salmon Slices                    | 180g             | $   12 | fish-seafood, salmon
- 76719 | Fresh NZ Salmon Fillet 1 2 Pack                    | Min order 400g   | $   51 | fish-seafood, salmon
+    ID | Name                              | Size           | Price  | Unit Price
+----------------------------------------------------------------------------------
+762844 | Ocean Blue Smoked Salmon Slices   | 100g           | $    9 | $90 /kg
+697201 | Clearly Premium Smoked Salmon     | 200g           | $ 13.5 | $67.5 /kg
+830035 | Ocean Blue Smoked Salmon Slices   | 180g           | $   12 | $67.7 /kg
 ```
 
 This is a sample of a single product stored in CosmosDB. It was re-run at multiple dates to store changing prices:
 
 ```json
 {
-    "id": "123456",
-    "name": "Sausages Precooked Chinese Honey",
-    "currentPrice": 12.9,
-    "size": "Prepacked 1kg pack",
-    "priceHistory": [
-        {
-            "date": "Sat Jan 14 2023",
-            "price": 10
-        },
-        {
-            "date": "Thu Jan 26 2023",
-            "price": 12.9
-        }
-    ],
+  "id": "123456",
+  "name": "Sausages Precooked Chinese Honey",
+  "currentPrice": 12.9,
+  "size": "Prepacked 1kg pack",
+  "priceHistory": [
+    {
+      "date": "Sat Jan 14 2023",
+      "price": 10
+    },
+    {
+      "date": "Thu Jan 26 2023",
+      "price": 12.9
+    }
+  ]
 }
 ```
