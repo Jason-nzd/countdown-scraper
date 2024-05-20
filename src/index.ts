@@ -217,15 +217,6 @@ async function uploadImageRestAPI(
     return false;
   }
 
-  // Try fetch CDN image to see if it already exists
-  const cdnUrlBase = process.env.IMAGE_CDN_URL_BASE;
-  if (cdnUrlBase) {
-    const checkCDNForExistingImage = await fetch(
-      cdnUrlBase + "200/" + product.id + ".webp"
-    );
-    if (checkCDNForExistingImage.ok) return true;
-  }
-
   // Get IMAGE_UPLOAD_FUNC_URL from env
   // Example format:
   // https://<func-app>.azurewebsites.net/api/ImageToS3?code=<auth-code>
@@ -245,14 +236,12 @@ async function uploadImageRestAPI(
   var responseMsg = await (await res.blob()).text();
 
   if (responseMsg.includes("S3 Upload of Full-Size")) {
-    if (cdnUrlBase) {
-      // Log new CDN URL for successful upload
+    // Log for successful upload
       log(
         colour.grey,
-        `  New Image  : ${cdnUrlBase}${(product.id + ".webp").padEnd(11)} | ` +
+      `  New Image  : ${(product.id + ".webp").padEnd(11)} | ` +
         `${product.name.padEnd(40).slice(0, 40)}`
       );
-    }
   } else if (responseMsg.includes("already exists")) {
     // Do not log for existing images
   } else if (responseMsg.includes("Unable to download:")) {
