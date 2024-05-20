@@ -18,13 +18,13 @@ The program can now be tested in dry run mode without any further setup using `n
 
 The `.env` file has variables that can be filled for more functionality.
 
-```cmd
+```js
 STORE_NAME=             Optional supermarket location name
 COSMOS_CONSTRING=       Read-write CosmosDB connection string
 COSMOS_DB_NAME=         CosmosDB Name
 COSMOS_CONTAINER=       CosmosDB Container Name, eg. products
 COSMOS_PARTITION_KEY=   CosmosDB Partition Key, eg. /name
-IMAGE_UPLOAD_FUNC_URL=  URL for uploading images to
+IMAGE_UPLOAD_FUNC_URL=  Optional image upload REST API URL
 ```
 
 - The CosmosDB read-write connection string can be obtained from the `Azure Portal > CosmosDB > Settings > Keys`.
