@@ -17,8 +17,8 @@ import {
 // -----------------
 // Scrapes pricing and other info from Countdown NZ's website.
 
-const secondsDelayBetweenPageScrapes = 11;
-export const uploadImagesToAzureFunc = false;
+const secondsDelayBetweenPageScrapes = 13;
+export const uploadImagesToAzureFunc = true;
 export let dryRunMode = false;
 
 // Playwright variables
@@ -83,9 +83,9 @@ categorisedUrls.forEach((categorisedUrl) => {
       await page.goto(url);
 
       // Wait and page down to further trigger any lazy loads
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(3000);
       await page.keyboard.press("PageDown");
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(3000);
       await page.keyboard.press("PageDown");
 
       // Wait for product-price h3 html element to dynamically load in,
@@ -237,11 +237,11 @@ async function uploadImageRestAPI(
 
   if (responseMsg.includes("S3 Upload of Full-Size")) {
     // Log for successful upload
-      log(
-        colour.grey,
+    log(
+      colour.grey,
       `  New Image  : ${(product.id + ".webp").padEnd(11)} | ` +
-        `${product.name.padEnd(40).slice(0, 40)}`
-      );
+      `${product.name.padEnd(40).slice(0, 40)}`
+    );
   } else if (responseMsg.includes("already exists")) {
     // Do not log for existing images
   } else if (responseMsg.includes("Unable to download:")) {
@@ -547,9 +547,9 @@ export function parseAndCategoriseURL(
         // Replace query parameters with optimised ones,
         //  such as limiting to certain sellers,
         //  or showing a higher number of products
-        categorisedUrl.url +=
-          "?search=&page=1&size=48&sort=CUPAsc&inStockProductsOnly=false";
-        //categorisedUrl.url += '?inStockProductsOnly=true&page=1&size=48';
+        // categorisedUrl.url +=
+        //   "?search=&page=1&size=48&sort=CUPAsc&inStockProductsOnly=false";
+        categorisedUrl.url += '?inStockProductsOnly=true&page=1&size=48';
 
         // Parse in 1 or more categories
       } else if (section.startsWith("categories=")) {
