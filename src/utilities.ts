@@ -37,13 +37,13 @@ export function logError(text: string) {
 // Log a single product in one row, using alternating colours for readability.
 
 export function logProductRow(product: Product) {
-  const unitPriceString = product.unitPrice ? `$${product.unitPrice} /${product.unitName}` : ``;
+  const unitPriceString = product.unitPrice ? `$${product.unitPrice.toFixed(2)} /${product.unitName}` : ``;
   log(
     getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
-      `${product.size?.slice(0, 17).padEnd(17)} | ` +
-      `$ ${product.currentPrice.toString().padStart(4).padEnd(5)} | ` +
-      unitPriceString
+    `${product.size?.slice(0, 17).padEnd(17)} | ` +
+    `$ ${product.currentPrice.toFixed(2).padStart(4).padEnd(5)} | ` +
+    unitPriceString
   );
 }
 
@@ -54,12 +54,12 @@ export function logTableHeader() {
   log(
     colour.yellow,
     `${'ID'.padStart(6)} | ${'Name'.padEnd(50)} | ` +
-      `${'Size'.padEnd(17)} | ` +
-      `${'Price'.padEnd(7)} | Unit Price`
+    `${'Size'.padEnd(17)} | ` +
+    `${'Price'.padEnd(7)} | Unit Price`
   );
-  
+
   let headerLine = ""
-  for(let i=0; i<102; i++){
+  for (let i = 0; i < 102; i++) {
     headerLine += "-"
   }
   log(colour.yellow, headerLine);
@@ -102,16 +102,17 @@ export function getTimeElapsedSince(startTime: number): string {
   let elapsedTimeSeconds: number = (Date.now() - startTime) / 1000;
   let elapsedTimeString: string = Math.floor(elapsedTimeSeconds).toString();
 
-  // If over 60 secs, print as 00:23 minute:seconds format
-  if (elapsedTimeSeconds >= 60)
-    elapsedTimeString =
+  // If over 60 secs, print as 1:23 format
+  if (elapsedTimeSeconds >= 60) {
+    return (
       Math.floor(elapsedTimeSeconds / 60) +
       ':' +
       Math.floor(elapsedTimeSeconds % 60)
         .toString()
-        .padStart(2, '0');
-
-  return elapsedTimeString;
+        .padStart(2, '0')
+    )
+    // Else print in 40s format
+  } else return elapsedTimeString + "s";
 }
 
 // addUnitPriceToProduct()
