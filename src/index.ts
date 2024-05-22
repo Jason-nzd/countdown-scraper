@@ -17,7 +17,7 @@ import {
 // -----------------
 // Scrapes pricing and other info from Countdown NZ's website.
 
-const secondsDelayBetweenPageScrapes = 13;
+const secondsDelayBetweenPageScrapes = 11;
 export const uploadImagesToAzureFunc = true;
 export let dryRunMode = false;
 
@@ -82,11 +82,16 @@ categorisedUrls.forEach((categorisedUrl) => {
       // Open page with url options now set
       await page.goto(url);
 
-      // Wait and page down to further trigger any lazy loads
-      await page.waitForTimeout(3000);
-      await page.keyboard.press("PageDown");
-      await page.waitForTimeout(3000);
-      await page.keyboard.press("PageDown");
+      // Wait and page down multiple times to further trigger any lazy loads
+      for (let i = 1; i < 4; i++) {
+        // create a random number between 200 and 2000
+        const timeBetweenPgDowns = Math.random() * 200 + 1000;
+        await page.waitForTimeout(timeBetweenPgDowns);
+        await page.keyboard.press("PageDown");
+      }
+
+      // Set page timeout to 15 seconds
+      await page.setDefaultTimeout(15000);
 
       // Wait for product-price h3 html element to dynamically load in,
       //  this is required to see product data
@@ -125,6 +130,7 @@ categorisedUrls.forEach((categorisedUrl) => {
 
       // Loop through each product entry, add desired data into a Product object
       let promises = productEntries.map(async (index, productEntryElement) => {
+        // await setTimeout(1000);
         const product = playwrightElementToProduct(
           productEntryElement,
           categorisedUrl.categories
