@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npx jest",
     "dev": "npx esrun src/index.ts",
-    "dry": "npx esrun src/index.ts dry-run-mode"
+    "db": "npx esrun src/index.ts db",
+    "db images": "npx esrun src/index.ts db images"
   },
   "author": "",
   "license": "ISC",

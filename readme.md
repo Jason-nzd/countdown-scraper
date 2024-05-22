@@ -12,7 +12,7 @@ With `NodeJS` installed, clone this repository, then run `npm install` to instal
 
 Playwright must also be installed when running for the first time with `npx playwright install`.
 
-The program can now be tested in dry run mode without any further setup using `npm run dry`.
+The program can now be tested in dry run mode without any further setup using `npm run dev`.
 
 ## Optional Setup
 
@@ -32,11 +32,17 @@ IMAGE_UPLOAD_FUNC_URL=  Optional image upload REST API URL
 
 ## Usage
 
-`npm run dry` - will use dry-run mode, no azure connection is required and the results will log to console.
+`npm run dev` - will use dry-run mode, no azure connection is required and the results will log to console.
 
-`npm run dev` - will scrape through all the URLs, then results will be stored in Azure as well logged to the console.
+`npm run db` - will scrape through the URLs and store the results into CosmosDB.
 
-`npm run dev https://sampleurl` - a single url can be used as an argument. This will be scraped instead of the stored URLs
+`npm run db https://sampleurl` - a single url can be used as an argument. This will be scraped instead of the URLs text file.
+
+## Other Command-Line Arguments
+
+`images` - will also upload images.
+
+`headed` - will run the browser in a window instead of a headless.
 
 ## Output
 
