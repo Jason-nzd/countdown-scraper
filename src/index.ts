@@ -5,87 +5,116 @@ dotenv.config({ path: `.env.local`, override: true });
 import playwright from "playwright";
 import * as cheerio from "cheerio";
 import _ from "lodash";
+import { setTimeout } from "timers/promises";
 
-import { customQuery, establishCosmosDB, upsertProductToCosmosDB } from "./cosmosdb.js";
+import { establishCosmosDB, upsertProductToCosmosDB } from "./cosmosdb.js";
 import { productOverrides } from "./product-overrides.js";
 import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from "./typings";
 import {
-  log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince, addUnitPriceToProduct, logTableHeader
+  log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince,
+  addUnitPriceToProduct, logTableHeader,
 } from "./utilities.js";
+
 
 // Countdown Scraper
 // -----------------
 // Scrapes pricing and other info from Countdown NZ's website.
 
-const secondsDelayBetweenPageScrapes = 11;
-export const uploadImagesToAzureFunc = true;
-export let dryRunMode = false;
+// Set a reasonable delay between each page load to reduce load on the server.
+const pageLoadDelaySeconds = 11;
 
-// Playwright variables
-let browser: playwright.Browser;
-let page: playwright.Page;
+// Set a delay when logging each product per page to the console.
+const productLogDelayMilliSeconds = 80;
 
 // Record start time, for logging purposes
 const startTime = Date.now();
 
-// Try to read file urls.txt for a list of URLs
-let rawLinesFromFile: string[] = readLinesFromTextFile("src/urls.txt");
-
-// Parse and optimise urls
-let categorisedUrls: CategorisedUrl[] = [];
-rawLinesFromFile.map((line) => {
-  let categorisedUrl = parseAndCategoriseURL(line);
-  if (categorisedUrl !== undefined) categorisedUrls.push(categorisedUrl);
-});
+// Load URLs from text file
+let categorisedUrls = loadUrlsFile();
 
 // Handle command-line arguments
-await handleArguments();
+export let databaseMode = false;
+export let uploadImagesMode = false;
+let headlessMode = true;
+categorisedUrls = await handleArguments(categorisedUrls);
 
 // Establish CosmosDB if being used
-if (!dryRunMode) establishCosmosDB();
+if (databaseMode) establishCosmosDB();
 
 // Establish playwright browser
-await establishPlaywrightPage();
+let browser: playwright.Browser;
+let page: playwright.Page;
+browser = await establishPlaywrightPage(headlessMode);
 
 // Select store location
 await selectStoreByLocationName();
 
-// Counter and promise to help with delayed looping of each page load
-let pagesScrapedCount = 1;
-let promise = Promise.resolve();
+// Main Loop - Scrape through each page
+await loopAllPageURLs();
 
-// Log loop start stats
+// Program End and Cleanup
+browser.close();
 log(
-  colour.yellow,
-  `${categorisedUrls.length} pages to be scraped \t\t` +
-  `${secondsDelayBetweenPageScrapes}s delay between scrapes\t` +
-  (dryRunMode ? " (Dry Run Mode On) " : "")
+  colour.sky,
+  `\nAll Pages Completed = Total Time Elapsed ${getTimeElapsedSince(startTime)} \n`
 );
+// -----------------------
 
-// Loop through each URL to scrape
-categorisedUrls.forEach((categorisedUrl) => {
-  const url = categorisedUrl.url;
 
-  // Use promises to ensure a delay between each scrape
-  promise = promise.then(async () => {
-    // Create a shortened URL for log readability
+// loadUrlsFile
+// ------------
+// Loads and validates URLs from a txt file to be scraped.
+
+function loadUrlsFile(filePath: string = "src/urls.txt"): CategorisedUrl[] {
+  // Try to read file urls.txt or other file for a list of URLs
+  const rawLinesFromFile: string[] = readLinesFromTextFile(filePath);
+
+  // Parse and optimise URLs
+  let categorisedUrls: CategorisedUrl[] = [];
+  rawLinesFromFile.map((line) => {
+    let categorisedUrl = parseAndCategoriseURL(line);
+    if (categorisedUrl !== undefined) categorisedUrls.push(categorisedUrl);
+  });
+
+  // Return as an array of CategorisedUrl objects
+  return categorisedUrls;
+}
+
+// loopAllPageURLs
+// ---------------
+// Loops through each page URL and scrapes pricing and other info.
+// This is the main function that calls the other functions.
+
+async function loopAllPageURLs() {
+
+  // Log loop start
+  log(
+    colour.yellow,
+    `${categorisedUrls.length + 1} pages to be scraped`.padEnd(32) +
+    `${pageLoadDelaySeconds}s delay between scrapes`.padEnd(32) +
+    (databaseMode ? "(Database Mode)" : "(Dry Run Mode)")
+  );
+
+  // Loop through each page URL to scrape
+  for (let i = 0; i < categorisedUrls.length; i++) {
+    const categorisedUrl = categorisedUrls[i];
+    const url = categorisedUrl.url;
+
+    // Log current scrape sequence and the total number of pages to scrape
     const shortUrl = url.substring(0, url.indexOf("?")).replace("https://", "");
-    // Log current scrape sequence, the total number of pages to scrape,
-    // and show a shortened url
     log(
       colour.yellow,
-      `\n[${pagesScrapedCount}/${categorisedUrls.length}] ${shortUrl}`
+      `\n[${i + 1}/${categorisedUrls.length + 1}] ${shortUrl}`
     );
 
-    let pageLoadValid = false;
     try {
       // Open page with url options now set
       await page.goto(url);
 
       // Wait and page down multiple times to further trigger any lazy loads
-      for (let i = 1; i < 4; i++) {
-        // create a random number between 200 and 2000
-        const timeBetweenPgDowns = Math.random() * 200 + 1000;
+      for (let pageDown = 0; pageDown < 5; pageDown++) {
+        // create a random number between 500 and 1500
+        const timeBetweenPgDowns = Math.random() * 1000 + 500;
         await page.waitForTimeout(timeBetweenPgDowns);
         await page.keyboard.press("PageDown");
       }
@@ -97,117 +126,130 @@ categorisedUrls.forEach((categorisedUrl) => {
       //  this is required to see product data
       await page.waitForSelector("product-price h3");
 
-      pageLoadValid = true;
     } catch (error) {
       logError(
-        "Page Timeout after 30 seconds - Skipping this page - " + error + "\n"
-      );
-    }
-
-    // Count number of items processed for logging purposes
-    let alreadyUpToDateCount = 0;
-    let priceChangedCount = 0;
-    let infoUpdatedCount = 0;
-    let newProductsCount = 0;
-
-    // If page load is valid, load html into Cheerio for easy DOM selection
-    if (pageLoadValid) {
-      const html = await page.innerHTML("product-grid");
-      const $ = cheerio.load(html);
-      const productEntries = $("cdx-card a.product-entry");
-
-      // Log the number of products found, time elapsed in seconds or min:s,
-      // and found categories
-      log(
-        colour.yellow,
-        `${productEntries.length} product entries found \t` +
-        `Time Elapsed: ${getTimeElapsedSince(startTime)} \t` +
-        `Category: ${_.startCase(categorisedUrl.categories.join(" - "))}`
-      );
-
-      // Log table header
-      if (dryRunMode) logTableHeader();
-
-      // Loop through each product entry, add desired data into a Product object
-      let promises = productEntries.map(async (index, productEntryElement) => {
-        // await setTimeout(1000);
-        const product = playwrightElementToProduct(
-          productEntryElement,
-          categorisedUrl.categories
-        );
-
-        if (!dryRunMode && product !== undefined) {
-          // Insert or update item into azure cosmosdb
-          const response = await upsertProductToCosmosDB(product);
-
-          // Use response to update logging counters
-          switch (response) {
-            case UpsertResponse.AlreadyUpToDate:
-              alreadyUpToDateCount++;
-              break;
-            case UpsertResponse.InfoChanged:
-              infoUpdatedCount++;
-              break;
-            case UpsertResponse.NewProduct:
-              newProductsCount++;
-              break;
-            case UpsertResponse.PriceChanged:
-              priceChangedCount++;
-              break;
-            default:
-              break;
-          }
-
-          // Upload image to Azure Function
-          if (uploadImagesToAzureFunc) {
-            // Get image url using provided base url, product ID, and hi-res query parameters
-            const imageUrlBase =
-              "https://assets.woolworths.com.au/images/2010/";
-            const imageUrlExtensionAndQueryParams =
-              ".jpg?impolicy=wowcdxwbjbx&w=900&h=900";
-            const imageUrl =
-              imageUrlBase + product.id + imageUrlExtensionAndQueryParams;
-
-            await uploadImageRestAPI(imageUrl!, product);
-          }
-        } else if (dryRunMode && product !== undefined) {
-          // When doing a dry run, log product name - size - price in table format
-          logProductRow(product!);
-        }
-      });
-      // Wait for entire map of product entries to finish
-      await Promise.all(promises);
-    }
-
-    // After scraping every item is complete, log how many products were scraped
-    if (!dryRunMode && pageLoadValid) {
-      log(
-        colour.blue,
-        `CosmosDB: ${newProductsCount} new products, ` +
-        `${priceChangedCount} updated prices, ` +
-        `${infoUpdatedCount} updated info, ` +
-        `${alreadyUpToDateCount} already up-to-date`
-      );
-    }
-
-    // If all scrapes have completed, close the playwright browser
-    if (pagesScrapedCount++ === categorisedUrls.length) {
-      browser.close();
-      log(
-        colour.sky,
-        `All Pages Completed = Total Time Elapsed ${getTimeElapsedSince(
-          startTime
-        )} \n`
+        "Page Timeout after 15 seconds - Skipping this page - " + error + "\n"
       );
       return;
     }
 
-    // Add a delay between each scrape loop
-    return new Promise((resolve) => {
-      setTimeout(resolve, secondsDelayBetweenPageScrapes * 1000);
-    });
-  });
-});
+    // Load html into Cheerio for DOM selection
+    const html = await page.innerHTML("product-grid");
+    const $ = cheerio.load(html);
+    const productEntries = $("cdx-card a.product-entry");
+
+    // Log the number of products found, time elapsed, category
+    log(
+      colour.yellow,
+      `${productEntries.length} product entries found`.padEnd(32) +
+      `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(32) +
+      `Category: ${_.startCase(categorisedUrl.categories.join(" - "))}`
+    );
+
+    // Log table header
+    if (!databaseMode) logTableHeader();
+
+    // Store number of items processed for logging purposes
+    let perPageLogStats = {
+      newProducts: 0,
+      priceChanged: 0,
+      infoUpdated: 0,
+      alreadyUpToDate: 0,
+    }
+
+    // Start nested loop which loops through each product entry
+    perPageLogStats = await processFoundProductEntries(categorisedUrl, productEntries, perPageLogStats);
+
+    // After scraping every item is complete, log how many products were scraped
+    if (databaseMode) {
+      log(
+        colour.blue,
+        `CosmosDB: ${perPageLogStats.newProducts} new products, ` +
+        `${perPageLogStats.priceChanged} updated prices, ` +
+        `${perPageLogStats.infoUpdated} updated info, ` +
+        `${perPageLogStats.alreadyUpToDate} already up-to-date`
+      );
+    }
+
+    // Delay between each page load
+    await setTimeout(pageLoadDelaySeconds * 1000);
+  }
+}
+
+
+// processFoundProductEntries
+// --------------------------
+// Loops through each product entry and scrapes pricing and other info.
+// This function is called by LoopAllPageURLs.
+
+async function processFoundProductEntries
+  (
+    categorisedUrl: CategorisedUrl,
+    productEntries: cheerio.Cheerio<cheerio.Element>,
+    perPageLogStats: {
+      newProducts: number;
+      priceChanged: number;
+      infoUpdated: number;
+      alreadyUpToDate: number;
+    }) {
+
+  // Loop through each product entry
+  for (let i = 0; i < productEntries.length; i++) {
+    const productEntryElement = productEntries[i];
+
+    const product = playwrightElementToProduct(
+      productEntryElement,
+      categorisedUrl.categories
+    );
+
+    if (databaseMode && product !== undefined) {
+      // Insert or update item into azure cosmosdb
+      const response = await upsertProductToCosmosDB(product);
+
+      // Use response to update logging counters
+      switch (response) {
+        case UpsertResponse.AlreadyUpToDate:
+          perPageLogStats.alreadyUpToDate++;
+          break;
+        case UpsertResponse.InfoChanged:
+          perPageLogStats.infoUpdated++;
+          break;
+        case UpsertResponse.NewProduct:
+          perPageLogStats.newProducts++;
+          break;
+        case UpsertResponse.PriceChanged:
+          perPageLogStats.priceChanged++;
+          break;
+        default:
+          break;
+      }
+
+      // Upload image to Azure Function
+      if (uploadImagesMode) {
+        // Get image url using provided base url, product ID, and hi-res query parameters
+        const imageUrlBase =
+          "https://assets.woolworths.com.au/images/2010/";
+        const imageUrlExtensionAndQueryParams =
+          ".jpg?impolicy=wowcdxwbjbx&w=900&h=900";
+        const imageUrl =
+          imageUrlBase + product.id + imageUrlExtensionAndQueryParams;
+
+        await uploadImageRestAPI(imageUrl!, product);
+      }
+    } else if (!databaseMode && product !== undefined) {
+      // When doing a dry run, log product name - size - price in table format
+      logProductRow(product!);
+    }
+
+    // Add a tiny delay between each product loop.
+    // This makes printing the log more readable
+    await setTimeout(productLogDelayMilliSeconds);
+  }
+
+  // Return log stats for completed page
+  return perPageLogStats;
+}
+
 
 // uploadImageRestAPI()
 // --------------------
@@ -266,49 +308,59 @@ async function uploadImageRestAPI(
 // -----------------
 // Handle command line arguments. Can be reverse mode, dry-run-mode, custom url, or categories
 
-async function handleArguments() {
+function handleArguments(categorisedUrls): CategorisedUrl[] {
   if (process.argv.length > 2) {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
 
     // Loop through all args and find any matching keywords
     let potentialUrl = "";
-    await userArgs.forEach(async (arg) => {
-      if (arg === "dry-run-mode") dryRunMode = true;
+    userArgs.forEach(async (arg) => {
+      if (arg === "db") databaseMode = true;
+      else if (arg === "images") uploadImagesMode = true;
+      else if (arg === "headless") headlessMode = true // is already default
+      else if (arg === "headed") headlessMode = false
+
+      // Any arg containing .co.nz will replaced the URLs text file to be scraped.
       else if (arg.includes(".co.nz")) potentialUrl += arg;
-      else if (arg.includes("categories=")) potentialUrl += " " + arg;
+
+      // Reverse the order of the URLs to be scraped, starting from the bottom
       else if (arg === "reverse") categorisedUrls = categorisedUrls.reverse();
-      else if (arg === "custom") {
-        categorisedUrls = [];
-        await customQuery();
-        process.exit();
-      }
+      // else if (arg === "custom") {
+      //   categorisedUrls = [];
+      //   await customQuery();
+      //   process.exit();
+      // }
     });
-    // Try to parse any url + categories
+
+    // Try to parse the potential new url
     const parsedUrl = parseAndCategoriseURL(potentialUrl);
     if (parsedUrl !== undefined) categorisedUrls = [parsedUrl];
   }
+  return categorisedUrls;
 }
 
 // establishPlaywrightPage()
 // -------------------------
 // Create a playwright headless browser using webkit
 
-async function establishPlaywrightPage() {
+async function establishPlaywrightPage(headless = true) {
   log(
     colour.yellow,
-    "Launching Headless Browser.. " +
+    "Launching Browser.. " +
     (process.argv.length > 2
       ? "(" + (process.argv.length - 2) + " arguments found)"
       : "")
   );
   browser = await playwright.webkit.launch({
-    headless: true,
+    headless: headless,
   });
   page = await browser.newPage();
 
   // Define unnecessary types and ad/tracking urls to reject
   await routePlaywrightExclusions();
+
+  return browser;
 }
 
 // selectStoreByLocationName()
@@ -316,7 +368,7 @@ async function establishPlaywrightPage() {
 // Selects a store location by typing in the specified location address
 
 async function selectStoreByLocationName(locationName: string = "") {
-  // If no location was passed in, check .env for STORE_NAME
+  // If no location was passed in, also check .env for STORE_NAME
   if (locationName === "") {
     if (process.env.STORE_NAME) locationName = process.env.STORE_NAME;
     // If STORE_NAME is also not present, skip store location selection
@@ -326,10 +378,16 @@ async function selectStoreByLocationName(locationName: string = "") {
   log(colour.yellow, "Selecting Store Location..");
 
   // Open store selection page
-  await page.goto("https://www.countdown.co.nz/bookatimeslot", {
-    waitUntil: "domcontentloaded",
-  });
-  await page.waitForSelector("fieldset div div p button");
+  try {
+    await page.setDefaultTimeout(12000);
+    await page.goto("https://www.countdown.co.nz/bookatimeslot", {
+      waitUntil: "domcontentloaded",
+    });
+    await page.waitForSelector("fieldset div div p button");
+  } catch (error) {
+    logError("Location selection page timed out - Using default location instead");
+    return;
+  }
 
   const oldLocation = await page
     .locator("fieldset div div p strong")
