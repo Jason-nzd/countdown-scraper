@@ -168,7 +168,7 @@ async function loopAllPageURLs() {
       await setTimeout(pageLoadDelaySeconds * 1000);
 
     } catch (error) {
-      if (error.contains("NS_ERROR_CONNECTION_REFUSED")) {
+      if ((error as string).includes("NS_ERROR_CONNECTION_REFUSED")) {
         logError("Connection Failed - Check Firewall");
         return;
       }
