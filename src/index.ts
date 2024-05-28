@@ -661,8 +661,13 @@ async function routePlaywrightExclusions() {
     "googletagmanager.com",
     "cloudflareinsights.com",
     "dwanalytics",
+    "facebook.net",
+    "chatWidget",
     "edge.adobedc.net",
     "​/Content/Banners/",
+    "algolia.io",
+    "algoliaradar.com",
+    "go-mpulse.net"
   ];
 
   // Route with exclusions processed
