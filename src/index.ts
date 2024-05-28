@@ -24,7 +24,7 @@ import {
 const pageLoadDelaySeconds = 11;
 
 // Set a delay when logging each product per page to the console.
-const productLogDelayMilliSeconds = 80;
+const productLogDelayMilliSeconds = 50;
 
 // Record start time, for logging purposes
 const startTime = Date.now();
@@ -126,46 +126,46 @@ async function loopAllPageURLs() {
       //  this is required to see product data
       await page.waitForSelector("product-price h3");
 
-    // Load html into Cheerio for DOM selection
-    const html = await page.innerHTML("product-grid");
-    const $ = cheerio.load(html);
-    const productEntries = $("cdx-card a.product-entry");
+      // Load html into Cheerio for DOM selection
+      const html = await page.innerHTML("product-grid");
+      const $ = cheerio.load(html);
+      const productEntries = $("cdx-card a.product-entry");
 
-    // Log the number of products found, time elapsed, category
-    log(
-      colour.yellow,
-      `${productEntries.length} product entries found`.padEnd(32) +
-      `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(32) +
-      `Category: ${_.startCase(categorisedUrl.categories.join(" - "))}`
-    );
-
-    // Log table header
-    if (!databaseMode) logTableHeader();
-
-    // Store number of items processed for logging purposes
-    let perPageLogStats = {
-      newProducts: 0,
-      priceChanged: 0,
-      infoUpdated: 0,
-      alreadyUpToDate: 0,
-    }
-
-    // Start nested loop which loops through each product entry
-    perPageLogStats = await processFoundProductEntries(categorisedUrl, productEntries, perPageLogStats);
-
-    // After scraping every item is complete, log how many products were scraped
-    if (databaseMode) {
+      // Log the number of products found, time elapsed, category
       log(
-        colour.blue,
-        `CosmosDB: ${perPageLogStats.newProducts} new products, ` +
-        `${perPageLogStats.priceChanged} updated prices, ` +
-        `${perPageLogStats.infoUpdated} updated info, ` +
-        `${perPageLogStats.alreadyUpToDate} already up-to-date`
+        colour.yellow,
+        `${productEntries.length} product entries found`.padEnd(32) +
+        `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(32) +
+        `Category: ${_.startCase(categorisedUrl.categories.join(" - "))}`
       );
-    }
 
-    // Delay between each page load
-    await setTimeout(pageLoadDelaySeconds * 1000);
+      // Log table header
+      if (!databaseMode) logTableHeader();
+
+      // Store number of items processed for logging purposes
+      let perPageLogStats = {
+        newProducts: 0,
+        priceChanged: 0,
+        infoUpdated: 0,
+        alreadyUpToDate: 0,
+      }
+
+      // Start nested loop which loops through each product entry
+      perPageLogStats = await processFoundProductEntries(categorisedUrl, productEntries, perPageLogStats);
+
+      // After scraping every item is complete, log how many products were scraped
+      if (databaseMode) {
+        log(
+          colour.blue,
+          `CosmosDB: ${perPageLogStats.newProducts} new products, ` +
+          `${perPageLogStats.priceChanged} updated prices, ` +
+          `${perPageLogStats.infoUpdated} updated info, ` +
+          `${perPageLogStats.alreadyUpToDate} already up-to-date`
+        );
+      }
+
+      // Delay between each page load
+      await setTimeout(pageLoadDelaySeconds * 1000);
 
     } catch (error) {
       if (error.contains("NS_ERROR_CONNECTION_REFUSED")) {
@@ -345,7 +345,7 @@ function handleArguments(categorisedUrls): CategorisedUrl[] {
 
 // establishPlaywrightPage()
 // -------------------------
-// Create a playwright headless browser using webkit
+// Create a playwright browser
 
 async function establishPlaywrightPage(headless = true) {
   log(
@@ -355,12 +355,12 @@ async function establishPlaywrightPage(headless = true) {
       ? "(" + (process.argv.length - 2) + " arguments found)"
       : "")
   );
-  browser = await playwright.webkit.launch({
+  browser = await playwright.firefox.launch({
     headless: headless,
   });
   page = await browser.newPage();
 
-  // Define unnecessary types and ad/tracking urls to reject
+  // Reject unnecessary ad/tracking urls
   await routePlaywrightExclusions();
 
   return browser;
