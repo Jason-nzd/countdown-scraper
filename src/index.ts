@@ -126,13 +126,6 @@ async function loopAllPageURLs() {
       //  this is required to see product data
       await page.waitForSelector("product-price h3");
 
-    } catch (error) {
-      logError(
-        "Page Timeout after 15 seconds - Skipping this page - " + error + "\n"
-      );
-      return;
-    }
-
     // Load html into Cheerio for DOM selection
     const html = await page.innerHTML("product-grid");
     const $ = cheerio.load(html);
@@ -173,6 +166,16 @@ async function loopAllPageURLs() {
 
     // Delay between each page load
     await setTimeout(pageLoadDelaySeconds * 1000);
+
+    } catch (error) {
+      if (error.contains("NS_ERROR_CONNECTION_REFUSED")) {
+        logError("Connection Failed - Check Firewall");
+        return;
+      }
+      logError(
+        "Page Timeout after 15 seconds - Skipping this page - " + error + "\n"
+      );
+    }
   }
 }
 
