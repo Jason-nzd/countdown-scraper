@@ -90,7 +90,7 @@ async function loopAllPageURLs() {
   // Log loop start
   log(
     colour.yellow,
-    `${categorisedUrls.length + 1} pages to be scraped`.padEnd(32) +
+    `${categorisedUrls.length} pages to be scraped`.padEnd(32) +
     `${pageLoadDelaySeconds}s delay between scrapes`.padEnd(32) +
     (databaseMode ? "(Database Mode)" : "(Dry Run Mode)")
   );
@@ -104,7 +104,7 @@ async function loopAllPageURLs() {
     const shortUrl = url.substring(0, url.indexOf("?")).replace("https://", "");
     log(
       colour.yellow,
-      `\n[${i + 1}/${categorisedUrls.length + 1}] ${shortUrl}`
+      `\n[${i + 1}/${categorisedUrls.length}] ${shortUrl}`
     );
 
     try {
