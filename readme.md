@@ -1,6 +1,6 @@
-# Countdown Scraper
+# Woolworths Scraper
 
-This project scrapes product info from Countdown's NZ website and optionally places the data into Azure CosmosDB.
+This project scrapes product info from Woolworths (Formerly Countdown) NZ website and optionally places the data into Azure CosmosDB.
 
 A history of price changes is stored within each product's database entry.
 

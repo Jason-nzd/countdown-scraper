@@ -2,125 +2,125 @@
 # Categories can be derived from last /url-bracket/, or categories can be overridden with: categories=ice-cream
 # Each page scrapes a maximum of 48 in-stock products, unless 120-per-page is added next to each url
 
-countdown.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips
-countdown.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips 120-per-page
-countdown.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
-countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate 120-per-page
-countdown.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=boxed-chocolate 120-per-page
-countdown.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies
-countdown.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips 120-per-page
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate 120-per-page
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=boxed-chocolate 120-per-page
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
 
-countdown.co.nz/shop/browse/pantry/eggs
+woolworths.co.nz/shop/browse/pantry/eggs
 
-countdown.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
-countdown.co.nz/shop/browse/pantry/biscuits-crackers/crackers categories=crackers
-countdown.co.nz/shop/browse/pantry/biscuits-crackers/rice-cakes-crispbread categories=crackers
+woolworths.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits
+woolworths.co.nz/shop/browse/pantry/biscuits-crackers/crackers categories=crackers
+woolworths.co.nz/shop/browse/pantry/biscuits-crackers/rice-cakes-crispbread categories=crackers
 
-countdown.co.nz/shop/browse/pantry/bulk-foods/nuts-seeds categories=nuts-bulk-mix
-countdown.co.nz/shop/browse/pantry/bulk-foods/dried-fruit-mixes categories=nuts-bulk-mix
+woolworths.co.nz/shop/browse/pantry/bulk-foods/nuts-seeds categories=nuts-bulk-mix
+woolworths.co.nz/shop/browse/pantry/bulk-foods/dried-fruit-mixes categories=nuts-bulk-mix
 
-countdown.co.nz/shop/browse/pantry/baking/flour categories=baking
-countdown.co.nz/shop/browse/pantry/baking/sugar-sweeteners categories=baking
+woolworths.co.nz/shop/browse/pantry/baking/flour categories=baking
+woolworths.co.nz/shop/browse/pantry/baking/sugar-sweeteners categories=baking
 
-countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
-countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/noodles 120-per-page
-countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/dried-pasta categories=pasta
-countdown.co.nz/shop/browse/pantry/pasta-noodles-grains/pasta-meals-sides categories=pasta
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/noodles 120-per-page
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/dried-pasta categories=pasta
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/pasta-meals-sides categories=pasta
 
-countdown.co.nz/shop/browse/pantry/tinned-foods-packets/baked-beans-spaghetti categories=beans-spaghetti
-countdown.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-tuna-seafood categories=canned-fish
-countdown.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-meat categories=canned-meat
-countdown.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-soup-soup-mix categories=soup
-countdown.co.nz/shop/browse/pantry/cereals-spreads/cereal 120-per-page
-countdown.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads
-countdown.co.nz/shop/browse/pantry/cereals-spreads/honey categories=spreads
-countdown.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads
-countdown.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads
-countdown.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/baked-beans-spaghetti categories=beans-spaghetti
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-tuna-seafood categories=canned-fish
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-meat categories=canned-meat
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-soup-soup-mix categories=soup
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/cereal 120-per-page
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/honey categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
 
-countdown.co.nz/shop/browse/pantry/sauces-pastes categories=sauces
+woolworths.co.nz/shop/browse/pantry/sauces-pastes categories=sauces
 
-countdown.co.nz/shop/browse/fish-seafood/salmon categories=salmon
-countdown.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
+woolworths.co.nz/shop/browse/fish-seafood/salmon categories=salmon
+woolworths.co.nz/shop/browse/fish-seafood/prawns-seafood categories=seafood
 
-countdown.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food
-countdown.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food
-countdown.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food
-countdown.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-food
-countdown.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
-countdown.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
-countdown.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food
+woolworths.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food
+woolworths.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food
+woolworths.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food
+woolworths.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-food
+woolworths.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
+woolworths.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
+woolworths.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food
 
-countdown.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread-rolls
-countdown.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread-rolls
-countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread-rolls
-countdown.co.nz/shop/browse/bakery/sliced-packaged-bread categories=bread 120-per-page
-countdown.co.nz/shop/browse/bakery/wraps-pita-pizza-bases categories=specialty-bread
-countdown.co.nz/shop/browse/bakery/pastries-croissants-biscuits categories=bakery-desserts
-countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/banana-bread-sponge-cakes categories=bakery-cakes
-countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/muffins-cupcakes categories=bakery-desserts
-countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/slices-tarts categories=bakery-desserts
-countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/donuts-cream-buns categories=bakery-desserts
-countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/puddings-other-desserts categories=bakery-desserts
-countdown.co.nz/shop/browse/bakery/cakes-muffins-desserts/birthday-celebration-cakes categories=bakery-cakes
-countdown.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=specialty-bread
+woolworths.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread-rolls
+woolworths.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread-rolls
+woolworths.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=bread-rolls
+woolworths.co.nz/shop/browse/bakery/sliced-packaged-bread categories=bread 120-per-page
+woolworths.co.nz/shop/browse/bakery/wraps-pita-pizza-bases categories=specialty-bread
+woolworths.co.nz/shop/browse/bakery/pastries-croissants-biscuits categories=bakery-desserts
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/banana-bread-sponge-cakes categories=bakery-cakes
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/muffins-cupcakes categories=bakery-desserts
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/slices-tarts categories=bakery-desserts
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/donuts-cream-buns categories=bakery-desserts
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/puddings-other-desserts categories=bakery-desserts
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/birthday-celebration-cakes categories=bakery-cakes
+woolworths.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=specialty-bread
 
-countdown.co.nz/shop/browse/drinks/coffee
-countdown.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea
-countdown.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=green-tea
-countdown.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=herbal-tea
-countdown.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
-countdown.co.nz/shop/browse/drinks/juice-cordial/fruit-juice-drinks categories=juice
-countdown.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories=juice
-countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks 120-per-page
-countdown.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks 120-per-page
+woolworths.co.nz/shop/browse/drinks/coffee
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=green-tea
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=herbal-tea
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
+woolworths.co.nz/shop/browse/drinks/juice-cordial/fruit-juice-drinks categories=juice
+woolworths.co.nz/shop/browse/drinks/juice-cordial/chilled-juice-drinks categories=juice
+woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks 120-per-page
+woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks 120-per-page
 
-countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream 120-per-page
-countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream 120-per-page
-countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls 120-per-page
-countdown.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pizza categories=pizza
-countdown.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pastry categories=pastries-cheesecake
-countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=other-savouries
-countdown.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=other-savouries
-countdown.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables
-countdown.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
-countdown.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
-countdown.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
+woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream 120-per-page
+woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream 120-per-page
+woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls 120-per-page
+woolworths.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pizza categories=pizza
+woolworths.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pastry categories=pastries-cheesecake
+woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
 
-countdown.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=other-savouries
-countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
-countdown.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=patties-meatballs
-countdown.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-savouries
-countdown.co.nz/shop/browse/frozen/frozen-seafood
-countdown.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
+woolworths.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=patties-meatballs
+woolworths.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-seafood
+woolworths.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
 
-countdown.co.nz/shop/browse/fridge-deli/milk 120-per-page
-countdown.co.nz/shop/browse/fridge-deli/cream-custard categories=cream
-countdown.co.nz/shop/browse/fridge-deli/milk/long-life-milk categories=long-life-milk
-countdown.co.nz/shop/browse/fridge-deli/butter-spreads categories=butter
-countdown.co.nz/shop/browse/fridge-deli/cheese categories=cheese 120-per-page
-countdown.co.nz/shop/browse/fridge-deli/cheese/block-cheese categories=cheese
-countdown.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases categories=pizza
-countdown.co.nz/shop/browse/fridge-deli/yoghurt-desserts categories=yoghurt 120-per-page
-countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat categories=ham
-countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon categories=bacon
-countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats categories=salami
-countdown.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats categories=deli-meats
-countdown.co.nz/shop/browse/fridge-deli/juice-drinks categories=juice
-countdown.co.nz/shop/browse/fridge-deli/vegan-vegetarian categories=other-deli-foods
-countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals categories=other-deli-foods
-countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto categories=other-deli-foods
-countdown.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche categories=pies-sausage-rolls
-countdown.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles categories=other-deli-foods
+woolworths.co.nz/shop/browse/fridge-deli/milk 120-per-page
+woolworths.co.nz/shop/browse/fridge-deli/cream-custard categories=cream
+woolworths.co.nz/shop/browse/fridge-deli/milk/long-life-milk categories=long-life-milk
+woolworths.co.nz/shop/browse/fridge-deli/butter-spreads categories=butter
+woolworths.co.nz/shop/browse/fridge-deli/cheese categories=cheese 120-per-page
+woolworths.co.nz/shop/browse/fridge-deli/cheese/block-cheese categories=cheese
+woolworths.co.nz/shop/browse/fridge-deli/pasta-pizza-pastry/pizza-bases categories=pizza
+woolworths.co.nz/shop/browse/fridge-deli/yoghurt-desserts categories=yoghurt 120-per-page
+woolworths.co.nz/shop/browse/fridge-deli/deli-meats-seafood/ham-shaved-meat categories=ham
+woolworths.co.nz/shop/browse/fridge-deli/deli-meats-seafood/bacon categories=bacon
+woolworths.co.nz/shop/browse/fridge-deli/deli-meats-seafood/salami-cured-dried-meats categories=salami
+woolworths.co.nz/shop/browse/fridge-deli/deli-meats-seafood/cooked-meats categories=deli-meats
+woolworths.co.nz/shop/browse/fridge-deli/juice-drinks categories=juice
+woolworths.co.nz/shop/browse/fridge-deli/vegan-vegetarian categories=other-deli-foods
+woolworths.co.nz/shop/browse/fridge-deli/prepared-meals-sides/heat-and-eat-meals categories=other-deli-foods
+woolworths.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto categories=other-deli-foods
+woolworths.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche categories=pies-sausage-rolls
+woolworths.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles categories=other-deli-foods
 
-countdown.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
-countdown.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
-countdown.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
-countdown.co.nz/shop/browse/meat-poultry/pork
-countdown.co.nz/shop/browse/meat-poultry/mince-patties categories=patties-meatballs
-countdown.co.nz/shop/browse/meat-poultry/sausages
-countdown.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=meat-alternatives
+woolworths.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb
+woolworths.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
+woolworths.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken
+woolworths.co.nz/shop/browse/meat-poultry/pork
+woolworths.co.nz/shop/browse/meat-poultry/mince-patties categories=patties-meatballs
+woolworths.co.nz/shop/browse/meat-poultry/sausages
+woolworths.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=meat-alternatives
 
-countdown.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fruit 120-per-page
-countdown.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
-countdown.co.nz/shop/browse/fruit-veg/fresh-vegetables 120-per-page
+woolworths.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fruit 120-per-page
+woolworths.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
+woolworths.co.nz/shop/browse/fruit-veg/fresh-vegetables 120-per-page

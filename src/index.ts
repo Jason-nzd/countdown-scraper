@@ -16,15 +16,15 @@ import {
 } from "./utilities.js";
 
 
-// Countdown Scraper
+// Woolworths / Countdown Scraper
 // -----------------
-// Scrapes pricing and other info from Countdown NZ's website.
+// Scrapes pricing and other info from woolworths NZ's website.
 
 // Set a reasonable delay between each page load to reduce load on the server.
-const pageLoadDelaySeconds = 11;
+const pageLoadDelaySeconds = 7;
 
 // Set a delay when logging each product per page to the console.
-const productLogDelayMilliSeconds = 50;
+const productLogDelayMilliSeconds = 20;
 
 // Record start time, for logging purposes
 const startTime = Date.now();
@@ -50,7 +50,7 @@ browser = await establishPlaywrightPage(headlessMode);
 await selectStoreByLocationName();
 
 // Main Loop - Scrape through each page
-await loopAllPageURLs();
+await scrapeAllPageURLs();
 
 // Program End and Cleanup
 browser.close();
@@ -80,12 +80,12 @@ function loadUrlsFile(filePath: string = "src/urls.txt"): CategorisedUrl[] {
   return categorisedUrls;
 }
 
-// loopAllPageURLs
+// scrapeAllPageURLs
 // ---------------
 // Loops through each page URL and scrapes pricing and other info.
 // This is the main function that calls the other functions.
 
-async function loopAllPageURLs() {
+async function scrapeAllPageURLs() {
 
   // Log loop start
   log(
@@ -183,7 +183,7 @@ async function loopAllPageURLs() {
 // processFoundProductEntries
 // --------------------------
 // Loops through each product entry and scrapes pricing and other info.
-// This function is called by LoopAllPageURLs.
+// This function is called by scrapeAllPageURLs.
 
 async function processFoundProductEntries
   (
@@ -383,7 +383,7 @@ async function selectStoreByLocationName(locationName: string = "") {
   // Open store selection page
   try {
     await page.setDefaultTimeout(12000);
-    await page.goto("https://www.countdown.co.nz/bookatimeslot", {
+    await page.goto("https://www.woolworths.co.nz/bookatimeslot", {
       waitUntil: "domcontentloaded",
     });
     await page.waitForSelector("fieldset div div p button");
@@ -581,10 +581,10 @@ function validateProduct(product: Product): boolean {
 // Parses a URL string and category from a line of text, also optimises query parameters
 // Returns undefined if not a valid URL
 // Example Input:
-//    countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream
+//    woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream
 // Example Return:
 //    {
-//        url: "https://countdown.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&size=48&inStockProductsOnly=true"
+//        url: "https://woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&size=48&inStockProductsOnly=true"
 //        category: "ice-cream"
 //    }
 
@@ -594,12 +594,12 @@ export function parseAndCategoriseURL(
   let categorisedUrl: CategorisedUrl = { url: "", categories: [] };
 
   // If line doesn't contain desired url section, return undefined
-  if (!line.includes("countdown.co.nz")) {
+  if (!line.includes("woolworths.co.nz")) {
     return undefined;
   } else {
     // Split line by empty space, look for url and optional category
     line.split(" ").forEach((section) => {
-      if (section.includes("countdown.co.nz")) {
+      if (section.includes("woolworths.co.nz")) {
         categorisedUrl.url = section;
 
         // Ensure URL has http:// or https://
