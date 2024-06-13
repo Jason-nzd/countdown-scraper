@@ -167,13 +167,15 @@ async function scrapeAllPageURLs() {
       // Delay between each page load
       await setTimeout(pageLoadDelaySeconds * 1000);
 
-    } catch (error) {
-      if ((error as string).includes("NS_ERROR_CONNECTION_REFUSED")) {
-        logError("Connection Failed - Check Firewall");
-        return;
+    } catch (error: unknown) {
+      if (typeof error === 'string') {
+        if (error.includes("NS_ERROR_CONNECTION_REFUSED")) {
+          logError("Connection Failed - Check Firewall\n" + error);
+          return;
+        }
       }
       logError(
-        "Page Timeout after 15 seconds - Skipping this page - " + error + "\n"
+        "Page Timeout after 15 seconds - Skipping this page\n" + error
       );
     }
   }
