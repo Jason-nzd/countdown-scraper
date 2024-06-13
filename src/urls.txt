@@ -1,7 +1,7 @@
 # Add urls with or without https://www
 # Categories can be derived from last /url-bracket/, or categories can be overridden with: categories=ice-cream
 # Each page scrapes a maximum of 48 in-stock products, unless 120-per-page is added next to each url
-
+woolworths.co.nz/shop/browse/fruit-veg/vegetables/potato-kumara categories=vegetables
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips 120-per-page
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars
@@ -123,4 +123,5 @@ woolworths.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=me
 
 woolworths.co.nz/shop/browse/fruit-veg/fresh-fruit categories=fruit 120-per-page
 woolworths.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
-woolworths.co.nz/shop/browse/fruit-veg/fresh-vegetables 120-per-page
+woolworths.co.nz/shop/browse/fruit-veg/vegetables 120-per-page
+woolworths.co.nz/shop/browse/fruit-veg/vegetables/potato-kumara categories=vegetables
