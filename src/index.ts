@@ -265,7 +265,7 @@ async function uploadImageRestAPI(
   product: Product
 ): Promise<boolean> {
   // Check if passed in url is valid, return if not
-  if (imgUrl === undefined || !imgUrl.includes("http")) {
+  if (imgUrl === undefined || !imgUrl.includes("http") || product.id.length < 4) {
     log(colour.grey, `  Image ${product.id} has invalid url: ${imgUrl}`);
     return false;
   }
@@ -282,7 +282,7 @@ async function uploadImageRestAPI(
       "IMAGE_UPLOAD_FUNC_URL=https://<func-app>.azurewebsites.net/api/ImageToS3?code=<auth-code>\n\n"
     );
   }
-  const restUrl = `${funcBaseUrl}&destination=s3://supermarketimages/product-images/${product.id}&source=${imgUrl}`;
+  const restUrl = `${funcBaseUrl}${product.id}&source=${imgUrl}`;
 
   // Perform http get
   var res = await fetch(new URL(restUrl), { method: "GET" });
