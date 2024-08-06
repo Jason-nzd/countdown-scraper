@@ -17,8 +17,8 @@ import {
 
 
 // Woolworths / Countdown Scraper
-// -----------------
-// Scrapes pricing and other info from woolworths NZ's website.
+// ------------------------------
+// Scrapes pricing and other info from Woolworths NZ's website.
 
 // Set a reasonable delay between each page load to reduce load on the server.
 const pageLoadDelaySeconds = 7;
@@ -72,8 +72,10 @@ function loadUrlsFile(filePath: string = "src/urls.txt"): CategorisedUrl[] {
   // Parse and optimise URLs
   let categorisedUrls: CategorisedUrl[] = [];
   rawLinesFromFile.map((line) => {
-    let categorisedUrl = parseAndCategoriseURL(line);
-    if (categorisedUrl !== undefined) categorisedUrls.push(categorisedUrl);
+    let parsedUrls = parseAndCategoriseURL(line);
+    if (parsedUrls !== undefined) {
+      categorisedUrls = [...categorisedUrls, ...parsedUrls];
+    }
   });
 
   // Return as an array of CategorisedUrl objects
@@ -101,7 +103,7 @@ async function scrapeAllPageURLs() {
     const url = categorisedUrl.url;
 
     // Log current scrape sequence and the total number of pages to scrape
-    const shortUrl = url.substring(0, url.indexOf("?")).replace("https://", "");
+    const shortUrl = url.replace("https://", "");
     log(
       colour.yellow,
       `\n[${i + 1}/${categorisedUrls.length}] ${shortUrl}`
@@ -580,72 +582,90 @@ function validateProduct(product: Product): boolean {
 
 // parseAndCategoriseURL()
 // -----------------------
-// Parses a URL string and category from a line of text, also optimises query parameters
+// Parses a URL string, an optional category, optional number of pages to scrape
+//  from a single line of text.
 // Returns undefined if not a valid URL
 // Example Input:
-//    woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream
+//    woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream pages=2
 // Example Return:
+//  [
 //    {
-//        url: "https://woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&size=48&inStockProductsOnly=true"
+//        url: "https://woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&inStockProductsOnly=true"
+//        category: "ice-cream"
+//    },
+//    {
+//        url: "https://woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=2&inStockProductsOnly=true"
 //        category: "ice-cream"
 //    }
+//  ]
 
 export function parseAndCategoriseURL(
   line: string
-): CategorisedUrl | undefined {
-  let categorisedUrl: CategorisedUrl = { url: "", categories: [] };
+): CategorisedUrl[] | undefined {
+  let baseCategorisedURL: CategorisedUrl = { url: "", categories: [] };
+  let parsedUrls: CategorisedUrl[] = [];
+  let numPagesPerURL = 1;
 
   // If line doesn't contain desired url section, return undefined
   if (!line.includes("woolworths.co.nz")) {
     return undefined;
   } else {
-    // Split line by empty space, look for url and optional category
+    // Split line by empty space, look for url, optional page amount & category
     line.split(" ").forEach((section) => {
+
+      // Parse URL
       if (section.includes("woolworths.co.nz")) {
-        categorisedUrl.url = section;
+        baseCategorisedURL.url = section;
 
         // Ensure URL has http:// or https://
-        if (!categorisedUrl.url.startsWith("http"))
-          categorisedUrl.url = "https://" + categorisedUrl.url;
+        if (!baseCategorisedURL.url.startsWith("http"))
+          baseCategorisedURL.url = "https://" + section;
 
         // If url contains ? it has query options already set
-        if (categorisedUrl.url.includes("?")) {
+        if (section.includes("?")) {
           // Strip any existing query options off of URL
-          categorisedUrl.url = line.substring(0, line.indexOf("?"));
+          baseCategorisedURL.url = line.substring(0, line.indexOf("?"));
         }
         // Replace query parameters with optimised ones,
-        //  such as limiting to certain sellers,
-        //  or showing a higher number of products
-        // categorisedUrl.url +=
-        //   "?search=&page=1&size=48&sort=CUPAsc&inStockProductsOnly=false";
-        categorisedUrl.url += '?inStockProductsOnly=true&page=1&size=48';
+        //  such as limiting to in-stock only,
+        baseCategorisedURL.url += '?page=1&inStockProductsOnly=true';
 
-        // Parse in 1 or more categories
+
+        // Parse Category
       } else if (section.startsWith("categories=")) {
         let splitCategories = [section.replace("categories=", "")];
         if (section.includes(","))
           splitCategories = section.replace("categories=", "").split(",");
-        categorisedUrl.categories = splitCategories;
+        baseCategorisedURL.categories = splitCategories;
+
+        // If no category was specified, derive one from the last url /section/
+        if (baseCategorisedURL.categories.length === 0) {
+          // Extract /slashSections/ from url, while excluding content after '?'
+          const baseUrl = baseCategorisedURL.url.split("?")[0];
+          let slashSections = baseUrl.split("/");
+
+          // Set category to last url /section/
+          baseCategorisedURL.categories = [slashSections[slashSections.length - 1]];
+        }
+
+        // Parse number of pages
+      } else if (section.startsWith("pages=")) {
+        numPagesPerURL = Number.parseInt(section.split("=")[1]);
       }
     });
 
-    // If url line specifies '120-per-page', replace the query parameter for 48 products per page to 120
-    if (line.includes("120-per-page")) {
-      categorisedUrl.url = categorisedUrl.url.replace("size=48", "size=120");
+    // For multiple pages, duplicate the url and edit the ?page=1 query parameter
+    for (let i = 1; i <= numPagesPerURL; i++) {
+      let pagedUrl = {
+        url: baseCategorisedURL.url.replace("page=1", "page=" + i),
+        categories: baseCategorisedURL.categories,
+      }
+      parsedUrls.push(pagedUrl);
     }
   }
 
-  // If no category was specified, derive one from the last url /section/
-  if (categorisedUrl.categories.length === 0) {
-    // Extract /slashSections/ from url, while excluding content after '?'
-    const baseUrl = categorisedUrl!.url.split("?")[0];
-    let slashSections = baseUrl.split("/");
 
-    // Set category to last url /section/
-    categorisedUrl.categories = [slashSections[slashSections.length - 1]];
-  }
-
-  return categorisedUrl;
+  return parsedUrls;
 }
 
 // routePlaywrightExclusions()
