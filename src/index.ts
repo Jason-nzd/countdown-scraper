@@ -15,7 +15,6 @@ import {
   addUnitPriceToProduct, logTableHeader,
 } from "./utilities.js";
 
-
 // Woolworths / Countdown Scraper
 // ------------------------------
 // Scrapes pricing and other info from Woolworths NZ's website.
@@ -103,7 +102,7 @@ async function scrapeAllPageURLs() {
     const url = categorisedUrl.url;
 
     // Log current scrape sequence and the total number of pages to scrape
-    const shortUrl = url.replace("https://", "");
+    const shortUrl = url.replace("https://", "").split("&")[0];
     log(
       colour.yellow,
       `\n[${i + 1}/${categorisedUrls.length}] ${shortUrl}`
@@ -131,7 +130,7 @@ async function scrapeAllPageURLs() {
       // Load html into Cheerio for DOM selection
       const html = await page.innerHTML("product-grid");
       const $ = cheerio.load(html);
-      const productEntries = $("cdx-card a.product-entry");
+      const productEntries = $("cdx-card product-stamp-grid div.product-entry");
 
       // Log the number of products found, time elapsed, category
       log(
@@ -182,7 +181,6 @@ async function scrapeAllPageURLs() {
     }
   }
 }
-
 
 // processFoundProductEntries
 // --------------------------
@@ -256,7 +254,6 @@ async function processFoundProductEntries
   // Return log stats for completed page
   return perPageLogStats;
 }
-
 
 // uploadImageRestAPI()
 // --------------------
