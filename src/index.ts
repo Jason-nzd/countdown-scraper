@@ -464,7 +464,7 @@ export function playwrightElementToProduct(
     ),
 
     // Product size may be blank
-    size: $(element).find("div.product-meta p span.size").text().trim(),
+    size: $(element).find("span.size").first().text().trim(),
 
     // Store where the source of information came from
     sourceSite: "countdown.co.nz",
@@ -485,11 +485,11 @@ export function playwrightElementToProduct(
   // and potentially a kg unit name inside the <span> for some meat products.
   // The 2 numbers are joined, parsed, and non-number chars are removed.
   const dollarString: string = $(element)
-    .find("div.product-meta product-price h3 em")
+    .find("product-price div h3 em")
     .text()
     .trim();
   let centString: string = $(element)
-    .find("div.product-meta product-price h3 span")
+    .find("product-price div h3 span")
     .text()
     .trim();
   if (centString.includes("kg")) product.size = "per kg";
@@ -515,15 +515,11 @@ export function playwrightElementToProduct(
     if (override.id === product.id) {
       // Check for size override
       if (override.size !== undefined) {
-        // console.log(`${product.name} - overriding size from ${product.size} to ${override.size}`);
         product.size = override.size;
       }
 
       // Check for category override
       if (override.category !== undefined) {
-        // console.log(
-        //   `${product.name} - overriding category from ${product.category} to ${override.category}`
-        // );
         product.category = [override.category];
       }
     }
