@@ -11,8 +11,7 @@ import { establishCosmosDB, upsertProductToCosmosDB } from "./cosmosdb.js";
 import { productOverrides } from "./product-overrides.js";
 import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from "./typings";
 import {
-  log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince,
-  addUnitPriceToProduct, logTableHeader,
+  log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince, logTableHeader,
 } from "./utilities.js";
 
 // Woolworths / Countdown Scraper
@@ -25,13 +24,13 @@ const pageLoadDelaySeconds = 7;
 // Set a delay when logging each product per page to the console.
 const productLogDelayMilliSeconds = 20;
 
-// Record start time, for logging purposes
+// Record start time for logging purposes
 const startTime = Date.now();
 
-// Load URLs from text file
-let categorisedUrls = loadUrlsFile();
+// Load URLs from text file 'urls.txt'
+let categorisedUrls: CategorisedUrl[] = loadUrlsFile();
 
-// Handle command-line arguments
+// Handle command-line arguments, ex: 'db', 'images', or single urls
 export let databaseMode = false;
 export let uploadImagesMode = false;
 let headlessMode = true;
@@ -91,18 +90,18 @@ async function scrapeAllPageURLs() {
   // Log loop start
   log(
     colour.yellow,
-    `${categorisedUrls.length} pages to be scraped`.padEnd(32) +
-    `${pageLoadDelaySeconds}s delay between scrapes`.padEnd(32) +
+    `${categorisedUrls.length} pages to be scraped`.padEnd(35) +
+    `${pageLoadDelaySeconds}s delay between scrapes`.padEnd(35) +
     (databaseMode ? "(Database Mode)" : "(Dry Run Mode)")
   );
 
   // Loop through each page URL to scrape
   for (let i = 0; i < categorisedUrls.length; i++) {
-    const categorisedUrl = categorisedUrls[i];
-    const url = categorisedUrl.url;
+    const categorisedUrl: CategorisedUrl = categorisedUrls[i];
+    let url: string = categorisedUrls[i].url;
 
     // Log current scrape sequence and the total number of pages to scrape
-    const shortUrl = url.replace("https://", "").split("&")[0];
+    const shortUrl = url.replace("https://", "");
     log(
       colour.yellow,
       `\n[${i + 1}/${categorisedUrls.length}] ${shortUrl}`
@@ -135,8 +134,8 @@ async function scrapeAllPageURLs() {
       // Log the number of products found, time elapsed, category
       log(
         colour.yellow,
-        `${productEntries.length} product entries found`.padEnd(32) +
-        `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(32) +
+        `${productEntries.length} product entries found`.padEnd(35) +
+        `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(35) +
         `Category: ${_.startCase(categorisedUrl.categories.join(" - "))}`
       );
 
@@ -441,36 +440,32 @@ export function playwrightElementToProduct(
   const $ = cheerio.load(element);
 
   let product: Product = {
-    // Extract ID from h3 tag and remove non-numbers
+
+    // ID
+    // -------
+    // Extract first from h3 tag id and remove non-numbers
     id: $(element).find("h3").first().attr("id")?.replace(/\D/g, "") as string,
 
-    // Original title is all lower-case and needs to be made into start-case
-    name: _.startCase(
+    // Name
+    // -------
+    // Extract from first h3 tag aria-label and clean up
+    name:
       $(element)
         .find("h3")
         .first()
-        .text()
+        .attr("aria-label")!
+        .slice(0, -1) // remove trailing .
 
         // Clean unnecessary words from titles
         .replace("fresh fruit", "")
         .replace("fresh vegetable", "")
+    ,
 
-        // Clean variable weights from meat products, such 'Pork Loin Chops 0.4-0.9kg 3-4pcs'
-        .replace(/(\d\.\d-\d\.\d)kg (\d-\d)pcs/, "")
-
-        // Clean excess whitespace
-        .replace("  ", " ")
-        .trim()
-    ),
-
-    // Product size may be blank
-    size: $(element).find("span.size").first().text().trim(),
-
-    // Store where the source of information came from
-    sourceSite: "countdown.co.nz",
+    // Source Site - set where the source of information came from
+    sourceSite: "countdown.co.nz", // use countdown for consistency with old data
 
     // Categories
-    category: categories,
+    category: categories,  // already obtained from url/text file
 
     // Store today's date
     lastChecked: new Date(),
@@ -481,7 +476,9 @@ export function playwrightElementToProduct(
     currentPrice: 0,
   };
 
-  // The price is originally displayed with dollars in an <em>, cents in a <span>,
+  // Price
+  // ------
+  // Is originally displayed with dollars in an <em>, cents in a <span>,
   // and potentially a kg unit name inside the <span> for some meat products.
   // The 2 numbers are joined, parsed, and non-number chars are removed.
   const dollarString: string = $(element)
@@ -494,7 +491,6 @@ export function playwrightElementToProduct(
     .trim();
   if (centString.includes("kg")) product.size = "per kg";
   centString = centString.replace(/\D/g, "");
-
   product.currentPrice = Number(dollarString + "." + centString);
 
   // Create a date object for now, but with minutes and seconds set to 0
@@ -509,7 +505,55 @@ export function playwrightElementToProduct(
   };
   product.priceHistory = [todaysDatedPrice];
 
-  // Check for manually overridden product data
+  // Size
+  // ------ 
+  // Try to extract from raw product name
+  const rawProductName = $(element).find("h3").first().text();
+  product.size = extractProductSizeFromName(product.name, rawProductName);
+
+  // Unit Price
+  // -----------
+  // Try to extract from span.cupPrice, ex: $2.52 / 100mL
+  const rawUnitPrice = $(element).find("span.cupPrice").text().trim();
+
+  if (rawUnitPrice) {
+    // Extract and parse unit price, ex: 2.52
+    const unitPriceString = rawUnitPrice.split("/")[0].replace("$", "").trim();
+    let unitPrice = Number.parseFloat(unitPriceString);
+
+    // Extract amount and unit, ex: 100mL
+    const amountAndUnit = rawUnitPrice.split("/")[1].trim();
+
+    // Parse amount, ex: 100
+    let amount = Number.parseInt(amountAndUnit.match(/\d+/g)?.[0] || "");
+
+    // Extract unit, ex: mL
+    let unit = amountAndUnit.match(/\w+/g)?.[0] || ""
+
+    // Normalize units to kg or L
+    if (amountAndUnit == "100g") {
+      amount = amount * 10;
+      unitPrice = unitPrice * 10;
+      unit = "kg";
+    }
+    else if (amountAndUnit == "100mL") {
+      amount = amount * 10;
+      unitPrice = unitPrice * 10;
+      unit = "L";
+    }
+
+    // Cleanup 1kg to just kg
+    unit = unit.replace("1kg", "kg");
+    unit = unit.replace("1L", "L");
+
+    // Set finalised unit price and name
+    product.unitPrice = unitPrice;
+    product.unitName = unit;
+  }
+
+  // Overrides
+  // ----------
+  // Check .ts file for manually overridden product data
   productOverrides.forEach((override) => {
     // First check if product ID has any overrides
     if (override.id === product.id) {
@@ -525,27 +569,17 @@ export function playwrightElementToProduct(
     }
   });
 
-  // Try add unit price and unit name to product
-  product = addUnitPriceToProduct(product);
 
+  // Validation
+  // ----------
   // If product values pass validation, return product
   if (validateProduct(product)) return product;
-
-  // Log if out of stock or other errors
-  const outOfStock = $(element)
-    .find("product-add-to-trolley button")
-    .text()
-    .trim();
-  if (
-    outOfStock.includes("Out of stock") ||
-    outOfStock.includes("Unavailable")
-  ) {
-    return undefined;
-  } else {
+  else {
     logError(
       `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
       `$${product.currentPrice}`
     );
+
     return undefined;
   }
 }
@@ -602,6 +636,12 @@ export function parseAndCategoriseURL(
   // If line doesn't contain desired url section, return undefined
   if (!line.includes("woolworths.co.nz")) {
     return undefined;
+
+    // If line is a search url, return as-is
+  } else if (line.includes("?search=")) {
+    parsedUrls.push({ url: line, categories: [] })
+
+    // Else optimize and cleanup URL
   } else {
     // Split line by empty space, look for url, optional page amount & category
     line.split(" ").forEach((section) => {
@@ -622,7 +662,6 @@ export function parseAndCategoriseURL(
         // Replace query parameters with optimised ones,
         //  such as limiting to in-stock only,
         baseCategorisedURL.url += '?page=1&inStockProductsOnly=true';
-
 
         // Parse Category
       } else if (section.startsWith("categories=")) {
@@ -656,7 +695,6 @@ export function parseAndCategoriseURL(
       parsedUrls.push(pagedUrl);
     }
   }
-
 
   return parsedUrls;
 }
@@ -709,4 +747,47 @@ async function routePlaywrightExclusions() {
   });
 
   return;
+}
+
+// extractProductSizeFromName()
+// ----------------------------
+// Try to extract product size by comparing aria-label and raw product names such as:
+//        Raw: beef mince 18% fat grass fed Tray 1kg
+// Aria-Label: Beef Mince 18% Fat Grass Fed
+//    Returns: 1kg
+
+function extractProductSizeFromName(ariaLabelName: string, rawName: string): string {
+  // console.log("raw    | " + rawName);
+  // Due to inconsistent naming conventions for multi pack products,
+  // ignore size extraction for any multi pack products
+  // if (rawName.match(/\d+pack/gi)) return "";
+
+  // Ignore variable sizes such as '0.17-0.5kg 2pcs'
+  // if (rawName.match(/\d+-\d+\.*pcs/gi)) return "";
+
+  // Try to extract product size by comparing aria-label and raw product names such as:
+  //        Raw: beef mince 18% fat grass fed Tray 1kg
+  // Aria-Label: Beef Mince 18% Fat Grass Fed
+  const ariaTitleSplitWords = ariaLabelName.split(" ");
+  const lastWordOfTitle = ariaTitleSplitWords[ariaTitleSplitWords.length - 1].toLowerCase();;
+  const indexOfSizeSection = rawName.toLowerCase().indexOf(lastWordOfTitle) + lastWordOfTitle.length;
+  const sizeSection = rawName.substring(indexOfSizeSection).trim();
+  // console.log("section| " + sizeSection);
+
+  return sizeSection;
+  // // Regex match words such as 200g, 400ml, 1.5kg
+  // const matches = sizeSection.match(/\d+\.?\d*[g|ml|kg|L]/gi);
+
+  // // If a single match is found, it is correct and can be returned
+  // if (matches?.length == 1) {
+  //   console.log("match  | " + matches[0]);
+  //   return matches[0];
+
+  // } else if (matches && matches?.length > 1) {
+  //   // If multiple matches are found, ignore for now
+  //   return ""
+  // }
+
+  // // Return blank if unable to extract size
+  // return "";
 }
