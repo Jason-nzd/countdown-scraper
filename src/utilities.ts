@@ -1,6 +1,11 @@
 import { Product } from './typings';
 import { readFileSync } from 'fs';
 
+const tableIDWidth = 6
+const tableNameWidth = 60;
+const tableSizeWidth = 17;
+
+
 export const colour = {
   red: '\x1b[31m',
   green: '\x1b[32m',
@@ -40,8 +45,9 @@ export function logProductRow(product: Product) {
   const unitPriceString = product.unitPrice ? `$${product.unitPrice.toFixed(2)} /${product.unitName}` : ``;
   log(
     getAlternatingRowColour(colour.sky, colour.white),
-    `${product.id.padStart(6)} | ${product.name.slice(0, 50).padEnd(50)} | ` +
-    `${product.size?.slice(0, 17).padEnd(17)} | ` +
+    `${product.id.padStart(tableIDWidth)} | ` +
+    `${product.name.slice(0, tableNameWidth).padEnd(tableNameWidth)} | ` +
+    `${product.size?.slice(0, tableSizeWidth).padEnd(tableSizeWidth)} | ` +
     `$ ${product.currentPrice.toFixed(2).padStart(4).padEnd(5)} | ` +
     unitPriceString
   );
@@ -53,13 +59,13 @@ export function logProductRow(product: Product) {
 export function logTableHeader() {
   log(
     colour.yellow,
-    `${'ID'.padStart(6)} | ${'Name'.padEnd(50)} | ` +
-    `${'Size'.padEnd(17)} | ` +
+    `${'ID'.padStart(tableIDWidth)} | ${'Name'.padEnd(tableNameWidth)} | ` +
+    `${'Size'.padEnd(tableSizeWidth)} | ` +
     `${'Price'.padEnd(7)} | Unit Price`
   );
 
   let headerLine = ""
-  for (let i = 0; i < 102; i++) {
+  for (let i = 0; i < 111; i++) {
     headerLine += "-"
   }
   log(colour.yellow, headerLine);
