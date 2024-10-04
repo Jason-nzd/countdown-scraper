@@ -1,10 +1,10 @@
 import { Product } from './typings';
 import { readFileSync } from 'fs';
 
+// Set widths for table log output
 const tableIDWidth = 6
 const tableNameWidth = 60;
 const tableSizeWidth = 17;
-
 
 export const colour = {
   red: '\x1b[31m',
@@ -121,135 +121,7 @@ export function getTimeElapsedSince(startTime: number): string {
   } else return elapsedTimeString + "s";
 }
 
-// addUnitPriceToProduct()
-// -----------------------
-// Derives unit quantity, unit name, and price per unit of a product,
-// Returns an updated product
-
-export function addUnitPriceToProduct(product: Product): Product {
-  // Build an array of size and name split strings
-  let nameAndSize: string[] = [product.name];
-  const size = product.size?.toLowerCase();
-  if (size) nameAndSize = nameAndSize.concat(size.split(' '));
-
-  // Regex name and size to try match known units
-  let foundUnits: string[] = [];
-  nameAndSize!.forEach((section) => {
-    // Try match digits \d , optional decimal \.\d+ , optional whitespace,
-    //  and common unit names such as g kg l ml
-    let tryMatchUnit = section.toLowerCase().match(/\d+(\.\d+)?\s?(g|kg|l|ml)\b/g);
-
-    // If a new match is found, add to foundUnits array
-    if (tryMatchUnit && !foundUnits.includes(tryMatchUnit[0])) {
-      foundUnits.push(tryMatchUnit[0]);
-    }
-  });
-
-  let quantity: number | undefined = undefined;
-  let matchedUnit: string | undefined = undefined;
-
-  // If size is simply 'kg' or includes 'per kg', process it as 1kg
-  if (size === 'kg' || size?.includes('per kg')) {
-    quantity = 1;
-    matchedUnit = 'kg';
-  } else if (foundUnits.length > 0) {
-    // Quantity is derived from product name or size, 450ml = 450
-    quantity = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
-
-    // MatchedUnit,  450ml = ml
-    matchedUnit = foundUnits[0].match(/(g|kg|l|ml)/g)?.join('') as string;
-
-    // If 2 units were matched, such as '4 x 12g packs 48g', use the greater 48g
-    if (foundUnits.length === 2) {
-      quantity = parseFloat(foundUnits[0].match(/\d|\./g)?.join('') as string);
-      const secondQuantity = parseFloat(foundUnits[1].match(/\d|\./g)?.join('') as string);
-      if (secondQuantity > quantity) {
-        quantity = secondQuantity;
-        matchedUnit = foundUnits[1].match(/\D/g)?.join('') as string;
-      }
-    } else {
-      // Handle edge case where size contains a 'multiplier x sub-unit' - eg. 4 x 107mL
-      const matchMultipliedSizeString = size?.match(/\d+\s?x\s?\d+/g)?.join('');
-      if (matchMultipliedSizeString) {
-        const splitMultipliedSize = matchMultipliedSizeString.split('x');
-        const multiplier = parseInt(splitMultipliedSize[0].trim());
-        const subUnitSize = parseInt(splitMultipliedSize[1].trim());
-        quantity = multiplier * subUnitSize;
-      }
-
-      // Handle edge case for drink cans in format '330ml cans 30pack'
-      const matchCanString = size?.match(/\d+(ml)\s?cans\s?\d+pack/g)?.join('');
-      if (matchCanString) {
-        const canSize = parseInt(matchCanString.match(/\d+(ml)/g)?.join() as string);
-        const canQuantity = parseInt(matchCanString.match(/\d+(pack)/g)?.join() as string);
-        quantity = canSize * canQuantity;
-      }
-
-      // Handle edge cases for format '500g 5pack', which are inconsistent
-      const matchNoMultiplierString = size?.match(/\d+(g|ml)\s\d+pack/g)?.join('');
-      if (matchNoMultiplierString) {
-        const packSizeOnly = parseInt(
-          matchNoMultiplierString.match(/\d+(g|ml)/g)?.join() as string
-        );
-        const multiplier = parseInt(matchNoMultiplierString.match(/\d+(pack)/g)?.join() as string);
-
-        // The weight for small pack quantity is usually not multiplied
-        //  - '100g 6pack' would usually have an actual weight of 100g
-        if (multiplier <= 6) {
-          quantity = packSizeOnly;
-        } else {
-          // The weight for large pack quantity is usually multiplied
-          //  - '100g 20pack' would usually have an actual weight of 2000g
-          quantity = packSizeOnly * multiplier;
-        }
-      }
-
-      // Handle edge case for format '85g pouches 12pack'
-      // let numPack = size?.match(/\d+\s?pack/g)?.toString();
-      // let packSize = size?.match(/\d+(g|kg|ml|l)/g)?.toString();
-      // if (numPack && packSize) {
-      //   let numPackInt = Number.parseInt(numPack.replace('pack', ''));
-      //   let packSizeInt = Number.parseInt(packSize.match(/\d/g)!.join(''));
-      //   quantity = numPackInt * packSizeInt;
-      //   matchedUnit = packSize.match(/\D/g)!.join('').trim();
-      // }
-    }
-  }
-
-  if (matchedUnit && quantity) {
-    // Store original unit quantity before it is normalized to 1kg / 1L
-    product.originalUnitQuantity = quantity;
-
-    // If units are in grams, convert to /kg
-    if (quantity && matchedUnit === 'g') {
-      quantity = quantity / 1000;
-      matchedUnit = 'kg';
-    }
-
-    // If units are in mL, convert to /L
-    if (quantity && matchedUnit === 'ml') {
-      quantity = quantity / 1000;
-      matchedUnit = 'L';
-    }
-
-    // Capitalize L for Litres
-    if (quantity && matchedUnit === 'l') matchedUnit = 'L';
-
-    // Parse to int and check is within reasonable range
-    if (quantity && quantity > 0 && quantity < 9999) {
-      // Set per unit price, rounded to 2 decimal points
-      product.unitPrice = Math.round((product.currentPrice / quantity) * 100) / 100;
-
-      // Set unitName, such as 500g = g
-      product.unitName = matchedUnit;
-    }
-  }
-
-  // Return product whether unitPrice and unitName were set or not
-  return product;
-}
-
-// List of valid category names that scraped products should be a part of
+// List of valid category names that scraped products should be put in
 export const validCategories: string[] = [
   // freshCategory
   'eggs',
@@ -335,9 +207,12 @@ export const validCategories: string[] = [
   'dog-treats',
 ];
 
+// toTitleCase()
+// -------------
 // Convert a string to title case
+
 export function toTitleCase(str: string) {
   return str.replace(/\w\S*/g, function (txt) {
-    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
   });
 }
