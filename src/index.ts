@@ -12,6 +12,7 @@ import { productOverrides } from "./product-overrides.js";
 import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from "./typings";
 import {
   log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince, logTableHeader,
+  toTitleCase,
 } from "./utilities.js";
 
 // Woolworths / Countdown Scraper
@@ -443,23 +444,8 @@ export function playwrightElementToProduct(
 
     // ID
     // -------
-    // Extract first from h3 tag id and remove non-numbers
+    // Extract product ID from first h3 id attribute, and remove non-numbers
     id: $(element).find("h3").first().attr("id")?.replace(/\D/g, "") as string,
-
-    // Name
-    // -------
-    // Extract from first h3 tag aria-label and clean up
-    name:
-      $(element)
-        .find("h3")
-        .first()
-        .attr("aria-label")!
-        .slice(0, -1) // remove trailing .
-
-        // Clean unnecessary words from titles
-        .replace("fresh fruit", "")
-        .replace("fresh vegetable", "")
-    ,
 
     // Source Site - set where the source of information came from
     sourceSite: "countdown.co.nz", // use countdown for consistency with old data
@@ -472,9 +458,44 @@ export function playwrightElementToProduct(
     lastUpdated: new Date(),
 
     // These values will later be overwritten
+    name: "",
     priceHistory: [],
     currentPrice: 0,
   };
+
+  // Name & Size
+  // ------------
+  // Try to extract combined name and size from h3 tag inner text
+  let rawNameAndSize = $(element).find("h3").first().text().trim();
+  rawNameAndSize = rawNameAndSize.toLowerCase().replace("  ", " ");
+
+  // Clean unnecessary words from titles
+  rawNameAndSize =
+    rawNameAndSize.replace("fresh fruit", "").replace("fresh vegetable", "");
+
+  // Try to regex match a size section such as:
+  // 100g, 150ml, 16pack, 0.5-1.5kg, tray 1kg, etc
+  let tryMatchSize =
+    rawNameAndSize.match(/(tray\s\d+)|(\d+(\.\d+)?(\-\d+\.\d+)?\s?(g|kg|l|ml|pack))\b/g);
+
+  if (!tryMatchSize) {
+    // No size was found in name, can be derived from unit price later
+    product.name = toTitleCase(rawNameAndSize);
+    product.size = "";
+  } else {
+    // A size was found, get the index to split the string into name and size
+    let indexOfSizeSection = rawNameAndSize.indexOf(tryMatchSize[0]);
+
+    product.name = toTitleCase(rawNameAndSize.slice(0, indexOfSizeSection)).trim();
+
+    let cleanedSize = rawNameAndSize.slice(indexOfSizeSection).trim();
+    if (cleanedSize.match(/\d+l\b/)) {
+      // Capitalise L for litres
+      cleanedSize = cleanedSize.replace("l", "L");
+    }
+    cleanedSize.replace("tray", "Tray");
+    product.size = cleanedSize;
+  }
 
   // Price
   // ------
@@ -504,12 +525,6 @@ export function playwrightElementToProduct(
     price: product.currentPrice,
   };
   product.priceHistory = [todaysDatedPrice];
-
-  // Size
-  // ------ 
-  // Try to extract from raw product name
-  const rawProductName = $(element).find("h3").first().text();
-  product.size = extractProductSizeFromName(product.name, rawProductName);
 
   // Unit Price
   // -----------
@@ -749,45 +764,3 @@ async function routePlaywrightExclusions() {
   return;
 }
 
-// extractProductSizeFromName()
-// ----------------------------
-// Try to extract product size by comparing aria-label and raw product names such as:
-//        Raw: beef mince 18% fat grass fed Tray 1kg
-// Aria-Label: Beef Mince 18% Fat Grass Fed
-//    Returns: 1kg
-
-function extractProductSizeFromName(ariaLabelName: string, rawName: string): string {
-  // console.log("raw    | " + rawName);
-  // Due to inconsistent naming conventions for multi pack products,
-  // ignore size extraction for any multi pack products
-  // if (rawName.match(/\d+pack/gi)) return "";
-
-  // Ignore variable sizes such as '0.17-0.5kg 2pcs'
-  // if (rawName.match(/\d+-\d+\.*pcs/gi)) return "";
-
-  // Try to extract product size by comparing aria-label and raw product names such as:
-  //        Raw: beef mince 18% fat grass fed Tray 1kg
-  // Aria-Label: Beef Mince 18% Fat Grass Fed
-  const ariaTitleSplitWords = ariaLabelName.split(" ");
-  const lastWordOfTitle = ariaTitleSplitWords[ariaTitleSplitWords.length - 1].toLowerCase();;
-  const indexOfSizeSection = rawName.toLowerCase().indexOf(lastWordOfTitle) + lastWordOfTitle.length;
-  const sizeSection = rawName.substring(indexOfSizeSection).trim();
-  // console.log("section| " + sizeSection);
-
-  return sizeSection;
-  // // Regex match words such as 200g, 400ml, 1.5kg
-  // const matches = sizeSection.match(/\d+\.?\d*[g|ml|kg|L]/gi);
-
-  // // If a single match is found, it is correct and can be returned
-  // if (matches?.length == 1) {
-  //   console.log("match  | " + matches[0]);
-  //   return matches[0];
-
-  // } else if (matches && matches?.length > 1) {
-  //   // If multiple matches are found, ignore for now
-  //   return ""
-  // }
-
-  // // Return blank if unable to extract size
-  // return "";
-}
