@@ -11,8 +11,8 @@ import { establishCosmosDB, upsertProductToCosmosDB } from "./cosmosdb.js";
 import { productOverrides } from "./product-overrides.js";
 import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from "./typings";
 import {
-  log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince, logTableHeader,
-  toTitleCase,
+  log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince,
+  logTableHeader, toTitleCase,
 } from "./utilities.js";
 
 // Woolworths / Countdown Scraper
@@ -152,7 +152,8 @@ async function scrapeAllPageURLs() {
       }
 
       // Start nested loop which loops through each product entry
-      perPageLogStats = await processFoundProductEntries(categorisedUrl, productEntries, perPageLogStats);
+      perPageLogStats =
+        await processFoundProductEntries(categorisedUrl, productEntries, perPageLogStats);
 
       // After scraping every item is complete, log how many products were scraped
       if (databaseMode) {
@@ -467,11 +468,15 @@ export function playwrightElementToProduct(
   // ------------
   // Try to extract combined name and size from h3 tag inner text
   let rawNameAndSize = $(element).find("h3").first().text().trim();
-  rawNameAndSize = rawNameAndSize.toLowerCase().replace("  ", " ");
 
   // Clean unnecessary words from titles
-  rawNameAndSize =
-    rawNameAndSize.replace("fresh fruit", "").replace("fresh vegetable", "");
+  rawNameAndSize = rawNameAndSize
+    .toLowerCase()
+    .replace("  ", " ")
+    .replace("fresh fruit", "")
+    .replace("fresh vegetable", "")
+    .trim()
+    ;
 
   // Try to regex match a size section such as:
   // 100g, 150ml, 16pack, 0.5-1.5kg, tray 1kg, etc
@@ -479,15 +484,19 @@ export function playwrightElementToProduct(
     rawNameAndSize.match(/(tray\s\d+)|(\d+(\.\d+)?(\-\d+\.\d+)?\s?(g|kg|l|ml|pack))\b/g);
 
   if (!tryMatchSize) {
-    // No size was found in name, can be derived from unit price later
+    // Capitalise and set name
     product.name = toTitleCase(rawNameAndSize);
+
+    // No size was found in name, size can be derived from unit price later
     product.size = "";
   } else {
-    // A size was found, get the index to split the string into name and size
+    // If a size was found, get the index to split the string into name and size
     let indexOfSizeSection = rawNameAndSize.indexOf(tryMatchSize[0]);
 
+    // Capitalise and set name
     product.name = toTitleCase(rawNameAndSize.slice(0, indexOfSizeSection)).trim();
 
+    // Clean up and set size
     let cleanedSize = rawNameAndSize.slice(indexOfSizeSection).trim();
     if (cleanedSize.match(/\d+l\b/)) {
       // Capitalise L for litres
@@ -583,7 +592,6 @@ export function playwrightElementToProduct(
       }
     }
   });
-
 
   // Validation
   // ----------
