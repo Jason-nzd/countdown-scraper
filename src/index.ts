@@ -441,12 +441,20 @@ export function playwrightElementToProduct(
 ): Product | undefined {
   const $ = cheerio.load(element);
 
+  // Find the <h3> tag with an id containing "-title"
+  // This holds the product ID, name and size
+  let idNameSizeH3 = $(element).find("h3").filter((i, element) => {
+    if ($(element).attr("id")?.includes("-title")) {
+      return true
+    } else return false;
+  });
+
   let product: Product = {
 
     // ID
     // -------
-    // Extract product ID from first h3 id attribute, and remove non-numbers
-    id: $(element).find("h3").first().attr("id")?.replace(/\D/g, "") as string,
+    // Extract product ID from h3 id attribute, and remove non-numbers
+    id: idNameSizeH3.attr("id")?.replace(/\D/g, "") as string,
 
     // Source Site - set where the source of information came from
     sourceSite: "countdown.co.nz", // use countdown for consistency with old data
@@ -467,7 +475,7 @@ export function playwrightElementToProduct(
   // Name & Size
   // ------------
   // Try to extract combined name and size from h3 tag inner text
-  let rawNameAndSize = $(element).find("h3").first().text().trim();
+  let rawNameAndSize = idNameSizeH3.text().trim();
 
   // Clean unnecessary words from titles
   rawNameAndSize = rawNameAndSize
