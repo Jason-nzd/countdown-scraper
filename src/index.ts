@@ -130,7 +130,21 @@ async function scrapeAllPageURLs() {
       // Load html into Cheerio for DOM selection
       const html = await page.innerHTML("product-grid");
       const $ = cheerio.load(html);
-      const productEntries = $("cdx-card product-stamp-grid div.product-entry");
+
+      // Find all product entries
+      const allProductEntries = $("cdx-card product-stamp-grid div.product-entry");
+
+      // Find advertisement product entries not normally part of this product category
+      const advertisementEntries = $("div.carousel-track div cdx-card product-stamp-grid div.product-entry")
+      const adHrefs: string[] = advertisementEntries.map((index, element) => {
+        return $(element).find("a").first().attr("href");
+      }).toArray();
+
+      // Filter out product entries that match the found advertisements
+      const productEntries = allProductEntries.filter((index, element) => {
+        const productHref = $(element).find("a").first().attr("href");
+        return !adHrefs.includes(productHref!);
+      })
 
       // Log the number of products found, time elapsed, category
       log(
@@ -607,10 +621,10 @@ export function playwrightElementToProduct(
   if (validateProduct(product)) return product;
   else {
     try {
-    logError(
-      `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
-      `$${product.currentPrice}`
-    );
+      logError(
+        `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
+        `$${product.currentPrice}`
+      );
     } catch {
       logError("  Unable to Scrape ID from product");
     }
