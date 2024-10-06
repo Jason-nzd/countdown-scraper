@@ -598,11 +598,14 @@ export function playwrightElementToProduct(
   // If product values pass validation, return product
   if (validateProduct(product)) return product;
   else {
+    try {
     logError(
       `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
       `$${product.currentPrice}`
     );
-
+    } catch {
+      logError("  Unable to Scrape ID from product");
+    }
     return undefined;
   }
 }
@@ -613,6 +616,7 @@ export function playwrightElementToProduct(
 
 function validateProduct(product: Product): boolean {
   try {
+    if (product.name.match(/\$\s\d+/)) return false;
     if (product.name.length < 4 || product.name.length > 100) return false;
     if (product.id.length < 2 || product.id.length > 20) return false;
     if (
