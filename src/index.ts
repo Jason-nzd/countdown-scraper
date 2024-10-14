@@ -719,19 +719,19 @@ export function parseAndCategoriseURL(
           splitCategories = section.replace("categories=", "").split(",");
         baseCategorisedURL.categories = splitCategories;
 
-        // If no category was specified, derive one from the last url /section/
-        if (baseCategorisedURL.categories.length === 0) {
-          // Extract /slashSections/ from url, while excluding content after '?'
-          const baseUrl = baseCategorisedURL.url.split("?")[0];
-          let slashSections = baseUrl.split("/");
-
-          // Set category to last url /section/
-          baseCategorisedURL.categories = [slashSections[slashSections.length - 1]];
-        }
-
         // Parse number of pages
       } else if (section.startsWith("pages=")) {
         numPagesPerURL = Number.parseInt(section.split("=")[1]);
+      }
+
+      // If no category was specified, derive one from the last url /section
+      if (baseCategorisedURL.categories.length === 0) {
+        // Extract /slashSections/ from url, while excluding content after '?'
+        const baseUrl = baseCategorisedURL.url.split("?")[0];
+        let slashSections = baseUrl.split("/");
+
+        // Set category to last url /section/
+        baseCategorisedURL.categories = [slashSections[slashSections.length - 1]];
       }
     });
 
