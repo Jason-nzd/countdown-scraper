@@ -2,7 +2,7 @@ import { Product } from './typings';
 import { readFileSync } from 'fs';
 
 // Set widths for table log output
-const tableIDWidth = 6
+const tableIDWidth = 7
 const tableNameWidth = 60;
 const tableSizeWidth = 17;
 
