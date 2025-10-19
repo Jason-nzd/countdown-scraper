@@ -1,94 +1,30 @@
-# Add urls with or without https://www
-# Categories can be derived from last /url-bracket/, or can be overridden with format: categories=ice-cream
-# Each page scrapes a maximum of 48 in-stock products. Add pages=2 or similiar to scrape more pages
+# List of all URLs to be scraped (based off original WW categories as of Oct-2025)
+# --------------------------------------------------------------------------------
+# Not all products are scraped. Only popular categories are to save time.
+# add pages=2 or similiar to scrape more pages per category.
+# add categories=name to replace the category if storing to a database.
 
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/popcorn-nuts-savoury-snacks categories=other-snacks pages=2
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips pages=3
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars pages=2
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate pages=4
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=boxed-chocolate pages=2
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies pages=2
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
+# Fruit & Veg
+woolworths.co.nz/shop/browse/fruit-veg/fruit categories=fruit pages=2
+woolworths.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
+woolworths.co.nz/shop/browse/fruit-veg/vegetables categories=fresh-vegetables pages=4
+woolworths.co.nz/shop/browse/fruit-veg/fresh-salad-herbs categories=fresh-vegetables pages=2
+woolworths.co.nz/shop/browse/fruit-veg/fresh-salad-herbs/slaws-salad-kits categories=salads-coleslaw
 
-woolworths.co.nz/shop/browse/pantry/eggs
+# Meat & Poultry
+woolworths.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb  pages=2
+woolworths.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
+woolworths.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken pages=2
+woolworths.co.nz/shop/browse/meat-poultry/pork
+woolworths.co.nz/shop/browse/meat-poultry/mince-patties categories=patties-meatballs
+woolworths.co.nz/shop/browse/meat-poultry/sausages
+woolworths.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=meat-alternatives
 
-woolworths.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits pages=4
-woolworths.co.nz/shop/browse/pantry/biscuits-crackers/crackers categories=crackers pages=2
-woolworths.co.nz/shop/browse/pantry/biscuits-crackers/rice-cakes-crispbread categories=crackers
-
-woolworths.co.nz/shop/browse/pantry/bulk-foods/nuts-seeds categories=nuts-bulk-mix
-woolworths.co.nz/shop/browse/pantry/bulk-foods/dried-fruit-mixes categories=nuts-bulk-mix
-
-woolworths.co.nz/shop/browse/pantry/baking categories=baking pages=3
-
-woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
-woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/noodles pages=2
-woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/dried-pasta categories=pasta
-woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/pasta-meals-sides categories=pasta
-
-woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/baked-beans-spaghetti categories=beans-spaghetti
-woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-tuna-seafood categories=canned-fish
-woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-meat categories=canned-meat
-woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-soup-soup-mix categories=soup
-woolworths.co.nz/shop/browse/pantry/cereals-spreads/cereal pages=2
-woolworths.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads
-woolworths.co.nz/shop/browse/pantry/cereals-spreads/honey categories=spreads
-woolworths.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads
-woolworths.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads
-woolworths.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
-
-woolworths.co.nz/shop/browse/pantry/sauces-pastes categories=sauces
-
+# Fish & Seafood
 woolworths.co.nz/shop/browse/fish-seafood categories=seafood
 woolworths.co.nz/shop/browse/fish-seafood/salmon categories=salmon
 
-woolworths.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food pages=2
-woolworths.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food pages=3
-woolworths.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-food
-woolworths.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-food
-woolworths.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
-woolworths.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
-woolworths.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food
-
-woolworths.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread-rolls
-woolworths.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread-rolls
-woolworths.co.nz/shop/browse/bakery/sliced-packaged-bread categories=bread pages=2
-woolworths.co.nz/shop/browse/bakery/wraps-pita-pizza-bases categories=specialty-bread
-woolworths.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=specialty-bread
-woolworths.co.nz/shop/browse/bakery/pastries-croissants-biscuits categories=bakery-desserts
-woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts categories=bakery-desserts
-woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/birthday-celebration-cakes categories=bakery-cakes
-
-
-woolworths.co.nz/shop/browse/drinks/coffee pages=3
-woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea pages=2
-woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=green-tea
-woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=herbal-tea pages=2
-woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
-woolworths.co.nz/shop/browse/drinks/juice-cordial categories=juice pages=3
-woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks pages=2
-woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks pages=2
-
-woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream pages=3
-woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream pages=2
-woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls pages=2
-woolworths.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pizza categories=pizza
-woolworths.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pastry categories=pastries-cheesecake
-woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=other-savouries
-woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=other-savouries
-woolworths.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables
-woolworths.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
-woolworths.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
-woolworths.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
-
-woolworths.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=other-savouries
-woolworths.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
-woolworths.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=patties-meatballs
-woolworths.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-savouries
-woolworths.co.nz/shop/browse/frozen/frozen-seafood
-woolworths.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
-
+# Fridge & Deli
 woolworths.co.nz/shop/browse/fridge-deli/milk pages=3
 woolworths.co.nz/shop/browse/fridge-deli/cream-custard categories=cream
 woolworths.co.nz/shop/browse/fridge-deli/milk/long-life-milk categories=long-life-milk
@@ -109,14 +45,90 @@ woolworths.co.nz/shop/browse/fridge-deli/prepared-meals-sides/soup-risotto categ
 woolworths.co.nz/shop/browse/fridge-deli/prepared-meals-sides/pies-quiche categories=pies-sausage-rolls
 woolworths.co.nz/shop/browse/fridge-deli/dips-hummus-nibbles categories=other-deli-foods
 
-woolworths.co.nz/shop/browse/meat-poultry/beef categories=beef-lamb  pages=2
-woolworths.co.nz/shop/browse/meat-poultry/lamb categories=beef-lamb
-woolworths.co.nz/shop/browse/meat-poultry/chicken-poultry categories=chicken pages=2
-woolworths.co.nz/shop/browse/meat-poultry/pork
-woolworths.co.nz/shop/browse/meat-poultry/mince-patties categories=patties-meatballs
-woolworths.co.nz/shop/browse/meat-poultry/sausages
-woolworths.co.nz/shop/browse/meat-poultry/plant-based-alternatives categories=meat-alternatives
+# Bakery
+woolworths.co.nz/shop/browse/bakery/baked-in-store/loaves-garlic-savoury-bread categories=bread-rolls
+woolworths.co.nz/shop/browse/bakery/buns-rolls-bread-sticks categories=bread-rolls
+woolworths.co.nz/shop/browse/bakery/sliced-packaged-bread categories=bread pages=2
+woolworths.co.nz/shop/browse/bakery/wraps-pita-pizza-bases categories=specialty-bread
+woolworths.co.nz/shop/browse/bakery/bagels-crumpets-pancakes categories=specialty-bread
+woolworths.co.nz/shop/browse/bakery/pastries-croissants-biscuits categories=bakery-desserts
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts categories=bakery-desserts
+woolworths.co.nz/shop/browse/bakery/cakes-muffins-desserts/birthday-celebration-cakes categories=bakery-cakes
 
-woolworths.co.nz/shop/browse/fruit-veg/fruit categories=fruit pages=2
-woolworths.co.nz/shop/browse/fruit-veg/prepared-fruit-veg categories=salads-coleslaw
-woolworths.co.nz/shop/browse/fruit-veg/vegetables categories=fresh-vegetables pages=4
+# Frozen
+woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs categories=ice-cream pages=3
+woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/single-serve-multipacks categories=ice-cream pages=2
+woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/frozen-pies-sausage-rolls-hot-dogs categories=pies-sausage-rolls pages=2
+woolworths.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pizza categories=pizza
+woolworths.co.nz/shop/browse/frozen/pizza-pastry-bread/frozen-pastry categories=pastries-cheesecake
+woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/spring-rolls-toppers-savouries categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-meals-snacks/dumplings-wontons-steam-buns categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/other-frozen-vegetables categories=frozen-vegetables
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/frozen-peas-corn-carrots categories=frozen-vegetables
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/mixed-vegetables-stir-fry categories=frozen-vegetables
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/chips-wedges-potatoes categories=frozen-chips
+woolworths.co.nz/shop/browse/frozen/frozen-vegetables/hash-browns-rosti categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-meat/frozen-chicken-poultry categories=chicken
+woolworths.co.nz/shop/browse/frozen/frozen-meat/frozen-burgers categories=patties-meatballs
+woolworths.co.nz/shop/browse/frozen/frozen-meat-alternatives categories=other-savouries
+woolworths.co.nz/shop/browse/frozen/frozen-seafood
+woolworths.co.nz/shop/browse/frozen/frozen-fruit-drink categories=frozen-fruit
+
+# Pantry
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/popcorn-nuts-savoury-snacks categories=other-snacks pages=2
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=chips
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips pages=3
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars pages=2
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate pages=4
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=boxed-chocolate pages=3
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies pages=2
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
+woolworths.co.nz/shop/browse/pantry/eggs
+woolworths.co.nz/shop/browse/pantry/biscuits-crackers/biscuits-cookies categories=biscuits pages=4
+woolworths.co.nz/shop/browse/pantry/biscuits-crackers/crackers categories=crackers pages=2
+woolworths.co.nz/shop/browse/pantry/biscuits-crackers/rice-cakes-crispbread categories=crackers
+woolworths.co.nz/shop/browse/pantry/bulk-foods/nuts-seeds categories=nuts-bulk-mix
+woolworths.co.nz/shop/browse/pantry/bulk-foods/dried-fruit-mixes categories=nuts-bulk-mix
+woolworths.co.nz/shop/browse/pantry/baking categories=baking pages=3
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/rice
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/noodles pages=2
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/dried-pasta categories=pasta
+woolworths.co.nz/shop/browse/pantry/pasta-noodles-grains/pasta-meals-sides categories=pasta
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/baked-beans-spaghetti categories=beans-spaghetti
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-tuna-seafood categories=canned-fish
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-meat categories=canned-meat
+woolworths.co.nz/shop/browse/pantry/tinned-foods-packets/tinned-soup-soup-mix categories=soup
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/cereal pages=2
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/nut-butter categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/honey categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/jam categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/other-spreads categories=spreads
+woolworths.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cereal
+woolworths.co.nz/shop/browse/pantry/sauces-pastes categories=sauces
+
+# Beer & Wine
+
+# Drinks
+woolworths.co.nz/shop/browse/drinks/coffee pages=3
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea pages=2
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=green-tea
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=herbal-tea pages=2
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
+woolworths.co.nz/shop/browse/drinks/juice-cordial categories=juice pages=3
+woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks pages=2
+woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks pages=2
+
+# Health & Body
+
+# Household
+
+# Baby & Child
+
+# Pet
+woolworths.co.nz/shop/browse/pet/cats/dry-cat-food categories=cat-food pages=2
+woolworths.co.nz/shop/browse/pet/cats/wet-cat-food categories=cat-food pages=3
+woolworths.co.nz/shop/browse/pet/cats/cat-milk-treats categories=cat-treats
+woolworths.co.nz/shop/browse/pet/dogs/dog-chews-bones-treats categories=dog-treats
+woolworths.co.nz/shop/browse/pet/dogs/dry-dog-food categories=dog-food
+woolworths.co.nz/shop/browse/pet/dogs/wet-dog-food categories=dog-food
+woolworths.co.nz/shop/browse/pet/dogs/chilled-or-frozen-dog-food categories=dog-food
