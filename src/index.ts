@@ -109,8 +109,32 @@ async function scrapeAllPageURLs() {
     );
 
     try {
-      // Open page with url options now set
+      // Open page with upto 3 retries on failure
+      let retries = 0;
+      const maxRetries = 3;
+      const retryDelay = 2000; // 2 seconds
+
+      while (retries < maxRetries) {
+        try {
       await page.goto(url);
+
+          // Set page timeout to 8 seconds
+          await page.setDefaultTimeout(8000);
+
+          // Wait for product-price h3 html element to dynamically load in,
+          //  this is required to see product data
+          await page.waitForSelector("product-price h3");
+
+          break; // If successful, exit the retry loop
+        } catch (error) {
+          retries++;
+          if (retries === maxRetries) {
+            throw error; // If all retries failed, throw the error
+          }
+          log(colour.yellow, `Retry ${retries}/${maxRetries} for ${url}`);
+          await setTimeout(retryDelay);
+        }
+      }
 
       // Wait and page down multiple times to further trigger any lazy loads
       for (let pageDown = 0; pageDown < 5; pageDown++) {
