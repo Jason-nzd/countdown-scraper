@@ -37,7 +37,7 @@ export let uploadImagesMode = false;
 let headlessMode = true;
 categorisedUrls = await handleArguments(categorisedUrls);
 
-// Establish CosmosDB if being used
+// Establish CosmosDB connection if being used
 if (databaseMode) establishCosmosDB();
 
 // Establish playwright browser
@@ -98,6 +98,8 @@ async function scrapeAllPageURLs() {
 
   // Loop through each page URL to scrape
   for (let i = 0; i < categorisedUrls.length; i++) {
+
+    // Extract url from CategorisedUrl object
     const categorisedUrl: CategorisedUrl = categorisedUrls[i];
     let url: string = categorisedUrls[i].url;
 
@@ -116,7 +118,7 @@ async function scrapeAllPageURLs() {
 
       while (retries < maxRetries) {
         try {
-      await page.goto(url);
+          await page.goto(url);
 
           // Set page timeout to 8 seconds
           await page.setDefaultTimeout(8000);
@@ -144,12 +146,29 @@ async function scrapeAllPageURLs() {
         await page.keyboard.press("PageDown");
       }
 
-      // Set page timeout to 15 seconds
-      await page.setDefaultTimeout(15000);
+      // If url has page= query parameter, check to see that page is available
+      let desiredPageNumber = 1;
+      let numPagesAvailable = 1;
+      if (categorisedUrl.url.includes("page=")) {
+        const currentPageMatch = categorisedUrl.url.match(/page=(\d+)/);
+        if (currentPageMatch) {
+          desiredPageNumber = parseInt(currentPageMatch[1])
 
-      // Wait for product-price h3 html element to dynamically load in,
-      //  this is required to see product data
-      await page.waitForSelector("product-price h3");
+          try {
+            // Detect number of pages available
+            const paginationUL = await page.innerHTML("ul.pagination");
+            const $$ = cheerio.load(paginationUL);
+            numPagesAvailable = $$("li").length - 2 // exclude prev/next buttons
+          } catch {
+            numPagesAvailable = 1; // if no pagination found, only 1 page exists
+          }
+
+          if (desiredPageNumber > numPagesAvailable) {
+            log(colour.yellow, `Page ${desiredPageNumber} does not exist, only ${numPagesAvailable} pages available. Skipping..`);
+            continue; // Skip this page as it doesn't exist
+          }
+        }
+      }
 
       // Load html into Cheerio for DOM selection
       const html = await page.innerHTML("product-grid");
@@ -170,12 +189,13 @@ async function scrapeAllPageURLs() {
         return !adHrefs.includes(productHref!);
       })
 
-      // Log the number of products found, time elapsed, category
+      // Log the number of products found, time elapsed, category, pages
       log(
         colour.yellow,
-        `${productEntries.length} product entries found`.padEnd(35) +
+        `${productEntries.length} product entries found`.padEnd(38) +
         `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(35) +
-        `Category: ${_.startCase(categorisedUrl.categories.join(" - "))}`
+        `Category: ${_.startCase(categorisedUrl.categories.join(" - ")).padEnd(20)}` +
+        `Page: ${desiredPageNumber}/${numPagesAvailable}`
       );
 
       // Log table header
@@ -351,7 +371,7 @@ async function uploadImageRestAPI(
 // -----------------
 // Handle command line arguments. Can be reverse mode, dry-run-mode, custom url, or categories
 
-function handleArguments(categorisedUrls): CategorisedUrl[] {
+function handleArguments(categorisedUrls: CategorisedUrl[]): CategorisedUrl[] {
   if (process.argv.length > 2) {
     // Slice out the first 2 arguments, as they are not user-provided
     const userArgs = process.argv.slice(2, process.argv.length);
@@ -378,7 +398,7 @@ function handleArguments(categorisedUrls): CategorisedUrl[] {
 
     // Try to parse the potential new url
     const parsedUrl = parseAndCategoriseURL(potentialUrl);
-    if (parsedUrl !== undefined) categorisedUrls = [parsedUrl];
+    if (parsedUrl !== undefined) categorisedUrls = parsedUrl;
   }
   return categorisedUrls;
 }

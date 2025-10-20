@@ -65,7 +65,7 @@ export function logTableHeader() {
   );
 
   let headerLine = ""
-  for (let i = 0; i < 111; i++) {
+  for (let i = 0; i < 113; i++) {
     headerLine += "-"
   }
   log(colour.yellow, headerLine);
