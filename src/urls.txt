@@ -80,7 +80,7 @@ woolworths.co.nz/shop/browse/pantry/snacks-sweets/corn-chips-salsa categories=ch
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/chips categories=chips pages=3
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/muesli-bars-snack-bars categories=muesli-bars pages=2
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-bars-blocks categories=chocolate pages=4
-woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=boxed-chocolate pages=3
+woolworths.co.nz/shop/browse/pantry/snacks-sweets/chocolate-boxes-gifts categories=chocolate pages=4
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/sweets-lollies-licorice categories=sweets-lollies pages=2
 woolworths.co.nz/shop/browse/pantry/snacks-sweets/gums-mints categories=sweets-lollies
 woolworths.co.nz/shop/browse/pantry/eggs
