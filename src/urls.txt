@@ -109,14 +109,14 @@ woolworths.co.nz/shop/browse/pantry/sauces-pastes categories=sauces
 # Beer & Wine
 
 # Drinks
-woolworths.co.nz/shop/browse/drinks/coffee pages=3
-woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea pages=2
+woolworths.co.nz/shop/browse/drinks/coffee pages=2
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/black-breakfast-tea categories=black-tea
 woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/green-tea categories=green-tea
-woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=herbal-tea pages=2
+woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/herbal-fruit-teas categories=herbal-tea
 woolworths.co.nz/shop/browse/drinks/tea-milk-drinks/drinking-chocolate-malt categories=drinking-chocolate
-woolworths.co.nz/shop/browse/drinks/juice-cordial categories=juice pages=3
-woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks pages=2
-woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks pages=2
+woolworths.co.nz/shop/browse/drinks/juice-cordial categories=juice
+woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/soft-drinks
+woolworths.co.nz/shop/browse/drinks/soft-drinks-sports-drinks/energy-drinks
 
 # Health & Body
 
