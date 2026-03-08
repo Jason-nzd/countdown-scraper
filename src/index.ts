@@ -730,40 +730,50 @@ export function parseAndCategoriseURL(
   if (!line.includes("woolworths.co.nz")) {
     return undefined;
 
-    // If line is a search url, return as-is
-  } else if (line.includes("?search=")) {
-    parsedUrls.push({ url: line, categories: [] })
-
-    // Else optimize and cleanup URL
   } else {
-    // Split line by empty space, look for url, optional page amount & category
+    // Split line into sections
     line.split(" ").forEach((section) => {
 
-      // Parse URL
-      if (section.includes("woolworths.co.nz")) {
+      // If line is a search url
+      if (section.includes("?search=")) {
         baseCategorisedURL.url = section;
 
         // Ensure URL has http:// or https://
         if (!baseCategorisedURL.url.startsWith("http"))
           baseCategorisedURL.url = "https://" + section;
 
-        // If url contains ? it has query options already set
+        // Add optimised query parameters,
+        baseCategorisedURL.url += '&page=1&inStockProductsOnly=true';
+
+        // Derive category from search term (can still be overridden)
+        const searchTerm = section.slice(section.indexOf("="), section.indexOf("&page="))
+        baseCategorisedURL.categories = [searchTerm]
+      }
+
+      // If not a search url but a regular url
+      else if (section.includes("woolworths.co.nz")) {
+        baseCategorisedURL.url = section;
+
+        // Ensure URL has http:// or https://
+        if (!baseCategorisedURL.url.startsWith("http"))
+          baseCategorisedURL.url = "https://" + section;
+
         if (section.includes("?")) {
           // Strip any existing query options off of URL
-          baseCategorisedURL.url = line.substring(0, line.indexOf("?"));
+          baseCategorisedURL.url = section.substring(0, section.indexOf("?"));
         }
         // Replace query parameters with optimised ones,
         //  such as limiting to in-stock only,
         baseCategorisedURL.url += '?page=1&inStockProductsOnly=true';
 
-        // Parse Category
-      } else if (section.startsWith("categories=")) {
+        // If not a search url or regular url, try parse category
+      } else if (section.includes("categories=") || section.includes("category=")) {
         let splitCategories = [section.replace("categories=", "")];
         if (section.includes(","))
           splitCategories = section.replace("categories=", "").split(",");
         baseCategorisedURL.categories = splitCategories;
 
-        // Parse number of pages
+        // If not a search url, regular url, or category, try parse number of pages
       } else if (section.startsWith("pages=")) {
         numPagesPerURL = Number.parseInt(section.split("=")[1]);
       }
