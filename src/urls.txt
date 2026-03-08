@@ -1,5 +1,5 @@
-# List of all URLs to be scraped (based off original WW categories as of Oct-2025)
-# --------------------------------------------------------------------------------
+# List of all URLs to be scraped (based off original WW categories as of March-2026)
+# ----------------------------------------------------------------------------------
 # Not all products are scraped. Only popular categories are to save time.
 # add pages=2 or similiar to scrape more pages per category.
 # add categories=name to replace the category if storing to a database.
@@ -107,6 +107,9 @@ woolworths.co.nz/shop/browse/pantry/cereals-spreads/muesli-oats categories=cerea
 woolworths.co.nz/shop/browse/pantry/sauces-pastes categories=sauces
 
 # Beer & Wine
+woolworths.co.nz/shop/browse/beer-wine/beer
+woolworths.co.nz/shop/browse/beer-wine/craft-beer
+woolworths.co.nz/shop/searchproducts?search=wine categories=wine
 
 # Drinks
 woolworths.co.nz/shop/browse/drinks/coffee pages=2
