@@ -71,63 +71,38 @@ export async function upsertProductToCosmosDB(
   scrapedProduct: Product
 ): Promise<UpsertResponse> {
   try {
-    // Check CosmosDB for any existing item using id and name as the partition key
-    const cosmosResponse = await container
-      .item(scrapedProduct.id as string, scrapedProduct.name)
+    // Check CosmosDB for any existing item using id and partition key
+    let cosmosResponse = await container
+      .item(scrapedProduct.id, scrapedProduct.category)
       .read();
 
-    // If an existing item was found in CosmosDB, check for update values before uploading
+    // If unable to find, try find item without partition key
+    if (cosmosResponse.statusCode != 200) {
+      cosmosResponse = await container.item(scrapedProduct.id).read()
+    }
+
     if (cosmosResponse.statusCode === 200) {
-      const dbProduct = (await cosmosResponse.resource) as Product;
-      const response = buildUpdatedProduct(scrapedProduct, dbProduct);
+      // If an existing item was found in CosmosDB, check for updated values before uploading
+      const dbProduct = (await cosmosResponse.resource) as DBProduct;
+      const response = buildUpdatedDBProduct(scrapedProduct, dbProduct);
 
       // Send updated product to CosmosDB
-      await container.items.upsert(response.product);
+      await container.items.upsert(response.dbProduct);
+
+      // Return response type for logging
       return response.upsertType;
     }
 
-    // If product with ID and exact name doesn't yet exist in CosmosDB
     else if (cosmosResponse.statusCode === 404) {
-      // First check if there is an existing product with the same ID but different name(partition key)
-      const querySpec = {
-        query: `SELECT * FROM products p WHERE p.id = @id`,
-        parameters: [
-          {
-            name: "@id",
-            value: scrapedProduct.id,
-          },
-        ],
-      };
-      const { resources } = await container.items.query(querySpec).fetchAll();
+      // If product with ID doesn't yet exist, create new cosmos document
+      await container.items.create(transformToDBProduct(scrapedProduct));
 
-      // If an existing ID was found, update the DB with the new name
-      if (resources.length > 0) {
-        // Cast existing product to correct type
-        const dbProduct = resources[0] as Product;
+      console.log(
+        `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
+        ` | $ ${scrapedProduct.currentPrice}`
+      );
 
-        // Update product with new name
-        const response = buildUpdatedProduct(scrapedProduct, dbProduct);
-        response.product.name = scrapedProduct.name;
-
-        // Send updated product to CosmosDB
-        await container.items.upsert(response.product);
-        return response.upsertType;
-      } else {
-        // If no existing ID was found, create a new product
-        await container.items.create(scrapedProduct);
-
-        console.log(
-          `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
-          ` | $ ${scrapedProduct.currentPrice}`
-        );
-
-        return UpsertResponse.NewProduct;
-      }
-    }
-    // Manage any failed cosmos updates
-    else if (cosmosResponse.statusCode === 409) {
-      logError(`Conflicting ID found for product ${scrapedProduct.name}`);
-      return UpsertResponse.Failed;
+      return UpsertResponse.NewProduct;
     } else {
       // If CosmoDB returns a status code other than 200 or 404, manage other errors here
       logError(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
@@ -139,220 +114,89 @@ export async function upsertProductToCosmosDB(
   }
 }
 
-// buildUpdatedProduct()
+// buildUpdatedDBProduct()
 // ---------------------
 // This takes a freshly scraped product and compares it with a found database product.
 // It returns an updated product with data from both product versions
-
-function buildUpdatedProduct(
+function buildUpdatedDBProduct(
   scrapedProduct: Product,
-  dbProduct: Product
+  dbProduct: DBProduct
 ): ProductResponse {
-  // Date objects pulled from CosmosDB need to re-parsed as strings in format yyyy-mm-dd
-  let dbDay = dbProduct.lastUpdated.toString();
-  dbDay = dbDay.slice(0, 10);
-  let scrapedDay = scrapedProduct.lastUpdated.toISOString().slice(0, 10);
+  try {
+    // Set dbProduct's lastChecked to today to signify it is up to date
+    dbProduct.lastChecked = today
 
-  // Measure the price difference between the new scraped product and the old db product
-  const priceDifference = Math.abs(
-    dbProduct.currentPrice - scrapedProduct.currentPrice
-  );
-
-  // If price has changed by more than $0.05, and not on the same day
-  if (priceDifference > 0.05 && dbDay != scrapedDay) {
-    // Push scraped priceHistory into existing priceHistory array
-    dbProduct.priceHistory.push(scrapedProduct.priceHistory[0]);
-
-    // Set the scrapedProduct to use the updated priceHistory
-    scrapedProduct.priceHistory = dbProduct.priceHistory;
-
-    // Return completed Product ready for uploading
-    logPriceChange(dbProduct, scrapedProduct.currentPrice);
-    return {
-      upsertType: UpsertResponse.PriceChanged,
-      product: scrapedProduct,
-    };
-  }
-
-  // If any db categories are not included within the list of valid ones, update to scraped ones
-  else if (
-    !dbProduct.category.every((category) => {
-      const isValid = validCategories.includes(category);
-      return isValid;
-    }) ||
-    dbProduct.category === null
-  ) {
-    console.log(
-      `  Categories Changed: ${scrapedProduct.name
-        .padEnd(40)
-        .substring(0, 40)}` +
-      ` - ${dbProduct.category.join(" ")} > ${scrapedProduct.category.join(
-        " "
-      )}`
+    // Measure the price difference between scraped and db product
+    const dbLastPrice = dbProduct.priceHistory[dbProduct.priceHistory.length - 1].price;
+    const priceDifference = Math.abs(
+      dbLastPrice - scrapedProduct.currentPrice
     );
 
-    // Update everything but priceHistory and lastUpdated
-    scrapedProduct.priceHistory = dbProduct.priceHistory;
-    scrapedProduct.lastUpdated = dbProduct.lastUpdated;
+    // If price has changed by more than $0.05,
+    // and doesn't already have a price entry for today
+    const dbLastUpdated = dbProduct.priceHistory[dbProduct.priceHistory.length - 1].date;
+    if (priceDifference > 0.05 && dbLastUpdated != today) {
+      // Push scraped priceHistory into existing priceHistory array
+      const newDatedPrice = {
+        date: today,
+        price: scrapedProduct.currentPrice
+      }
+      dbProduct.priceHistory.push(newDatedPrice);
 
-    // Return completed Product ready for uploading
-    return {
-      upsertType: UpsertResponse.InfoChanged,
-      product: scrapedProduct,
-    };
+      logPriceChange(dbProduct);
+
+      // Return completed dbProduct ready for uploading
+      return {
+        upsertType: UpsertResponse.PriceChanged,
+        dbProduct: dbProduct,
+      };
+    }
+    else {
+      // Else return dbProduct with only .lastChecked being updated
+      return {
+        upsertType: UpsertResponse.AlreadyUpToDate,
+        dbProduct: dbProduct,
+      };
+    }
+  }
+  catch (error: any) {
+    logError("Error building updated DBproduct: " + error.message)
+    process.exit(1);
   }
 
-  // Update other info
-  else if (
-    dbProduct.sourceSite !== scrapedProduct.sourceSite ||
-    dbProduct.category.join(" ") !== scrapedProduct.category.join(" ") ||
-    dbProduct.size !== scrapedProduct.size ||
-    dbProduct.unitPrice !== scrapedProduct.unitPrice ||
-    dbProduct.unitName !== scrapedProduct.unitName ||
-    dbProduct.originalUnitQuantity !== scrapedProduct.originalUnitQuantity
-  ) {
-    // Update everything but priceHistory and lastUpdated
-    scrapedProduct.priceHistory = dbProduct.priceHistory;
-    scrapedProduct.lastUpdated = dbProduct.lastUpdated;
+}
 
-    // Return completed Product ready for uploading
-    return {
-      upsertType: UpsertResponse.InfoChanged,
-      product: scrapedProduct,
-    };
-  } else {
-    // Nothing has changed, only update lastChecked
-    dbProduct.lastChecked = scrapedProduct.lastChecked;
-    return {
-      upsertType: UpsertResponse.AlreadyUpToDate,
-      product: dbProduct,
-    };
+// transformToDBProduct
+// --------------------
+// Transform a raw scraped product into one compatible with the cosmosdb model
+function transformToDBProduct(p: Product): DBProduct {
+  const firstDatedPrice: DatedPrice = {
+    date: today,
+    price: p.currentPrice
+  }
+  return {
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    size: p.size,
+    priceHistory: [firstDatedPrice],
+    lastChecked: today,
+    sourceSite: "countdown.co.nz",
+    unitPrice: p.unitPrice
   }
 }
 
 // logPriceChange()
 // ----------------
-// Log a per product price change message,
-//  coloured green for price reduction, red for price increase
+// Log per product price change
+export function logPriceChange(p: DBProduct) {
+  const newPrice = p.priceHistory[p.priceHistory.length - 1].price;
+  const oldPrice = p.priceHistory[p.priceHistory.length - 2].price;
 
-export function logPriceChange(product: Product, newPrice: number) {
-  const priceIncreased = newPrice > product.currentPrice;
+  const priceIncreased = newPrice > oldPrice;
   log(
     priceIncreased ? colour.red : colour.green,
-    "  Price " +
-    (priceIncreased ? "Up   : " : "Down : ") +
-    product.name.slice(0, 47).padEnd(47) +
-    " | $" +
-    product.currentPrice.toString().padStart(4) +
-    " > $" +
-    newPrice
+    "  Price " + (priceIncreased ? "Up   : " : "Down : ") +
+    `${p.name.slice(0, 47).padEnd(47)} | $${oldPrice} > $${newPrice}`
   );
-}
-
-// customQuery()
-// -------------
-// Function for running custom DB queries - used primarily for debugging
-
-export async function customQuery(): Promise<void> {
-  const options: FeedOptions = {
-    maxItemCount: 30,
-  };
-  const secondsDelayBetweenBatches = 5;
-  const querySpec: SqlQuerySpec = {
-    query: "SELECT * FROM products p",
-  };
-
-  log(colour.yellow, "Custom Query \n" + querySpec.query);
-
-  const response = await container.items.query(querySpec, options);
-
-  let batchCount = 0;
-  const maxBatchCount = 900;
-  let continueFetching = true;
-
-  await (async () => {
-    while (response.hasMoreResults() && continueFetching) {
-      await delayedBatchFetch();
-    }
-  })();
-
-  console.log("Custom Query Complete");
-  return;
-
-  function delayedBatchFetch() {
-    return new Promise<void>((resolve) =>
-      setTimeout(async () => {
-        console.log(
-          "Batch " +
-          batchCount +
-          " - Items [" +
-          batchCount * options.maxItemCount! +
-          " - " +
-          (batchCount + 1) * options.maxItemCount!
-        ) + "]";
-
-        const batch = await response.fetchNext();
-        const products = batch.resources as Product[];
-        const items = batch.resources;
-
-        products.forEach(async (p) => {
-          let oldDatedPrice = 0;
-          let requiresUpdate = false;
-
-          p.priceHistory.forEach((datedPrice) => {
-            let newDatedPrice = datedPrice.price;
-            if (Math.abs(oldDatedPrice - newDatedPrice) < 0.04) {
-              console.log(p.name);
-              console.log(
-                " - Tiny price difference detected on " +
-                datedPrice.date.toDateString() +
-                " - " +
-                oldDatedPrice +
-                " - " +
-                newDatedPrice
-              );
-              datedPrice.price = 0;
-              requiresUpdate = true;
-            }
-            oldDatedPrice = newDatedPrice;
-          });
-
-          if (requiresUpdate) {
-            let updatedPriceHistory = p.priceHistory.filter((datedPrice) => {
-              if (datedPrice.price > 0) return true;
-              else return false;
-            });
-
-            console.log(
-              " - Old price history length: " +
-              p.priceHistory.length +
-              " - new length: " +
-              updatedPriceHistory.length
-            );
-
-            p.priceHistory = updatedPriceHistory;
-
-            const uploadRes = await container.items.upsert(p);
-            console.log(
-              " - Uploaded updated product with status code: " +
-              uploadRes.statusCode
-            );
-          }
-
-          // item.name = item.name.replace('  ', ' ').trim();
-          // let p: Product = item as Product;
-
-          // const res = await container.item(item.id, item.name).delete();
-          // console.log('delete ' + res.statusCode);
-
-          // const uploadRes = await container.items.upsert(p);
-          // console.log('upload ' + uploadRes.statusCode);
-        });
-
-        if (batchCount++ === maxBatchCount) continueFetching = false;
-
-        resolve();
-      }, secondsDelayBetweenBatches * 1000)
-    );
-  }
 }

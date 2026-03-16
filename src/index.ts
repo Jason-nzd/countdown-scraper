@@ -9,7 +9,7 @@ import { setTimeout } from "timers/promises";
 
 import { establishCosmosDB, upsertProductToCosmosDB } from "./cosmosdb.js";
 import { productOverrides } from "./product-overrides.js";
-import { CategorisedUrl, DatedPrice, Product, UpsertResponse } from "./typings";
+import { CategorisedUrl, Product, UpsertResponse } from "./typings";
 import {
   log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince,
   logTableHeader, toTitleCase,
@@ -194,7 +194,7 @@ async function scrapeAllPageURLs() {
         colour.yellow,
         `${productEntries.length} product entries found`.padEnd(38) +
         `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(35) +
-        `Category: ${_.startCase(categorisedUrl.categories.join(" - ")).padEnd(20)}` +
+        `Category: ${_.startCase(categorisedUrl.category).padEnd(20)}` +
         `Page: ${desiredPageNumber}/${numPagesAvailable}`
       );
 
@@ -245,11 +245,10 @@ async function scrapeAllPageURLs() {
 // --------------------------
 // Loops through each product entry and scrapes pricing and other info.
 // This function is called by scrapeAllPageURLs.
-
 async function processFoundProductEntries
   (
     categorisedUrl: CategorisedUrl,
-    productEntries: cheerio.Cheerio<cheerio.Element>,
+    productEntries: cheerio.Cheerio<any>,
     perPageLogStats: {
       newProducts: number;
       priceChanged: number;
@@ -263,7 +262,7 @@ async function processFoundProductEntries
 
     const product = playwrightElementToProduct(
       productEntryElement,
-      categorisedUrl.categories
+      categorisedUrl.category
     );
 
     if (databaseMode && product !== undefined) {
@@ -274,9 +273,6 @@ async function processFoundProductEntries
       switch (response) {
         case UpsertResponse.AlreadyUpToDate:
           perPageLogStats.alreadyUpToDate++;
-          break;
-        case UpsertResponse.InfoChanged:
-          perPageLogStats.infoUpdated++;
           break;
         case UpsertResponse.NewProduct:
           perPageLogStats.newProducts++;
@@ -494,8 +490,8 @@ async function selectStoreByLocationName(locationName: string = "") {
 // Takes a playwright html element for 'a.product-entry', builds and returns a Product
 
 export function playwrightElementToProduct(
-  element: cheerio.Element,
-  categories: string[]
+  element: any,
+  category: string
 ): Product | undefined {
   const $ = cheerio.load(element);
 
@@ -514,19 +510,11 @@ export function playwrightElementToProduct(
     // Extract product ID from h3 id attribute, and remove non-numbers
     id: idNameSizeH3.attr("id")?.replace(/\D/g, "") as string,
 
-    // Source Site - set where the source of information came from
-    sourceSite: "countdown.co.nz", // use countdown for consistency with old data
-
-    // Categories
-    category: categories,  // already obtained from url/text file
-
-    // Store today's date
-    lastChecked: new Date(),
-    lastUpdated: new Date(),
+    // Category
+    category: category,  // already obtained from url/text file
 
     // These values will later be overwritten
     name: "",
-    priceHistory: [],
     currentPrice: 0,
   };
 
@@ -589,18 +577,6 @@ export function playwrightElementToProduct(
   centString = centString.replace(/\D/g, "");
   product.currentPrice = Number(dollarString + "." + centString);
 
-  // Create a date object for now, but with minutes and seconds set to 0
-  const today = new Date();
-  today.setMinutes(0);
-  today.setSeconds(0);
-
-  // Create a DatedPrice object, which may be added into the product if needed
-  const todaysDatedPrice: DatedPrice = {
-    date: today,
-    price: product.currentPrice,
-  };
-  product.priceHistory = [todaysDatedPrice];
-
   // Unit Price
   // -----------
   // Try to extract from span.cupPrice, ex: $2.52 / 100mL
@@ -636,9 +612,8 @@ export function playwrightElementToProduct(
     unit = unit.replace("1kg", "kg");
     unit = unit.replace("1L", "L");
 
-    // Set finalised unit price and name
-    product.unitPrice = unitPrice;
-    product.unitName = unit;
+    // Set finalised unit price
+    product.unitPrice = unitPrice + "/" + unit;
   }
 
   // Overrides
@@ -654,37 +629,17 @@ export function playwrightElementToProduct(
 
       // Check for category override
       if (override.category !== undefined) {
-        product.category = [override.category];
+        product.category = override.category;
       }
     }
   });
 
-  // Validation
-  // ----------
   // If product values pass validation, return product
-  if (validateProduct(product)) return product;
-  else {
-    try {
-      logError(
-        `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
-        `$${product.currentPrice}`
-      );
-    } catch {
-      logError("  Unable to Scrape ID from product");
-    }
-    return undefined;
-  }
-}
-
-// validateProduct()
-// -----------------
-// Checks scraped product values are within reasonable ranges
-
-function validateProduct(product: Product): boolean {
+  let validProduct = true;
   try {
-    if (product.name.match(/\$\s\d+/)) return false;
-    if (product.name.length < 4 || product.name.length > 100) return false;
-    if (product.id.length < 2 || product.id.length > 20) return false;
+    if (product.name.match(/\$\s\d+/)) validProduct = false;
+    if (product.name.length < 4 || product.name.length > 100) validProduct = false;
+    if (product.id.length < 2 || product.id.length > 20) validProduct = false;
     if (
       product.currentPrice <= 0 ||
       product.currentPrice === null ||
@@ -692,11 +647,18 @@ function validateProduct(product: Product): boolean {
       Number.isNaN(product.currentPrice) ||
       product.currentPrice > 999
     ) {
-      return false;
+      validProduct = false;
     }
-    return true;
   } catch (error) {
-    return false;
+    validProduct = false;
+  }
+  if (validProduct) return product
+  else {
+    logError(
+      `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
+      `$${product.currentPrice}`
+    );
+    return undefined;
   }
 }
 
@@ -722,7 +684,7 @@ function validateProduct(product: Product): boolean {
 export function parseAndCategoriseURL(
   line: string
 ): CategorisedUrl[] | undefined {
-  let baseCategorisedURL: CategorisedUrl = { url: "", categories: [] };
+  let baseCategorisedURL: CategorisedUrl = { url: "", category: "" };
   let parsedUrls: CategorisedUrl[] = [];
   let numPagesPerURL = 1;
 
@@ -747,7 +709,7 @@ export function parseAndCategoriseURL(
 
         // Derive category from search term (can still be overridden)
         const searchTerm = section.slice(section.indexOf("="), section.indexOf("&page="))
-        baseCategorisedURL.categories = [searchTerm]
+        baseCategorisedURL.category = searchTerm
       }
 
       // If not a search url but a regular url
@@ -768,10 +730,7 @@ export function parseAndCategoriseURL(
 
         // If not a search url or regular url, try parse category
       } else if (section.includes("categories=") || section.includes("category=")) {
-        let splitCategories = [section.replace("categories=", "")];
-        if (section.includes(","))
-          splitCategories = section.replace("categories=", "").split(",");
-        baseCategorisedURL.categories = splitCategories;
+        baseCategorisedURL.category = section.split("=")[1];
 
         // If not a search url, regular url, or category, try parse number of pages
       } else if (section.startsWith("pages=")) {
@@ -779,13 +738,13 @@ export function parseAndCategoriseURL(
       }
 
       // If no category was specified, derive one from the last url /section
-      if (baseCategorisedURL.categories.length === 0) {
+      if (baseCategorisedURL.category == "") {
         // Extract /slashSections/ from url, while excluding content after '?'
         const baseUrl = baseCategorisedURL.url.split("?")[0];
         let slashSections = baseUrl.split("/");
 
         // Set category to last url /section/
-        baseCategorisedURL.categories = [slashSections[slashSections.length - 1]];
+        baseCategorisedURL.category = slashSections[slashSections.length - 1];
       }
     });
 
@@ -793,7 +752,7 @@ export function parseAndCategoriseURL(
     for (let i = 1; i <= numPagesPerURL; i++) {
       let pagedUrl = {
         url: baseCategorisedURL.url.replace("page=1", "page=" + i),
-        categories: baseCategorisedURL.categories,
+        category: baseCategorisedURL.category,
       }
       parsedUrls.push(pagedUrl);
     }

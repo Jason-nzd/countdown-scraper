@@ -42,7 +42,7 @@ export function logError(text: string) {
 // Log a single product in one row, using alternating colours for readability.
 
 export function logProductRow(product: Product) {
-  const unitPriceString = product.unitPrice ? `$${product.unitPrice.toFixed(2)} /${product.unitName}` : ``;
+  const unitPriceString = product.unitPrice ? `$${product.unitPrice}` : ``;
   log(
     getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(tableIDWidth)} | ` +
@@ -120,92 +120,6 @@ export function getTimeElapsedSince(startTime: number): string {
     // Else print in 40s format
   } else return elapsedTimeString + "s";
 }
-
-// List of valid category names that scraped products should be put in
-export const validCategories: string[] = [
-  // freshCategory
-  'eggs',
-  'fruit',
-  'fresh-vegetables',
-  'salads-coleslaw',
-  'bread',
-  'bread-rolls',
-  'specialty-bread',
-  'bakery-cakes',
-  'bakery-desserts',
-  // chilledCategory
-  'milk',
-  'long-life-milk',
-  'sour-cream',
-  'cream',
-  'yoghurt',
-  'butter',
-  'cheese',
-  'cheese-slices',
-  'salami',
-  'other-deli-foods',
-  // meatCategory
-  'beef-lamb',
-  'chicken',
-  'ham',
-  'bacon',
-  'pork',
-  'patties-meatballs',
-  'sausages',
-  'deli-meats',
-  'meat-alternatives',
-  'seafood',
-  'salmon',
-  // frozenCategory
-  'ice-cream',
-  'ice-blocks',
-  'pastries-cheesecake',
-  'frozen-chips',
-  'frozen-vegetables',
-  'frozen-fruit',
-  'frozen-seafood',
-  'pies-sausage-rolls',
-  'pizza',
-  'other-savouries',
-  // pantryCategory
-  'rice',
-  'noodles',
-  'pasta',
-  'beans-spaghetti',
-  'canned-fish',
-  'canned-meat',
-  'soup',
-  'cereal',
-  'spreads',
-  'baking',
-  'sauces',
-  'oils-vinegars',
-  'world-foods',
-  // snacksCategory
-  'chocolate',
-  'boxed-chocolate',
-  'chips',
-  'crackers',
-  'biscuits',
-  'muesli-bars',
-  'nuts-bulk-mix',
-  'sweets-lollies',
-  'other-snacks',
-  // drinksCategory
-  'black-tea',
-  'green-tea',
-  'herbal-tea',
-  'drinking-chocolate',
-  'coffee',
-  'soft-drinks',
-  'energy-drinks',
-  'juice',
-  // petsCategory
-  'cat-food',
-  'cat-treats',
-  'dog-food',
-  'dog-treats',
-];
 
 // toTitleCase()
 // -------------
