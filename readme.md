@@ -60,19 +60,22 @@ This is a sample of a single product stored in CosmosDB. It was re-run at multip
 
 ```json
 {
-  "id": "123456",
-  "name": "Sausages Precooked Chinese Honey",
-  "currentPrice": 12.9,
-  "size": "Prepacked 1kg pack",
-  "priceHistory": [
-    {
-      "date": "Sat Jan 14 2023",
-      "price": 10
-    },
-    {
-      "date": "Thu Jan 26 2023",
-      "price": 12.9
-    }
-  ]
+    "id": "123456",
+    "name": "Flying Sriracha Sauce Black",
+    "category": "sauces",
+    "size": "455mL",
+    "sourceSite": "countdown.co.nz",
+    "lastChecked": "2023-02-22",
+    "priceHistory": [
+        {
+            "date": "2023-01-13",
+            "price": 5.99
+        },
+        {
+            "date": "2023-02-08",
+            "price": 7.5
+        }
+    ],
+    "unitPrice": "16.48/L",
 }
 ```
