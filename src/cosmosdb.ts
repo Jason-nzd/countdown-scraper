@@ -1,16 +1,16 @@
-// Used by index.ts for creating and accessing items stored in Azure CosmosDB
-
 import * as dotenv from "dotenv";
 dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
 
-import { CosmosClient, Container, Database, FeedOptions, SqlQuerySpec } from "@azure/cosmos";
-import { logError, log, colour, validCategories } from "./utilities";
-import { Product, UpsertResponse, ProductResponse } from "./typings";
+import { CosmosClient, Container } from "@azure/cosmos";
+import { logError, log, colour } from "./utilities";
+import { Product, UpsertResponse, ProductResponse, DBProduct, DatedPrice } from "./typings";
 
 let cosmosClient: CosmosClient;
-let database: Database;
 let container: Container;
+let partitionKey: string;
+
+const today = new Date().toISOString().split('T')[0];
 
 export async function establishCosmosDB() {
   // Get CosmosDB connection string stored in .env
@@ -22,27 +22,43 @@ export async function establishCosmosDB() {
   }
 
   // Ensure partition key is in correct format
-  let validatedPartitionKey = process.env.COSMOS_PARTITION_KEY;
-  if (validatedPartitionKey?.charAt(0) != "/") validatedPartitionKey = "/" + validatedPartitionKey;
+  partitionKey = process.env.COSMOS_PARTITION_KEY || "";
+  if (partitionKey.charAt(0) != "/") partitionKey = "/" + partitionKey;
 
   // Establish CosmosDB Client, Database, Container
   try {
     cosmosClient = new CosmosClient(COSMOS_CONSTRING);
 
-    const databaseResponse = await cosmosClient.databases.createIfNotExists({
-      id: process.env.COSMOS_DB_NAME,
-    });
+    // Connect to database & container
+    const database = await cosmosClient.database(process.env.COSMOS_DB_NAME!);
+    container = await database.container(process.env.COSMOS_CONTAINER!);
 
-    database = databaseResponse.database;
+    // Test container connection and log container name
+    const containerDef = await container.read();
+    console.log(`Connected to CosmosDB Container:${containerDef.resource!.id} PK:${partitionKey} `);
 
-    const containerResponse = await database.containers.createIfNotExists({
-      id: process.env.COSMOS_CONTAINER,
-      partitionKey: { paths: [validatedPartitionKey] },
-    });
-
-    container = containerResponse.container;
   } catch (error) {
     throw Error(error + "\n\nInvalid CosmosDB connection - check for valid connection string");
+  }
+
+  // Test that some products can be read and parsed as DBProducts
+  try {
+    const testDocuments = await container.items.query(
+      { query: "SELECT TOP 5 * FROM c" }
+    ).fetchAll();
+
+    // Test 5 products were found
+    const products = testDocuments.resources as DBProduct[];
+    if (products.length < 5) throw new Error()
+
+    // Test that data fields can be read
+    products.map((p) => {
+      if (p.name.length < 3) throw new Error();
+    });
+
+  } catch (error: any) {
+    logError(`Error reading from and parsing DB products: ${error.message}`);
+    process.exit(1);
   }
 }
 
