@@ -72,18 +72,30 @@ export async function upsertProductToCosmosDB(
 ): Promise<UpsertResponse> {
   try {
     // Check CosmosDB for any existing item using id and partition key
-    let cosmosResponse = await container
+    let partitionQuery = await container
       .item(scrapedProduct.id, scrapedProduct.category)
       .read();
+    let statusCode = partitionQuery.statusCode;
+    let resource = partitionQuery.resource;
 
-    // If unable to find, try find item without partition key
-    if (cosmosResponse.statusCode != 200) {
-      cosmosResponse = await container.item(scrapedProduct.id).read()
+    // If unable to find with partition key, try searching by id across all partitions
+    if (statusCode != 200) {
+      const crossPartitionQuery = await container.items
+        .query({
+          query: "SELECT * FROM c WHERE c.id = @id",
+          parameters: [{ name: "@id", value: scrapedProduct.id }]
+        })
+        .fetchAll();
+
+      if (crossPartitionQuery.resources && crossPartitionQuery.resources.length > 0) {
+        resource = crossPartitionQuery.resources[0];
+        statusCode = 200;
+      }
     }
 
-    if (cosmosResponse.statusCode === 200) {
+    if (statusCode === 200) {
       // If an existing item was found in CosmosDB, check for updated values before uploading
-      const dbProduct = (await cosmosResponse.resource) as DBProduct;
+      const dbProduct = (await resource) as DBProduct;
       const response = buildUpdatedDBProduct(scrapedProduct, dbProduct);
 
       // Send updated product to CosmosDB
@@ -93,9 +105,10 @@ export async function upsertProductToCosmosDB(
       return response.upsertType;
     }
 
-    else if (cosmosResponse.statusCode === 404) {
+    else if (statusCode === 404) {
       // If product with ID doesn't yet exist, create new cosmos document
-      await container.items.create(transformToDBProduct(scrapedProduct));
+      const dbProduct = transformToDBProduct(scrapedProduct);
+      await container.items.create(dbProduct);
 
       console.log(
         `  New Product: ${scrapedProduct.name.slice(0, 47).padEnd(47)}` +
@@ -105,7 +118,7 @@ export async function upsertProductToCosmosDB(
       return UpsertResponse.NewProduct;
     } else {
       // If CosmoDB returns a status code other than 200 or 404, manage other errors here
-      logError(`CosmosDB returned status code: ${cosmosResponse.statusCode}`);
+      logError(`CosmosDB returned status code: ${statusCode}`);
       return UpsertResponse.Failed;
     }
   } catch (e: any) {
@@ -197,6 +210,6 @@ export function logPriceChange(p: DBProduct) {
   log(
     priceIncreased ? colour.red : colour.green,
     "  Price " + (priceIncreased ? "Up   : " : "Down : ") +
-    `${p.name.slice(0, 47).padEnd(47)} | $${oldPrice} > $${newPrice}`
+    `${p.name.slice(0, 47).padEnd(47)} | $ ${oldPrice.toFixed(2)} > $${newPrice.toFixed(2)}`
   );
 }
