@@ -436,52 +436,60 @@ async function selectStoreByLocationName(locationName: string = "") {
 
   log(colour.yellow, "Selecting Store Location..");
 
-  // Open store selection page
-  try {
-    await page.setDefaultTimeout(12000);
-    await page.goto("https://www.woolworths.co.nz/bookatimeslot", {
-      waitUntil: "domcontentloaded",
-    });
-    await page.waitForSelector("fieldset div div p button");
-  } catch (error) {
-    logError("Location selection page timed out - Using default location instead");
-    return;
-  }
+  // Retry logic with 4 retries and 5 second cooldowns
+  const maxRetries = 4;
+  const retryDelay = 5000; // 5 seconds
 
-  const oldLocation = await page
-    .locator("fieldset div div p strong")
-    .innerText();
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Open store selection page
+      await page.setDefaultTimeout(12000);
+      await page.goto("https://www.woolworths.co.nz/bookatimeslot", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.waitForSelector("fieldset div div p button");
 
-  // Click change address modal
-  await page.locator("fieldset div div p button").click();
-  await page.waitForSelector("form-suburb-autocomplete form-input input");
-  try {
-    // Type in address, wait 1.5s for auto-complete to populate entries
-    await page
-      .locator("form-suburb-autocomplete form-input input")
-      .type(locationName);
-    await page.waitForTimeout(1500);
+      const oldLocation = await page
+        .locator("fieldset div div p strong")
+        .innerText();
 
-    // Select first matched entry, wait for validation
-    await page.keyboard.press("ArrowDown");
-    await page.waitForTimeout(300);
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(1000);
+      // Click change address modal
+      await page.locator("fieldset div div p button").click();
+      await page.waitForSelector("form-suburb-autocomplete form-input input");
 
-    // Click save location button
-    await page.getByText("Save and Continue Shopping").click();
-    log(
-      colour.yellow,
-      "Changed Location from " + oldLocation + " to " + locationName + "\n"
-    );
+      // Type in address, wait 1.5s for auto-complete to populate entries
+      await page
+        .locator("form-suburb-autocomplete form-input input")
+        .type(locationName);
+      await page.waitForTimeout(1500);
 
-    // Ensure location is saved before moving on
-    await page.waitForTimeout(2000);
-  } catch {
-    // Catch timeout if no locations are found using the provided env value.
-    logError(
-      `Store Location:${locationName} not found. Using default instead.`
-    );
+      // Select first matched entry, wait for validation
+      await page.keyboard.press("ArrowDown");
+      await page.waitForTimeout(300);
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(1000);
+
+      // Click save location button
+      await page.getByText("Save and Continue Shopping").click();
+      log(
+        colour.yellow,
+        "Changed Location from " + oldLocation + " to " + locationName + "\n"
+      );
+
+      // Ensure location is saved before moving on
+      await page.waitForTimeout(2000);
+
+      // Success - exit the retry loop
+      return;
+    } catch (error) {
+      if (attempt === maxRetries) {
+        // All retries exhausted
+        logError("Location selection failed after all retries - Using default location instead");
+        return;
+      }
+      log(colour.yellow, `Store location selection failed, retry ${attempt + 1}/${maxRetries} in 5s..`);
+      await setTimeout(retryDelay);
+    }
   }
 }
 
@@ -526,6 +534,7 @@ export function playwrightElementToProduct(
   // Clean unnecessary words from titles
   rawNameAndSize = rawNameAndSize
     .toLowerCase()
+    .replace("   ", " ")
     .replace("  ", " ")
     .replace("fresh fruit", "")
     .replace("fresh vegetable", "")
