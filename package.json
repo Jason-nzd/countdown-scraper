@@ -5,7 +5,7 @@
   "description": "",
   "main": "index",
   "scripts": {
-    "test": "npx jest",
+    "test": "vitest",
     "dev": "npx tsx src/index.ts",
     "db": "npx tsx src/index.ts db",
     "db images": "npx tsx src/index.ts db images"
@@ -20,12 +20,10 @@
     "playwright": "1.58.2"
   },
   "devDependencies": {
-    "@types/jest": "30.0.0",
     "@types/lodash": "4.17.24",
     "@types/node": "25.5.0",
-    "jest": "30.2.0",
-    "ts-jest": "29.4.6",
     "tsx": "4.21.0",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
   }
 }
