@@ -1,5 +1,6 @@
 import { Product } from './typings';
 import { readFileSync } from 'fs';
+import { setTimeout } from 'timers/promises';
 
 // Set widths for table log output
 const tableIDWidth = 7
@@ -20,13 +21,49 @@ export const colour = {
   sky: '\x1b[38;5;153m',
 };
 
+// delay()
+// ----------
+// Delay execution for a specified number of milliseconds
+
+export async function delay(ms: number): Promise<void> {
+  await setTimeout(ms);
+}
+
+// withRetry()
+// ----------
+// Retry an async function with a maximum number of attempts and delay between retries
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options: { maxRetries: number; delay: number; label?: string }
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= options.maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < options.maxRetries) {
+        if (options.label) {
+          logWarn(`${options.label} failed, retry ${attempt}/${options.maxRetries} in ${options.delay}ms..`);
+        }
+        await delay(options.delay);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 // log()
 // ----------
 // Shorthand function for logging with custom colour
 
-export function log(text: string, colour: string = "colour.white") {
+export function log(text: string, logColour?: string) {
   const clear = '\x1b[0m';
-  console.log(`${colour}%s${clear}`, text);
+  const colourToUse = logColour ?? colour.white;
+  console.log(`${colourToUse}%s${clear}`, text);
 }
 
 // logWarn()
@@ -34,7 +71,7 @@ export function log(text: string, colour: string = "colour.white") {
 // Shorthand function for logging with yellow colour
 
 export function logWarn(text: string) {
-  log(text, colour.red);
+  log(text, colour.yellow);
 }
 
 // logError()
@@ -42,7 +79,7 @@ export function logWarn(text: string) {
 // Shorthand function for logging with red colour
 
 export function logError(text: string) {
-  log(text, colour.yellow)
+  log(text, colour.red)
 }
 
 // logProductRow()

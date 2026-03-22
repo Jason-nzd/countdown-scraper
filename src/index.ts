@@ -1,20 +1,19 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 dotenv.config({ path: `.env.local`, override: true });
-
 import playwright from "playwright";
 import * as cheerio from "cheerio";
 import _ from "lodash";
-import { setTimeout } from "timers/promises";
-
 import { establishCosmosDB, upsertProductToCosmosDB } from "./cosmosdb.js";
-import { productOverrides } from "./product-overrides.js";
 import { CategorisedUrl, Product, UpsertResponse } from "./typings";
 import {
-  log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince,
-  logTableHeader, toTitleCase,
-  logWarn,
+  log, colour, logProductRow, logError, logWarn, getTimeElapsedSince,
+  logTableHeader, delay, withRetry,
 } from "./utilities.js";
+import { establishPlaywrightPage, selectStoreByLocationName } from "./browser.js";
+import { playwrightElementToProduct } from "./parser.js";
+import { loadUrlsFile, parseAndCategoriseURL } from "./url-loader.js";
+
 
 // Woolworths / Countdown Scraper
 // ------------------------------
@@ -22,12 +21,6 @@ import {
 
 // Set a reasonable delay between each page load to reduce load on the server.
 const pageLoadDelaySeconds = 7;
-
-// Set a delay when logging each product per page to the console.
-const productLogDelayMilliSeconds = 20;
-
-// Record start time for logging purposes
-const startTime = Date.now();
 
 // Load URLs from text file 'urls.txt'
 let categorisedUrls: CategorisedUrl[] = loadUrlsFile();
@@ -42,54 +35,32 @@ categorisedUrls = await handleArguments(categorisedUrls);
 if (databaseMode) establishCosmosDB();
 
 // Establish playwright browser
-let browser: playwright.Browser;
-let page: playwright.Page;
-browser = await establishPlaywrightPage(headlessMode);
+const { browser, page } = await establishPlaywrightPage(headlessMode);
 
 // Select store location
-await selectStoreByLocationName();
+await selectStoreByLocationName(page);
 
-// Main Loop - Scrape through each page
-await scrapeAllPageURLs();
+// Record start time for logging
+const startTime = Date.now();
+
+// Main Loop - Loop and process every page
+await processAllPageUrls();
 
 // Program End and Cleanup
 browser.close();
-log(
-  `\nAll Pages Completed = Total Time Elapsed ${getTimeElapsedSince(startTime)} \n`
-);
+log(`\nAll Pages Complete - Total Time Elapsed ${getTimeElapsedSince(startTime)} \n`);
 // -----------------------
 
 
-// loadUrlsFile
-// ------------
-// Loads and validates URLs from a txt file to be scraped.
+// processAllPageUrls
+// ------------------
+// Loops through each page URL scraping pricing and other info.
 
-function loadUrlsFile(filePath: string = "src/urls.txt"): CategorisedUrl[] {
-  // Try to read file urls.txt or other file for a list of URLs
-  const rawLinesFromFile: string[] = readLinesFromTextFile(filePath);
-
-  // Parse and optimise URLs
-  let categorisedUrls: CategorisedUrl[] = [];
-  rawLinesFromFile.map((line) => {
-    let parsedUrls = parseAndCategoriseURL(line);
-    if (parsedUrls !== undefined) {
-      categorisedUrls = [...categorisedUrls, ...parsedUrls];
-    }
-  });
-
-  // Return as an array of CategorisedUrl objects
-  return categorisedUrls;
-}
-
-// scrapeAllPageURLs
-// ---------------
-// Loops through each page URL and scrapes pricing and other info.
-// This is the main function that calls the other functions.
-
-async function scrapeAllPageURLs() {
+async function processAllPageUrls() {
 
   // Log loop start
-  logWarn(
+  log(
+    colour.yellow,
     `${categorisedUrls.length} pages to be scraped`.padEnd(35) +
     `${pageLoadDelaySeconds}s delay between scrapes`.padEnd(35) +
     (databaseMode ? "(Database Mode)" : "(Dry Run Mode)")
@@ -97,132 +68,20 @@ async function scrapeAllPageURLs() {
 
   // Loop through each page URL to scrape
   for (let i = 0; i < categorisedUrls.length; i++) {
-
-    // Extract url from CategorisedUrl object
     const categorisedUrl: CategorisedUrl = categorisedUrls[i];
-    let url: string = categorisedUrls[i].url;
-
-    // Log current scrape sequence and the total number of pages to scrape
-    const shortUrl = url.replace("https://", "");
-    logWarn(
-      `\n[${i + 1}/${categorisedUrls.length}] ${shortUrl}`
-    );
 
     try {
-      // Open page with upto 3 retries on failure
-      let retries = 0;
-      const maxRetries = 3;
-      const retryDelay = 2000; // 2 seconds
+      const result = await scrapePage(page, categorisedUrl, databaseMode, uploadImagesMode);
 
-      while (retries < maxRetries) {
-        try {
-          await page.goto(url);
-
-          // Set page timeout to 8 seconds
-          await page.setDefaultTimeout(8000);
-
-          // Wait for product-price h3 html element to dynamically load in,
-          //  this is required to see product data
-          await page.waitForSelector("product-price h3");
-
-          break; // If successful, exit the retry loop
-        } catch (error) {
-          retries++;
-          if (retries === maxRetries) {
-            throw error; // If all retries failed, throw the error
-          }
-          logWarn(`Retry ${retries}/${maxRetries} for ${url}`);
-          await setTimeout(retryDelay);
-        }
+      if (result.skipped) {
+        await delay(pageLoadDelaySeconds * 1000);
+        continue;
       }
 
-      // Wait and page down multiple times to further trigger any lazy loads
-      for (let pageDown = 0; pageDown < 5; pageDown++) {
-        // create a random number between 500 and 1500
-        const timeBetweenPgDowns = Math.random() * 1000 + 500;
-        await page.waitForTimeout(timeBetweenPgDowns);
-        await page.keyboard.press("PageDown");
+      // Delay between each page load (not after the last one)
+      if (i < categorisedUrls.length - 1) {
+        await delay(pageLoadDelaySeconds * 1000);
       }
-
-      // If url has page= query parameter, check to see that page is available
-      let desiredPageNumber = 1;
-      let numPagesAvailable = 1;
-      if (categorisedUrl.url.includes("page=")) {
-        const currentPageMatch = categorisedUrl.url.match(/page=(\d+)/);
-        if (currentPageMatch) {
-          desiredPageNumber = parseInt(currentPageMatch[1])
-
-          try {
-            // Detect number of pages available
-            const paginationUL = await page.innerHTML("ul.pagination");
-            const $$ = cheerio.load(paginationUL);
-            numPagesAvailable = $$("li").length - 2 // exclude prev/next buttons
-          } catch {
-            numPagesAvailable = 1; // if no pagination found, only 1 page exists
-          }
-
-          if (desiredPageNumber > numPagesAvailable) {
-            logWarn(`Page ${desiredPageNumber} does not exist, only ${numPagesAvailable} pages available. Skipping..`);
-            continue; // Skip this page as it doesn't exist
-          }
-        }
-      }
-
-      // Load html into Cheerio for DOM selection
-      const html = await page.innerHTML("product-grid");
-      const $ = cheerio.load(html);
-
-      // Find all product entries
-      const allProductEntries = $("cdx-card product-stamp-grid div.product-entry");
-
-      // Find advertisement product entries not normally part of this product category
-      const advertisementEntries = $("div.carousel-track div cdx-card product-stamp-grid div.product-entry")
-      const adHrefs: string[] = advertisementEntries.map((index, element) => {
-        return $(element).find("a").first().attr("href");
-      }).toArray();
-
-      // Filter out product entries that match the found advertisements
-      const productEntries = allProductEntries.filter((index, element) => {
-        const productHref = $(element).find("a").first().attr("href");
-        return !adHrefs.includes(productHref!);
-      })
-
-      // Log the number of products found, time elapsed, category, pages
-      logWarn(
-        `${productEntries.length} product entries found`.padEnd(38) +
-        `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(35) +
-        `Category: ${_.startCase(categorisedUrl.category).padEnd(20)}` +
-        `Page: ${desiredPageNumber}/${numPagesAvailable}`
-      );
-
-      // Log table header
-      if (!databaseMode) logTableHeader();
-
-      // Store number of items processed for logging purposes
-      let perPageLogStats = {
-        newProducts: 0,
-        priceChanged: 0,
-        infoUpdated: 0,
-        alreadyUpToDate: 0,
-      }
-
-      // Start nested loop which loops through each product entry
-      perPageLogStats =
-        await processFoundProductEntries(categorisedUrl, productEntries, perPageLogStats);
-
-      // After scraping every item is complete, log how many products were scraped
-      if (databaseMode) {
-        log(
-          `CosmosDB: ${perPageLogStats.newProducts} new products, ` +
-          `${perPageLogStats.priceChanged} updated prices, ` +
-          `${perPageLogStats.infoUpdated} updated info, ` +
-          `${perPageLogStats.alreadyUpToDate} already up-to-date`,
-          colour.blue,
-        );
-      }
-
-      // Delay between each page load
-      await setTimeout(pageLoadDelaySeconds * 1000);
 
     } catch (error: unknown) {
       if (typeof error === 'string') {
@@ -234,24 +93,159 @@ async function scrapeAllPageURLs() {
       logError(
         "Page Timeout after 15 seconds - Skipping this page\n" + error
       );
+      // Delay before continuing to next URL
+      await delay(pageLoadDelaySeconds * 1000);
     }
   }
+}
+
+
+// scrapePage()
+// ------------
+// Scrapes a single page URL and processes all products found.
+// Returns statistics about what was scraped/updated.
+
+interface PageScrapeResult {
+  success: boolean;
+  productCount: number;
+  newProducts: number;
+  priceChanged: number;
+  infoUpdated: number;
+  alreadyUpToDate: number;
+  skipped: boolean;
+}
+
+async function scrapePage(
+  page: playwright.Page,
+  categorisedUrl: CategorisedUrl,
+  databaseMode: boolean,
+  uploadImagesMode: boolean
+): Promise<PageScrapeResult> {
+  const url = categorisedUrl.url;
+  const shortUrl = url.replace("https://", "");
+
+  logWarn(`\n${shortUrl}`);
+
+  // Navigate to page with retry logic
+  await withRetry(
+    async () => {
+      await page.goto(url);
+      await page.setDefaultTimeout(8000);
+      await page.waitForSelector("product-price h3");
+    },
+    { maxRetries: 3, delay: 2000, label: `Page load for ${shortUrl}` }
+  );
+
+  // Page down multiple times to trigger any lazy loads
+  for (let pageDown = 0; pageDown < 5; pageDown++) {
+    const timeBetweenPgDowns = Math.random() * 1000 + 500;
+    await page.waitForTimeout(timeBetweenPgDowns);
+    await page.keyboard.press("PageDown");
+  }
+
+  // If url has page= query parameter, check to see that page is available
+  let desiredPageNumber = 1;
+  let numPagesAvailable = 1;
+  if (categorisedUrl.url.includes("page=")) {
+    const currentPageMatch = categorisedUrl.url.match(/page=(\d+)/);
+    if (currentPageMatch) {
+      desiredPageNumber = parseInt(currentPageMatch[1]);
+
+      try {
+        const paginationUL = await page.innerHTML("ul.pagination");
+        const $$ = cheerio.load(paginationUL);
+        numPagesAvailable = $$("li").length - 2;
+      } catch {
+        numPagesAvailable = 1;
+      }
+
+      if (desiredPageNumber > numPagesAvailable) {
+        logWarn(`Page ${desiredPageNumber} does not exist, only ${numPagesAvailable} pages available. Skipping..`);
+        return { success: false, productCount: 0, newProducts: 0, priceChanged: 0, infoUpdated: 0, alreadyUpToDate: 0, skipped: true };
+      }
+    }
+  }
+
+  // Load html into Cheerio for DOM selection
+  const html = await page.innerHTML("product-grid");
+  const $ = cheerio.load(html);
+
+  // Find all product entries
+  const allProductEntries = $("cdx-card product-stamp-grid div.product-entry");
+
+  // Find advertisement product entries not normally part of this product category
+  const advertisementEntries = $("div.carousel-track div cdx-card product-stamp-grid div.product-entry");
+  const adHrefs: string[] = advertisementEntries.map((index, element) => {
+    return $(element).find("a").first().attr("href");
+  }).toArray();
+
+  // Filter out product entries that match the found advertisements
+  const productEntries = allProductEntries.filter((index, element) => {
+    const productHref = $(element).find("a").first().attr("href");
+    return !adHrefs.includes(productHref!);
+  });
+
+  // Log the number of products found, time elapsed, category, pages
+  logWarn(
+    `${productEntries.length} product entries found`.padEnd(38) +
+    `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(35) +
+    `Category: ${_.startCase(categorisedUrl.category).padEnd(20)}` +
+    `Page: ${desiredPageNumber}/${numPagesAvailable}`
+  );
+
+  // Log table header
+  if (!databaseMode) logTableHeader();
+
+  // Process each product entry
+  let perPageLogStats = {
+    newProducts: 0,
+    priceChanged: 0,
+    infoUpdated: 0,
+    alreadyUpToDate: 0,
+  };
+
+  perPageLogStats = await processFoundProductEntries(
+    categorisedUrl,
+    productEntries,
+    perPageLogStats,
+    databaseMode,
+    uploadImagesMode
+  );
+
+  // Log summary for database mode
+  if (databaseMode) {
+    log(
+      `CosmosDB: ${perPageLogStats.newProducts} new products, ` +
+      `${perPageLogStats.priceChanged} updated prices, ` +
+      `${perPageLogStats.infoUpdated} updated info, ` +
+      `${perPageLogStats.alreadyUpToDate} already up-to-date`
+    );
+  }
+
+  return {
+    success: true,
+    productCount: productEntries.length,
+    ...perPageLogStats,
+    skipped: false,
+  };
 }
 
 // processFoundProductEntries
 // --------------------------
 // Loops through each product entry and scrapes pricing and other info.
-// This function is called by scrapeAllPageURLs.
-async function processFoundProductEntries
-  (
-    categorisedUrl: CategorisedUrl,
-    productEntries: cheerio.Cheerio<any>,
-    perPageLogStats: {
-      newProducts: number;
-      priceChanged: number;
-      infoUpdated: number;
-      alreadyUpToDate: number;
-    }) {
+// This function is called by scrapePage.
+async function processFoundProductEntries(
+  categorisedUrl: CategorisedUrl,
+  productEntries: cheerio.Cheerio<any>,
+  perPageLogStats: {
+    newProducts: number;
+    priceChanged: number;
+    infoUpdated: number;
+    alreadyUpToDate: number;
+  },
+  databaseMode: boolean,
+  uploadImagesMode: boolean
+) {
 
   // Loop through each product entry
   for (let i = 0; i < productEntries.length; i++) {
@@ -283,41 +277,43 @@ async function processFoundProductEntries
 
       // Upload image to Azure Function
       if (uploadImagesMode) {
-        // Get image url using provided base url, product ID, and hi-res query parameters
-        const imageUrlBase =
-          "https://assets.woolworths.com.au/images/2010/";
-        const imageUrlExtensionAndQueryParams =
-          ".jpg?impolicy=wowcdxwbjbx&w=900&h=900";
-        const imageUrl =
-          imageUrlBase + product.id + imageUrlExtensionAndQueryParams;
-
-        await uploadImageRestAPI(imageUrl!, product);
+        const imageUrl = getImageUrl(product.id);
+        await uploadImageToRestAPI(imageUrl, product);
       }
     } else if (!databaseMode && product !== undefined) {
-      // When doing a dry run, log product name - size - price in table format
       logProductRow(product!);
     }
 
     // Add a tiny delay between each product loop.
     // This makes printing the log more readable
-    await setTimeout(productLogDelayMilliSeconds);
+    await delay(20);
   }
 
   // Return log stats for completed page
   return perPageLogStats;
 }
 
-// uploadImageRestAPI()
+// getImageUrl()
+// -------------
+// Build image URL from product ID
+
+function getImageUrl(productId: string): string {
+  const imageUrlBase = "https://assets.woolworths.com.au/images/2010/";
+  const imageUrlExtensionAndQueryParams = ".jpg?impolicy=wowcdxwbjbx&w=900&h=900";
+  return imageUrlBase + productId + imageUrlExtensionAndQueryParams;
+}
+
+// uploadImageToRestAPI()
 // --------------------
 // Send image url to an Azure Function API
 
-async function uploadImageRestAPI(
+async function uploadImageToRestAPI(
   imgUrl: string,
   product: Product
 ): Promise<boolean> {
   // Check if passed in url is valid, return if not
   if (imgUrl === undefined || !imgUrl.includes("http") || product.id.length < 4) {
-    log(`  Image ${product.id} has invalid url: ${imgUrl}`, colour.grey,);
+    log(`  Image ${product.id} has invalid url: ${imgUrl}`);
     return false;
   }
 
@@ -341,21 +337,19 @@ async function uploadImageRestAPI(
 
   if (responseMsg.includes("S3 Upload of Full-Size")) {
     // Log for successful upload
-    log(
-      `  New Image  : ${(product.id + ".webp").padEnd(11)} | ` +
-      `${product.name.padEnd(40).slice(0, 40)}`,
-      colour.grey,
+    log(`  New Image  : ${(product.id + ".webp").padEnd(11)} | ` +
+      `${product.name.padEnd(40).slice(0, 40)}`
     );
   } else if (responseMsg.includes("already exists")) {
     // Do not log for existing images
   } else if (responseMsg.includes("Unable to download:")) {
     // Log for missing images
-    log(`  Image ${product.id} unavailable to be downloaded`, colour.grey);
+    log(`  Image ${product.id} unavailable to be downloaded`);
   } else if (responseMsg.includes("unable to be processed")) {
-    log(`  Image ${product.id} unable to be processed`, colour.grey);
+    log(`  Image ${product.id} unable to be processed`);
   } else {
     // Log any other errors that may have occurred
-    log(responseMsg);
+    console.log(responseMsg);
   }
   return true;
 }
@@ -382,11 +376,7 @@ function handleArguments(categorisedUrls: CategorisedUrl[]): CategorisedUrl[] {
 
       // Reverse the order of the URLs to be scraped, starting from the bottom
       else if (arg === "reverse") categorisedUrls = categorisedUrls.reverse();
-      // else if (arg === "custom") {
-      //   categorisedUrls = [];
-      //   await customQuery();
-      //   process.exit();
-      // }
+
     });
 
     // Try to parse the potential new url
@@ -395,420 +385,3 @@ function handleArguments(categorisedUrls: CategorisedUrl[]): CategorisedUrl[] {
   }
   return categorisedUrls;
 }
-
-// establishPlaywrightPage()
-// -------------------------
-// Create a playwright browser
-
-async function establishPlaywrightPage(headless = true) {
-  logWarn(
-    "Launching Browser.. " +
-    (process.argv.length > 2
-      ? "(" + (process.argv.length - 2) + " arguments found)"
-      : "")
-  );
-  browser = await playwright.firefox.launch({
-    headless: headless,
-  });
-  page = await browser.newPage();
-
-  // Reject unnecessary ad/tracking urls
-  await routePlaywrightExclusions();
-
-  return browser;
-}
-
-// selectStoreByLocationName()
-// ---------------------------
-// Selects a store location by typing in the specified location address
-
-async function selectStoreByLocationName(locationName: string = "") {
-  // If no location was passed in, also check .env for STORE_NAME
-  if (locationName === "") {
-    if (process.env.STORE_NAME) locationName = process.env.STORE_NAME;
-    // If STORE_NAME is also not present, skip store location selection
-    else return;
-  }
-
-  logWarn("Selecting Store Location..");
-
-  // Retry logic with 4 retries and 5 second cooldowns
-  const maxRetries = 4;
-  const retryDelay = 5000; // 5 seconds
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      // Open store selection page
-      await page.setDefaultTimeout(12000);
-      await page.goto("https://www.woolworths.co.nz/bookatimeslot", {
-        waitUntil: "domcontentloaded",
-      });
-      await page.waitForSelector("fieldset div div p button");
-
-      const oldLocation = await page
-        .locator("fieldset div div p strong")
-        .innerText();
-
-      // Click change address modal
-      await page.locator("fieldset div div p button").click();
-      await page.waitForSelector("form-suburb-autocomplete form-input input");
-
-      // Type in address, wait 1.5s for auto-complete to populate entries
-      await page
-        .locator("form-suburb-autocomplete form-input input")
-        .type(locationName);
-      await page.waitForTimeout(1500);
-
-      // Select first matched entry, wait for validation
-      await page.keyboard.press("ArrowDown");
-      await page.waitForTimeout(300);
-      await page.keyboard.press("Enter");
-      await page.waitForTimeout(1000);
-
-      // Click save location button
-      await page.getByText("Save and Continue Shopping").click();
-      logWarn(
-        "Changed Location from " + oldLocation + " to " + locationName + "\n"
-      );
-
-      // Ensure location is saved before moving on
-      await page.waitForTimeout(2000);
-
-      // Success - exit the retry loop
-      return;
-    } catch (error) {
-      if (attempt === maxRetries) {
-        // All retries exhausted
-        logError("Location selection failed after all retries - Using default location instead");
-        return;
-      }
-      logWarn(`Store location selection failed, retry ${attempt + 1}/${maxRetries} in 5s..`);
-      await setTimeout(retryDelay);
-    }
-  }
-}
-
-// playwrightElementToProduct()
-// ----------------------------
-// Takes a playwright html element for 'a.product-entry', builds and returns a Product
-
-export function playwrightElementToProduct(
-  element: any,
-  category: string
-): Product | undefined {
-  const $ = cheerio.load(element);
-
-  // Find the <h3> tag with an id containing "-title"
-  // This holds the product ID, name and size
-  let idNameSizeH3 = $(element).find("h3").filter((i, element) => {
-    if ($(element).attr("id")?.includes("-title")) {
-      return true
-    } else return false;
-  });
-
-  let product: Product = {
-
-    // ID
-    // -------
-    // Extract product ID from h3 id attribute, and remove non-numbers
-    id: idNameSizeH3.attr("id")?.replace(/\D/g, "") as string,
-
-    // Category
-    category: category,  // already obtained from url/text file
-
-    // These values will later be overwritten
-    name: "",
-    currentPrice: 0,
-  };
-
-  // Name & Size
-  // ------------
-  // Try to extract combined name and size from h3 tag inner text
-  let rawNameAndSize = idNameSizeH3.text().trim();
-
-  // Clean unnecessary words from titles
-  rawNameAndSize = rawNameAndSize
-    .toLowerCase()
-    .replace("   ", " ")
-    .replace("  ", " ")
-    .replace("fresh fruit", "")
-    .replace("fresh vegetable", "")
-    .trim()
-    ;
-
-  // Try to regex match a size section such as:
-  // 100g, 150ml, 16pack, 0.5-1.5kg, tray 1kg, etc
-  let tryMatchSize =
-    rawNameAndSize.match(/(tray\s\d+)|(\d+(\.\d+)?(\-\d+\.\d+)?\s?(g|kg|l|ml|pack))\b/g);
-
-  if (!tryMatchSize) {
-    // Capitalise and set name
-    product.name = toTitleCase(rawNameAndSize);
-
-    // No size was found in name, size can be derived from unit price later
-    product.size = "";
-  } else {
-    // If a size was found, get the index to split the string into name and size
-    let indexOfSizeSection = rawNameAndSize.indexOf(tryMatchSize[0]);
-
-    // Capitalise and set name
-    product.name = toTitleCase(rawNameAndSize.slice(0, indexOfSizeSection)).trim();
-
-    // Clean up and set size
-    let cleanedSize = rawNameAndSize.slice(indexOfSizeSection).trim();
-    if (cleanedSize.match(/\d+l\b/)) {
-      // Capitalise L for litres
-      cleanedSize = cleanedSize.replace("l", "L");
-    }
-    cleanedSize.replace("tray", "Tray");
-    product.size = cleanedSize;
-  }
-
-  // Price
-  // ------
-  // Is originally displayed with dollars in an <em>, cents in a <span>,
-  // and potentially a kg unit name inside the <span> for some meat products.
-  // The 2 numbers are joined, parsed, and non-number chars are removed.
-  const dollarString: string = $(element)
-    .find("product-price div h3 em")
-    .text()
-    .trim();
-  let centString: string = $(element)
-    .find("product-price div h3 span")
-    .text()
-    .trim();
-  if (centString.includes("kg")) product.size = "per kg";
-  centString = centString.replace(/\D/g, "");
-  product.currentPrice = Number(dollarString + "." + centString);
-
-  // Unit Price
-  // -----------
-  // Try to extract from span.cupPrice, ex: $2.52 / 100mL
-  const rawUnitPrice = $(element).find("span.cupPrice").text().trim();
-
-  if (rawUnitPrice) {
-    // Extract and parse unit price, ex: 2.52
-    const unitPriceString = rawUnitPrice.split("/")[0].replace("$", "").trim();
-    let unitPrice = Number.parseFloat(unitPriceString);
-
-    // Extract amount and unit, ex: 100mL
-    const amountAndUnit = rawUnitPrice.split("/")[1].trim();
-
-    // Parse amount, ex: 100
-    let amount = Number.parseInt(amountAndUnit.match(/\d+/g)?.[0] || "");
-
-    // Extract unit, ex: mL
-    let unit = amountAndUnit.match(/\w+/g)?.[0] || ""
-
-    // Normalize units to kg or L
-    if (amountAndUnit == "100g") {
-      amount = amount * 10;
-      unitPrice = unitPrice * 10;
-      unit = "kg";
-    }
-    else if (amountAndUnit == "100mL") {
-      amount = amount * 10;
-      unitPrice = unitPrice * 10;
-      unit = "L";
-    }
-
-    // Cleanup 1kg to just kg
-    unit = unit.replace("1kg", "kg");
-    unit = unit.replace("1L", "L");
-
-    // Set finalised unit price
-    product.unitPrice = unitPrice + "/" + unit;
-  }
-
-  // Overrides
-  // ----------
-  // Check .ts file for manually overridden product data
-  productOverrides.forEach((override) => {
-    // First check if product ID has any overrides
-    if (override.id === product.id) {
-      // Check for size override
-      if (override.size !== undefined) {
-        product.size = override.size;
-      }
-
-      // Check for category override
-      if (override.category !== undefined) {
-        product.category = override.category;
-      }
-    }
-  });
-
-  // If product values pass validation, return product
-  let validProduct = true;
-  try {
-    if (product.name.match(/\$\s\d+/)) validProduct = false;
-    if (product.name.length < 4 || product.name.length > 100) validProduct = false;
-    if (product.id.length < 2 || product.id.length > 20) validProduct = false;
-    if (
-      product.currentPrice <= 0 ||
-      product.currentPrice === null ||
-      product.currentPrice === undefined ||
-      Number.isNaN(product.currentPrice) ||
-      product.currentPrice > 999
-    ) {
-      validProduct = false;
-    }
-  } catch (error) {
-    validProduct = false;
-  }
-  if (validProduct) return product
-  else {
-    logError(
-      `  Unable to Scrape: ${product.id.padStart(6)} | ${product.name} | ` +
-      `$${product.currentPrice}`
-    );
-    return undefined;
-  }
-}
-
-// parseAndCategoriseURL()
-// -----------------------
-// Parses a URL string, an optional category, optional number of pages to scrape
-//  from a single line of text.
-// Returns undefined if not a valid URL
-// Example Input:
-//    woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs category=ice-cream pages=2
-// Example Return:
-//  [
-//    {
-//        url: "https://woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=1&inStockProductsOnly=true"
-//        category: "ice-cream"
-//    },
-//    {
-//        url: "https://woolworths.co.nz/shop/browse/frozen/ice-cream-sorbet/tubs?page=2&inStockProductsOnly=true"
-//        category: "ice-cream"
-//    }
-//  ]
-
-export function parseAndCategoriseURL(
-  line: string
-): CategorisedUrl[] | undefined {
-  let baseCategorisedURL: CategorisedUrl = { url: "", category: "" };
-  let parsedUrls: CategorisedUrl[] = [];
-  let numPagesPerURL = 1;
-
-  // If line doesn't contain desired url section, return undefined
-  if (!line.includes("woolworths.co.nz")) {
-    return undefined;
-
-  } else {
-    // Split line into sections
-    line.split(" ").forEach((section) => {
-
-      // If line is a search url
-      if (section.includes("?search=")) {
-        baseCategorisedURL.url = section;
-
-        // Ensure URL has http:// or https://
-        if (!baseCategorisedURL.url.startsWith("http"))
-          baseCategorisedURL.url = "https://" + section;
-
-        // Add optimised query parameters,
-        baseCategorisedURL.url += '&page=1&inStockProductsOnly=true';
-
-        // Derive category from search term (can still be overridden)
-        const searchTerm = section.slice(section.indexOf("="), section.indexOf("&page="))
-        baseCategorisedURL.category = searchTerm
-      }
-
-      // If not a search url but a regular url
-      else if (section.includes("woolworths.co.nz")) {
-        baseCategorisedURL.url = section;
-
-        // Ensure URL has http:// or https://
-        if (!baseCategorisedURL.url.startsWith("http"))
-          baseCategorisedURL.url = "https://" + section;
-
-        if (section.includes("?")) {
-          // Strip any existing query options off of URL
-          baseCategorisedURL.url = section.substring(0, section.indexOf("?"));
-        }
-        // Replace query parameters with optimised ones,
-        //  such as limiting to in-stock only,
-        baseCategorisedURL.url += '?page=1&inStockProductsOnly=true';
-
-        // If not a search url or regular url, try parse category
-      } else if (section.includes("categories=") || section.includes("category=")) {
-        baseCategorisedURL.category = section.split("=")[1];
-
-        // If not a search url, regular url, or category, try parse number of pages
-      } else if (section.startsWith("pages=")) {
-        numPagesPerURL = Number.parseInt(section.split("=")[1]);
-      }
-
-      // If no category was specified, derive one from the last url /section
-      if (baseCategorisedURL.category == "") {
-        // Extract /slashSections/ from url, while excluding content after '?'
-        const baseUrl = baseCategorisedURL.url.split("?")[0];
-        let slashSections = baseUrl.split("/");
-
-        // Set category to last url /section/
-        baseCategorisedURL.category = slashSections[slashSections.length - 1];
-      }
-    });
-
-    // For multiple pages, duplicate the url and edit the ?page=1 query parameter
-    for (let i = 1; i <= numPagesPerURL; i++) {
-      let pagedUrl = {
-        url: baseCategorisedURL.url.replace("page=1", "page=" + i),
-        category: baseCategorisedURL.category,
-      }
-      parsedUrls.push(pagedUrl);
-    }
-  }
-
-  return parsedUrls;
-}
-
-// routePlaywrightExclusions()
-// ---------------------------
-// Excludes ads, tracking, and bandwidth intensive resources from being downloaded by Playwright
-
-async function routePlaywrightExclusions() {
-  let typeExclusions = ["image", "media", "font"];
-  let urlExclusions = [
-    "googleoptimize.com",
-    "gtm.js",
-    "visitoridentification.js",
-    "js-agent.newrelic.com",
-    "cquotient.com",
-    "googletagmanager.com",
-    "cloudflareinsights.com",
-    "dwanalytics",
-    "facebook.net",
-    "chatWidget",
-    "edge.adobedc.net",
-    "​/Content/Banners/",
-    "algolia.io",
-    "algoliaradar.com",
-    "go-mpulse.net"
-  ];
-
-  // Route with exclusions processed
-  await page.route("**/*", async (route) => {
-    const req = route.request();
-    let excludeThisRequest = false;
-
-    urlExclusions.forEach((excludedURL) => {
-      if (req.url().includes(excludedURL)) excludeThisRequest = true;
-    });
-
-    typeExclusions.forEach((excludedType) => {
-      if (req.resourceType() === excludedType) excludeThisRequest = true;
-    });
-
-    if (excludeThisRequest) {
-      await route.abort();
-    } else {
-      await route.continue();
-    }
-  });
-
-  return;
-}
-

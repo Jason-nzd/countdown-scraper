@@ -35,7 +35,7 @@ export async function establishCosmosDB() {
 
     // Test container connection and log container name
     const containerDef = await container.read();
-    console.log(`Connected to CosmosDB Container:${containerDef.resource!.id} PK:${partitionKey} `);
+    log(`Connected to CosmosDB \tContainer: ${containerDef.resource!.id} \tPK: ${partitionKey} `, colour.green);
 
   } catch (error) {
     throw Error(error + "\n\nInvalid CosmosDB connection - check for valid connection string");
