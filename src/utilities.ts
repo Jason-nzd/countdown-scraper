@@ -21,12 +21,20 @@ export const colour = {
 };
 
 // log()
-// -----
-// Console log with specified colour
+// ----------
+// Shorthand function for logging with custom colour
 
-export function log(colour: string, text: string) {
+export function log(text: string, colour: string = "colour.white") {
   const clear = '\x1b[0m';
   console.log(`${colour}%s${clear}`, text);
+}
+
+// logWarn()
+// ----------
+// Shorthand function for logging with yellow colour
+
+export function logWarn(text: string) {
+  log(text, colour.red);
 }
 
 // logError()
@@ -34,7 +42,7 @@ export function log(colour: string, text: string) {
 // Shorthand function for logging with red colour
 
 export function logError(text: string) {
-  log(colour.red, text);
+  log(text, colour.yellow)
 }
 
 // logProductRow()
@@ -44,12 +52,12 @@ export function logError(text: string) {
 export function logProductRow(product: Product) {
   const unitPriceString = product.unitPrice ? `$${product.unitPrice}` : ``;
   log(
-    getAlternatingRowColour(colour.sky, colour.white),
     `${product.id.padStart(tableIDWidth)} | ` +
     `${product.name.slice(0, tableNameWidth).padEnd(tableNameWidth)} | ` +
     `${product.size?.slice(0, tableSizeWidth).padEnd(tableSizeWidth)} | ` +
     `$ ${product.currentPrice.toFixed(2).padStart(4).padEnd(5)} | ` +
-    unitPriceString
+    unitPriceString,
+    getAlternatingRowColour(colour.sky, colour.white)
   );
 }
 
@@ -57,8 +65,7 @@ export function logProductRow(product: Product) {
 // ----------------
 
 export function logTableHeader() {
-  log(
-    colour.yellow,
+  logWarn(
     `${'ID'.padStart(tableIDWidth)} | ${'Name'.padEnd(tableNameWidth)} | ` +
     `${'Size'.padEnd(tableSizeWidth)} | ` +
     `${'Price'.padEnd(7)} | Unit Price`
@@ -68,8 +75,7 @@ export function logTableHeader() {
   for (let i = 0; i < 113; i++) {
     headerLine += "-"
   }
-  log(colour.yellow, headerLine);
-
+  logWarn(headerLine);
 }
 
 // getAlternatingRowColour()

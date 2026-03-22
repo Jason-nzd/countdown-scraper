@@ -13,6 +13,7 @@ import { CategorisedUrl, Product, UpsertResponse } from "./typings";
 import {
   log, colour, logProductRow, logError, readLinesFromTextFile, getTimeElapsedSince,
   logTableHeader, toTitleCase,
+  logWarn,
 } from "./utilities.js";
 
 // Woolworths / Countdown Scraper
@@ -54,7 +55,6 @@ await scrapeAllPageURLs();
 // Program End and Cleanup
 browser.close();
 log(
-  colour.sky,
   `\nAll Pages Completed = Total Time Elapsed ${getTimeElapsedSince(startTime)} \n`
 );
 // -----------------------
@@ -89,8 +89,7 @@ function loadUrlsFile(filePath: string = "src/urls.txt"): CategorisedUrl[] {
 async function scrapeAllPageURLs() {
 
   // Log loop start
-  log(
-    colour.yellow,
+  logWarn(
     `${categorisedUrls.length} pages to be scraped`.padEnd(35) +
     `${pageLoadDelaySeconds}s delay between scrapes`.padEnd(35) +
     (databaseMode ? "(Database Mode)" : "(Dry Run Mode)")
@@ -105,8 +104,7 @@ async function scrapeAllPageURLs() {
 
     // Log current scrape sequence and the total number of pages to scrape
     const shortUrl = url.replace("https://", "");
-    log(
-      colour.yellow,
+    logWarn(
       `\n[${i + 1}/${categorisedUrls.length}] ${shortUrl}`
     );
 
@@ -133,7 +131,7 @@ async function scrapeAllPageURLs() {
           if (retries === maxRetries) {
             throw error; // If all retries failed, throw the error
           }
-          log(colour.yellow, `Retry ${retries}/${maxRetries} for ${url}`);
+          logWarn(`Retry ${retries}/${maxRetries} for ${url}`);
           await setTimeout(retryDelay);
         }
       }
@@ -164,7 +162,7 @@ async function scrapeAllPageURLs() {
           }
 
           if (desiredPageNumber > numPagesAvailable) {
-            log(colour.yellow, `Page ${desiredPageNumber} does not exist, only ${numPagesAvailable} pages available. Skipping..`);
+            logWarn(`Page ${desiredPageNumber} does not exist, only ${numPagesAvailable} pages available. Skipping..`);
             continue; // Skip this page as it doesn't exist
           }
         }
@@ -190,8 +188,7 @@ async function scrapeAllPageURLs() {
       })
 
       // Log the number of products found, time elapsed, category, pages
-      log(
-        colour.yellow,
+      logWarn(
         `${productEntries.length} product entries found`.padEnd(38) +
         `Time Elapsed: ${getTimeElapsedSince(startTime)}`.padEnd(35) +
         `Category: ${_.startCase(categorisedUrl.category).padEnd(20)}` +
@@ -216,11 +213,11 @@ async function scrapeAllPageURLs() {
       // After scraping every item is complete, log how many products were scraped
       if (databaseMode) {
         log(
-          colour.blue,
           `CosmosDB: ${perPageLogStats.newProducts} new products, ` +
           `${perPageLogStats.priceChanged} updated prices, ` +
           `${perPageLogStats.infoUpdated} updated info, ` +
-          `${perPageLogStats.alreadyUpToDate} already up-to-date`
+          `${perPageLogStats.alreadyUpToDate} already up-to-date`,
+          colour.blue,
         );
       }
 
@@ -320,7 +317,7 @@ async function uploadImageRestAPI(
 ): Promise<boolean> {
   // Check if passed in url is valid, return if not
   if (imgUrl === undefined || !imgUrl.includes("http") || product.id.length < 4) {
-    log(colour.grey, `  Image ${product.id} has invalid url: ${imgUrl}`);
+    log(`  Image ${product.id} has invalid url: ${imgUrl}`, colour.grey,);
     return false;
   }
 
@@ -345,20 +342,20 @@ async function uploadImageRestAPI(
   if (responseMsg.includes("S3 Upload of Full-Size")) {
     // Log for successful upload
     log(
-      colour.grey,
       `  New Image  : ${(product.id + ".webp").padEnd(11)} | ` +
-      `${product.name.padEnd(40).slice(0, 40)}`
+      `${product.name.padEnd(40).slice(0, 40)}`,
+      colour.grey,
     );
   } else if (responseMsg.includes("already exists")) {
     // Do not log for existing images
   } else if (responseMsg.includes("Unable to download:")) {
     // Log for missing images
-    log(colour.grey, `  Image ${product.id} unavailable to be downloaded`);
+    log(`  Image ${product.id} unavailable to be downloaded`, colour.grey);
   } else if (responseMsg.includes("unable to be processed")) {
-    log(colour.grey, `  Image ${product.id} unable to be processed`);
+    log(`  Image ${product.id} unable to be processed`, colour.grey);
   } else {
     // Log any other errors that may have occurred
-    console.log(responseMsg);
+    log(responseMsg);
   }
   return true;
 }
@@ -404,8 +401,7 @@ function handleArguments(categorisedUrls: CategorisedUrl[]): CategorisedUrl[] {
 // Create a playwright browser
 
 async function establishPlaywrightPage(headless = true) {
-  log(
-    colour.yellow,
+  logWarn(
     "Launching Browser.. " +
     (process.argv.length > 2
       ? "(" + (process.argv.length - 2) + " arguments found)"
@@ -434,7 +430,7 @@ async function selectStoreByLocationName(locationName: string = "") {
     else return;
   }
 
-  log(colour.yellow, "Selecting Store Location..");
+  logWarn("Selecting Store Location..");
 
   // Retry logic with 4 retries and 5 second cooldowns
   const maxRetries = 4;
@@ -471,8 +467,7 @@ async function selectStoreByLocationName(locationName: string = "") {
 
       // Click save location button
       await page.getByText("Save and Continue Shopping").click();
-      log(
-        colour.yellow,
+      logWarn(
         "Changed Location from " + oldLocation + " to " + locationName + "\n"
       );
 
@@ -487,7 +482,7 @@ async function selectStoreByLocationName(locationName: string = "") {
         logError("Location selection failed after all retries - Using default location instead");
         return;
       }
-      log(colour.yellow, `Store location selection failed, retry ${attempt + 1}/${maxRetries} in 5s..`);
+      logWarn(`Store location selection failed, retry ${attempt + 1}/${maxRetries} in 5s..`);
       await setTimeout(retryDelay);
     }
   }
@@ -798,7 +793,6 @@ async function routePlaywrightExclusions() {
   await page.route("**/*", async (route) => {
     const req = route.request();
     let excludeThisRequest = false;
-    //let trimmedUrl = req.url().length > 120 ? req.url().substring(0, 120) + '...' : req.url();
 
     urlExclusions.forEach((excludedURL) => {
       if (req.url().includes(excludedURL)) excludeThisRequest = true;
@@ -809,10 +803,8 @@ async function routePlaywrightExclusions() {
     });
 
     if (excludeThisRequest) {
-      //logError(`${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
       await route.abort();
     } else {
-      //log(colour.white, `${req.method()} ${req.resourceType()} - ${trimmedUrl}`);
       await route.continue();
     }
   });
